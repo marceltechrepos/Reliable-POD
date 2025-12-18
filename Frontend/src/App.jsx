@@ -7,7 +7,6 @@ import AdminLayout from "../layout/Admin/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Order from "./pages/Order";
 import Provider from "./pages/Provider";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
 
@@ -17,13 +16,11 @@ function App() {
       <Routes>
 
         {/* ADMIN ROUTES */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="order" element={<Order />} />
-            <Route path="product" element={<ProductBase />} />
-            <Route path="provider" element={<Provider />} />
-          </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="order" element={<Order />} />
+          <Route path="product" element={<ProductBase />} />
+          <Route path="provider" element={<Provider />} />
         </Route>
 
         {/* AUTH ROUTES */}
