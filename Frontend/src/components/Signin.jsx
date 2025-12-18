@@ -1,10 +1,17 @@
 import React from 'react'
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
- 
 function Signin() {
+    const navigate = useNavigate();
     const SubmitHandler = (e) => {
         e.preventDefault();
+        try {
+            localStorage.setItem("token", "LORaA LEhSUN")
+            navigate('/admin/dashboard')
+        } catch (error) {
+            console.log(error)
+        }
     }
     return (
         <div className="sigup-container flex items-center justify-center h-screen">
@@ -15,46 +22,46 @@ function Signin() {
                 </div>
                 <form className="signup-fields" onSubmit={SubmitHandler}>
                     <div className="mb-3">
-                        <label 
-                        className="block mb-2 text-sm font-medium"
-                        htmlFor="userEmail"
+                        <label
+                            className="block mb-2 text-sm font-medium"
+                            htmlFor="userEmail"
                         >
-                        Email
+                            Email
                         </label>
-                        <input 
-                        type="email" 
-                        name="userEmail"
-                        className="block w-full border border-silver border-solid rounded-sm p-2" 
-                        id="userEmail" 
+                        <input
+                            type="email"
+                            name="userEmail"
+                            className="block w-full border border-silver border-solid rounded-sm p-2"
+                            id="userEmail"
                         />
                     </div>
                     <div className="mb-3">
-                        <label 
+                        <label
                             className="block mb-2 text-sm font-medium"
                             htmlFor="userPassword"
                         >
                             Password
                         </label>
-                        <input 
-                            type="password" 
+                        <input
+                            type="password"
                             name="userPassword"
-                            className="block w-full border border-silver border-solid rounded-sm p-2" 
-                            id="userPassword" 
+                            className="block w-full border border-silver border-solid rounded-sm p-2"
+                            id="userPassword"
                         />
                     </div>
 
                     <div className="mb-5 text-center">
-                        <input 
-                        type="submit" 
-                        className="bg-tiger hover:bg-hoverTiger text-white py-3 px-20 rounded-full cursor-pointer" 
-                        id="signinBtn" 
-                        value="Sign in" 
+                        <input
+                            type="submit"
+                            className="bg-tiger hover:bg-hoverTiger text-white py-3 px-20 rounded-full cursor-pointer"
+                            id="signinBtn"
+                            value="Sign in"
                         />
                     </div>
                 </form>
                 <div className='flex items-center justify-center gap-1'>
                     <p>Create New Account?</p>
-                     <Link to="/signup" className="text-tiger hover:underline">Sign up</Link>
+                    <Link to="/signup" className="text-tiger hover:underline">Sign up</Link>
                 </div>
             </div>
         </div>

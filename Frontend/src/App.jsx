@@ -1,26 +1,35 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Signin from "./components/Signin"
 import Signup from "./components/Signup"
-import Dashboard from "./components/Dashboard";
 import "./index.css"
-import Order from "./components/Order";
-import ProductBase from "./components/ProductBase";
+import ProductBase from "./pages/ProductBase";
+import AdminLayout from "../layout/Admin/AdminLayout";
+import Dashboard from "./pages/Dashboard";
+import Order from "./pages/Order";
+import Provider from "./pages/Provider";
 
 function App() {
-  
+
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Signin />} />
+
+        {/* ADMIN ROUTES */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="order" element={<Order />} />
+          <Route path="product" element={<ProductBase />} />
+          <Route path="provider" element={<Provider />} />
+        </Route>
+
+        {/* AUTH ROUTES */}
+        <Route path="/login" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/order" element={<Order />} />
-        <Route path="/product" element={<ProductBase />} />
 
       </Routes>
     </Router>
-  ) 
+  )
 }
 
 export default App
