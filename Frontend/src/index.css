@@ -14,9 +14,6 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
-.custom-height{
-  height: calc(100vh - 32px);
-}
 .tabs-container .MuiBox-root {
   padding: 0;
 }
