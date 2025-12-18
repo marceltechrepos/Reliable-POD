@@ -18,7 +18,7 @@ function Sidebar() {
     };
   
   return (
-    <aside id='sidebar' className='w-1/6 p-5 bg-white shadow-sm'>
+    <aside id='sidebar' className='w-1/6 h-screen p-5 bg-white shadow-sm'>
       <ul>
         {menuItems.map((item, index) => (
           <li 

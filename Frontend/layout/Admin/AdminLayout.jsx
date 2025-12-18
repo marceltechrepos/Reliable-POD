@@ -9,7 +9,7 @@ const AdminLayout = () => {
 
 
             <Topbar />
-            <div className='flex custom-height bg-slate-100'>
+            <div className='flex bg-slate-100'>
                 <Sidebar />
                 <Outlet />
 
