@@ -16,10 +16,10 @@ function ProductBase() {
 
     return (
         <>
-            <div className='flex bg-slate-100'>
+            <div className='flex w-full bg-slate-100'>
                 <div className='w-full p-10'>
                     <Breadcrumbs />
-                    <div className='product-fields w-full bg-white mt-5 p-4 rounded-xl border-s-5 border-ocean border-solid'>
+                    <div className='product-fields w-1/2 bg-white mt-5 p-4 rounded-xl border-s-5 border-ocean border-solid'>
                         <h2 className='text-2xl font-bold text-black mb-10'>Basic information</h2>
                         <div className="mb-5">
                             <TextField

@@ -43,8 +43,8 @@ export default function BasicTabs() {
   };
 
   return (
-    <div className='tabs-container'>
-      <Box sx={{ width: '100%' }}>
+    <div className='tabs-container w-full'>
+      <Box sx={{ width: '100%', marginTop:"20px" }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
             <Tab label="Print Area" {...a11yProps(0)} />
