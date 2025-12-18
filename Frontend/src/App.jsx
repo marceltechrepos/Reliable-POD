@@ -24,7 +24,7 @@ function App() {
         </Route>
 
         {/* AUTH ROUTES */}
-        <Route path="/login" element={<Signin />} />
+        <Route path="/" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
 
       </Routes>
