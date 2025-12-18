@@ -9,11 +9,13 @@ const AdminLayout = () => {
 
 
             <Topbar />
-            <div className='flex custom-height bg-slate-100'>
+            <div className="flex min-h-screen">
                 <Sidebar />
-                <Outlet />
-
+                <main className="flex-1 p-6 bg-gray-50">
+                    <Outlet />
+                </main>
             </div>
+
 
 
         </>
