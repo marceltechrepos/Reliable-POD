@@ -13,6 +13,11 @@ const UserSchema = new Schema({
   country: { type: String },
   postalCode: { type: String },
   taxNumber: { type: String },
+  role: {
+    type: String,
+    enum: ["Admin", "User"],
+    default: "Admin",
+  },
   NotificationEmail: { type: Boolean, default: false },
   UpdatedEmail: { type: Boolean, default: false },
   PendingOrderEmail: { type: Boolean, default: false },
