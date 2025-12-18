@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const isLogin = async (req, res, next) => {
+export const isLogin = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
 
@@ -30,4 +30,12 @@ const isLogin = async (req, res, next) => {
   }
 };
 
-export default isLogin;
+export const isAdmin = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. You are not an admin.",
+    });
+  }
+  next();
+};
