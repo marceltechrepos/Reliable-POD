@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 function PrintArea() {
   const [showForm, setShowForm] = useState(false);
   const [printAreas, setPrintAreas] = useState([
     {
-      id: 1,
-      tib: '866787',
+      id: uuidv4(),
+      tib: 'PA-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
       key: 'Front',
       displayName: 'Tile',
       width: '1314',
@@ -13,17 +14,28 @@ function PrintArea() {
     }
   ]);
   const [formData, setFormData] = useState({
-    tib: '',
     key: '',
     displayName: '',
     width: '',
     height: ''
   });
 
+  // TIB generate karne ka function
+  const generateTIB = () => {
+    // Method 1: Random alphanumeric
+    const randomPart = Math.random().toString(36).substr(2, 6).toUpperCase();
+    return `PA-${randomPart}`;
+    
+    // Method 2: Timestamp based
+    // return `PA-${Date.now().toString(36).toUpperCase()}`;
+    
+    // Method 3: Sequential (if you want)
+    // return `PA-${printAreas.length + 1}`.padStart(8, '0');
+  };
+
   // NEW STATE: Track which row is being edited
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({
-    tib: '',
     key: '',
     displayName: '',
     width: '',
@@ -69,14 +81,14 @@ function PrintArea() {
 
   // 3. Handle Add button click - Add new print area
   const handleAddClick = () => {
-    if (!formData.tib || !formData.key || !formData.displayName || !formData.width || !formData.height) {
+    if (!formData.key || !formData.displayName || !formData.width || !formData.height) {
       alert('Please fill all fields!');
       return;
     }
 
     const newPrintArea = {
-      id: printAreas.length + 1,
-      tib: formData.tib,
+      id: uuidv4(),
+      tib: generateTIB(),
       key: formData.key,
       displayName: formData.displayName,
       width: formData.width,
@@ -85,7 +97,6 @@ function PrintArea() {
 
     setPrintAreas([...printAreas, newPrintArea]);
     setFormData({
-      tib: '',
       key: '',
       displayName: '',
       width: '',
@@ -111,7 +122,6 @@ function PrintArea() {
   const handleEditClick = (area) => {
     setEditingId(area.id);
     setEditFormData({
-      tib: area.tib,
       key: area.key,
       displayName: area.displayName,
       width: area.width,
@@ -125,7 +135,7 @@ function PrintArea() {
 
   // NEW FUNCTION: Handle Save button click for editing
   const handleSaveEdit = (id) => {
-    if (!editFormData.tib || !editFormData.key || !editFormData.displayName || !editFormData.width || !editFormData.height) {
+    if (!editFormData.key || !editFormData.displayName || !editFormData.width || !editFormData.height) {
       alert('Please fill all fields!');
       return;
     }
@@ -134,7 +144,6 @@ function PrintArea() {
       if (area.id === id) {
         return {
           ...area,
-          tib: editFormData.tib,
           key: editFormData.key,
           displayName: editFormData.displayName,
           width: editFormData.width,
@@ -173,19 +182,7 @@ function PrintArea() {
       {showForm && (
         <div className='add-print-form bg-gray-50 p-4 rounded-lg mb-6 mt-4'>
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Add New Print Area</h3>
-          <div className="grid grid-cols-6 gap-4 mb-4 items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">TIB *</label>
-              <input
-                type="text"
-                name="tib"
-                value={formData.tib}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ocean"
-                placeholder="Enter TIB"
-                required
-              />
-            </div>
+          <div className="grid grid-cols-5 gap-4 mb-4 items-end">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fulfill Key *</label>
               <input
