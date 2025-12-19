@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "../../public/expressPODLogo.png"; // adjust path if needed
+// import logo from "../../public/expressPODLogo.png"; 
 
 function Topbar() {
   const [open, setOpen] = useState(false);
@@ -10,7 +10,7 @@ function Topbar() {
       {/* Left: Logo */}
       <div className="flex items-center">
         <img
-          src={logo}
+          // src={logo}
           alt="ExpressPOD"
           className="h-8 w-auto object-contain"
         />
