@@ -15,21 +15,20 @@ import {
   getVariant,
   updateVariant,
   removeVariant,
+  updateProduct,
 } from "../Controllers/product.controller.js";
-import { upload } from "../Utils/multer.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
+import {upload} from "../Utils/multer.js"
 const router = Router();
 
-router.get(
-  "/get-product",
-  // isLogin,
-  getProducts
-);
-router.post(
-  "/create-product",
-  // isLogin,
+router.get("/get-product", isLogin, getProducts);
+router.post("/create-product", isLogin, createProduct);
+
+router.put(
+  "/update-product/:id",
+  isLogin,
   upload.single("thumbnail"),
-  createProduct
+  updateProduct
 );
 router.delete("/delete-product/:id", deleteProduct);
 
