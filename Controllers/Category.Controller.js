@@ -3,7 +3,7 @@ import Category from "../Models/Categories.Model.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
 import fs from "fs";
 
-export const createCategory = async (req, res) => {
+const createCategory = async (req, res) => {
     try {
         const { category } = req.body;
 
@@ -38,3 +38,21 @@ export const createCategory = async (req, res) => {
         });
     }
 };
+
+
+const getAllCategory = async (req, res) => {
+    try {
+        const categories = await Category.find();
+        res.status(200).json({
+            success: true,
+            data: categories,
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export { createCategory, getAllCategory };  
