@@ -44,10 +44,10 @@ export const isAdmin = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     // ✅ Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
 
     const user = await User.findById(decoded.id);
-    console.log("user", user);
+    // console.log("user", user);
     if (!user) {
       return res.status(403).json({ message: "Unauthorized: User not found" });
     }

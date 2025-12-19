@@ -7,10 +7,23 @@ import AdminLayout from "../layout/Admin/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Order from "./pages/Order";
 import Provider from "./pages/Provider";
+import Category from "./pages/Category";
+import { useEffect } from "react";
 
 function App() {
-
-
+  const token = localStorage.getItem("token");
+  const getCategory = async () => {
+    try {
+      const response = await fetch("/api/Category/get-all-category")
+      const data = await response.json()
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  useEffect(() => {
+    getCategory()
+  }, [])
   return (
     <Router>
       <Routes>
@@ -20,6 +33,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="order" element={<Order />} />
           <Route path="product" element={<ProductBase />} />
+          <Route path="category" element={<Category />} />
           <Route path="provider" element={<Provider />} />
         </Route>
 
