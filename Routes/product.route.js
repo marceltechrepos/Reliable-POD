@@ -22,12 +22,12 @@ const router = Router();
 
 router.get(
   "/get-product",
-  // isLogin,
+  isLogin,
   getProducts
 );
 router.post(
   "/create-product",
-  // isLogin,
+  isLogin,
   upload.single("thumbnail"),
   createProduct
 );
