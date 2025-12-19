@@ -1,3 +1,5 @@
+
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Signin from "./components/Signin"
 import Signup from "./components/Signup"
@@ -16,7 +18,7 @@ function App() {
     try {
       const response = await fetch("/api/Category/get-all-category")
       const data = await response.json()
-      console.log(data);
+      console.log(data , " <<<< datad");
     } catch (error) {
       console.log(error);
     }
