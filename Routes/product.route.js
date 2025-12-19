@@ -16,8 +16,8 @@ import {
   updateVariant,
   removeVariant,
 } from "../Controllers/product.controller.js";
-import { upload } from "../Utils/multer.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
+import { upload } from "../Middlewares/Multer/multer.js";
 const router = Router();
 
 router.get(
