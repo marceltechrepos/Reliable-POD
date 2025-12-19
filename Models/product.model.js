@@ -12,7 +12,11 @@ const productSchema = new Schema(
       public_id: String,
     },
     mockupImage: String,
-
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
     Printareas: [
       {
         fulfiledKey: String,

@@ -3,7 +3,7 @@ import cloudinary from "../Utils/Cloudinary.Config.js";
  
 export const getProducts = async (req, res) => {
   try {
-    const products = await productModel.find();
+    const products = await productModel.find().populate("category");
     res.status(200).json({ success: true, data: products, status: 200 });
   } catch (error) {
     res.status(404).json({ message: error.message });
@@ -38,6 +38,16 @@ export const createProduct = async (req, res) => {
         field: "fulfilmentCatalogID",
         required: true,
         errorMessage: "Please provide a fulfilment catalog ID",
+      },
+      {
+        field: "description",
+        required: true,
+        errorMessage: "Please provide a product description",
+      },
+      {
+        field: "category",
+        required: true,
+        errorMessage: "Please provide a category",
       },
     ];
 

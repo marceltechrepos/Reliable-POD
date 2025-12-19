@@ -3,8 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 
 function Breadcrumbs() {
   const location = useLocation();
-  
-  const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
+
+  // const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
+  const pathSegments = location.pathname
+    .split('/')
+    .filter(segment => segment !== '' && segment !== 'admin');
+
+  const newPath = '/' + pathSegments.join('/');
   const breadcrumbs = [
     { name: 'Home', path: '/dashboard' },
     ...pathSegments.map((segment, index) => {
@@ -13,7 +18,7 @@ function Breadcrumbs() {
       return { name, path };
     })
   ];
-  
+
   return (
     <nav className="flex" aria-label="Breadcrumb">
       <ol className="inline-flex items-center space-x-1 md:space-x-2">
