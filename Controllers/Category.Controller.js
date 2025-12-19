@@ -55,4 +55,12 @@ const getAllCategory = async (req, res) => {
     }
 };
 
+
+const createProvider = async (req, res) => {
+    try {
+        
+    } catch (error) {
+
+    }
+}
 export { createCategory, getAllCategory };  
