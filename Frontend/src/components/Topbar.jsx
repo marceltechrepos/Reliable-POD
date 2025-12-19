@@ -1,9 +1,67 @@
-import React from 'react'
+import React, { useState } from "react";
+import { Menu } from "lucide-react";
 
-function Topbar() {
+function Topbar({ onMenuClick }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className='bg-white shadow-lg/30 py-1'>&nbsp;</div>
-  )
+    <header className="bg-[#81430085] shadow-lg px-4 sm:px-6 py-3 flex items-center justify-between">
+
+      {/* Left */}
+      <div className="flex items-center gap-3">
+        {/* Mobile Menu Button */}
+        <button
+          className="sm:hidden text-white"
+          onClick={onMenuClick}
+        >
+          <Menu size={24} />
+        </button>
+
+        <img
+          src="/expressPODLogo.png"
+          alt="ExpressPOD"
+          className="h-8 w-auto object-contain"
+        />
+      </div>
+
+      {/* Search (hidden on mobile) */}
+      <div className="hidden sm:flex flex-1 max-w-md mx-6">
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full px-4 py-2 rounded-lg outline-none text-sm border border-white focus:ring-2 focus:ring-amber-600 text-white placeholder:text-white bg-transparent"
+        />
+      </div>
+
+      {/* Profile */}
+      <div className="relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="profile"
+            className="w-8 h-8 rounded-full border-2 border-white"
+          />
+          <span className="hidden sm:block text-sm font-medium">Admin</span>
+        </button>
+
+        {open && (
+          <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+            <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+              Profile
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 }
 
-export default Topbar
+export default Topbar;
