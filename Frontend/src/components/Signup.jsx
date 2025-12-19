@@ -110,7 +110,7 @@ function Signup() {
                 </form>
                 <div className='flex items-center justify-center gap-1 mt-5'>
                     <p>Already Account?</p>
-                     <Link to="/login" className="text-tiger hover:underline">Sign in</Link>
+                     <Link to="/" className="text-tiger hover:underline">Sign in</Link>
                 </div>
             </div>
         </div>
