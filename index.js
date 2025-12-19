@@ -5,6 +5,7 @@ import ConnectDB from "./Utils/DB.Config.js";
 import UserRouter from "./Routes/User.Route.js";
 import mockupImageRouter from "./Routes/mockupImage.route.js";
 import productRouter from "./Routes/product.route.js";
+import CategoryRouter from "./Routes/Category.Route.js";
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(express.static("public"));
 ConnectDB();
 
 
-const routes = [UserRouter, productRouter, mockupImageRouter];
+const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter];
 routes.forEach((route) => app.use("/api", route));
 
 app.listen(process.env.PORT, () => {
