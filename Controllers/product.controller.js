@@ -115,7 +115,7 @@ export const updateProduct = async (req, res) => {
     }
 
     // If thumbnail is provided, upload to Cloudinary
-    console.log(thumbnail)
+    console.log({thumbnail})
     if (thumbnail) {
       const uploadResult = await cloudinary.uploader.upload(
         thumbnail.path,
@@ -155,7 +155,6 @@ export const updateProduct = async (req, res) => {
     });
   }
 };
-
 
 export const addPrintArea = async (req, res) => {
   try {
@@ -624,6 +623,7 @@ export const addVariant = async (req, res) => {
     }
 
     variantData.createdAt = new Date();
+    variantData.updatedAt = new Date();
 
     // Add the new variant to the array
     product.Variants.push(variantData);
