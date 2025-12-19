@@ -1,5 +1,6 @@
 import productModel from "../Models/product.model.js";
-
+import cloudinary from "../Utils/Cloudinary.Config.js";
+ 
 export const getProducts = async (req, res) => {
   try {
     const products = await productModel.find();
@@ -86,6 +87,65 @@ export const createProduct = async (req, res) => {
     });
   }
 };
+
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const thumbnail = req.file
+
+    // Check if product exists
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Product not found",
+      });
+    }
+
+    // If thumbnail is provided, upload to Cloudinary
+    console.log(thumbnail)
+    if (thumbnail) {
+      const uploadResult = await cloudinary.uploader.upload(
+        thumbnail.path,
+        {
+          folder: "products/thumbnails",
+        }
+      );
+
+      updateData.thumbnail = {
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+      };
+    }
+
+    // Update product
+    const updatedProduct = await productModel.findByIdAndUpdate(
+      id,
+      {
+        $set: updateData,
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      data: updatedProduct,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating product:", error);
+
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
 
 export const addPrintArea = async (req, res) => {
   try {
@@ -306,7 +366,7 @@ export const updatePrintArea = async (req, res) => {
       ...updateData,
       updatedAt: new Date(), // Add updated timestamp
     };
-
+    
     await product.save();
 
     res.status(200).json({
