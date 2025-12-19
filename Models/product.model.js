@@ -9,7 +9,10 @@ const productSchema = new Schema(
     description: String,
     thumbnail: String,
     mockupImage: String,
-
+    category: {
+      type: Category.ObjectId,
+      ref: "Category",
+    },
     Printareas: [
       {
         fulfiledKey: String,
