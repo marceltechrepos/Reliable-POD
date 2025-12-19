@@ -7,7 +7,10 @@ const productSchema = new Schema(
     fulfilmentProvider: String,
     fulfilmentCatalogID: String,
     description: String,
-    thumbnail: String,
+    thumbnail: {
+      url: String,
+      public_id: String,
+    },
     mockupImage: String,
     category: {
       type: Schema.Types.ObjectId,
