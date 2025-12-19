@@ -22,14 +22,19 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
+import AddIcon from '@mui/icons-material/Add';
 import CardContent from '@mui/material/CardContent';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 // Helper function to create data
 function createData(id, sku, color, size, colorHex, weight, price, comparePrice, baseCost, available, addToCampaigns, createdAt, updatedAt) {
   return { id, sku, color, size, colorHex, weight, price, comparePrice, baseCost, available, addToCampaigns, createdAt, updatedAt };
 }
 
-export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigger }) {
+export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigger, isCustomPrintArea }) {
   // Initial sample data
   const initialRows = [
     createData(
@@ -79,12 +84,21 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     ),
   ];
 
+
+
   // State management
   const [rows, setRows] = useState(initialRows);
   const [internalShowForm, setInternalShowForm] = useState(showForm || false);
   const [editingId, setEditingId] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
-  
+  const [modalOpen, setModalOpen] = useState(false);
+  const [printAreaData, setPrintAreaData] = useState({
+    key: '',
+    displayName: '',
+    width: '',
+    height: ''
+  });
+
   // Form data for new variant
   const [formData, setFormData] = useState({
     sku: '',
@@ -149,6 +163,65 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     });
   };
 
+  // Handle print area input change
+  const handlePrintAreaChange = (event) => {
+    const { name, value } = event.target;
+    setPrintAreaData({
+      ...printAreaData,
+      [name]: value,
+    });
+  };
+
+
+  // Generate TIB function
+  const generateTIB = () => {
+    const randomPart = Math.random().toString(36).substr(2, 6).toUpperCase();
+    return `PA-${randomPart}`;
+  };
+
+  // Handle modal open
+  // const handleModalOpen = () => {
+  //   // Auto-generate TIB when opening modal
+  //   const generatedTIB = generateTIB();
+  //   setPrintAreaData(prev => ({
+  //     ...prev,
+  //     tib: generatedTIB
+  //   }));
+  //   setModalOpen(true);
+  // };
+
+// Make modal row-aware: show clicked row's id as TIB (fallback to generated)
+const handleModalOpen = (row) => {
+  const tibValue = (row && row.id) ? row.id : generateTIB();
+  setPrintAreaData({
+    tib: tibValue,
+    key: row?.key || '',
+    displayName: row?.displayName || '',
+    width: row?.width || '',
+    height: row?.height || '',
+  });
+  setModalOpen(true);
+};
+
+
+
+
+
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setPrintAreaData({
+      key: '',
+      displayName: '',
+      width: '',
+      height: ''
+    });
+  };
+
+
+
+
   // Handle edit input changes
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
@@ -167,7 +240,11 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     }
 
     const currentDate = new Date().toISOString().split('T')[0];
-    
+
+
+
+
+
     const newRow = createData(
       uuidv4(), // Auto-generated ID
       formData.sku,
@@ -187,7 +264,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     setRows([...rows, newRow]);
     setInternalShowForm(false);
     if (onFormClose) onFormClose();
-    
+
     // Reset form
     setFormData({
       sku: '',
@@ -208,7 +285,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     setEditingId(row.id);
     setInternalShowForm(false);
     if (onFormClose) onFormClose();
-    
+
     setEditFormData({
       sku: row.sku,
       color: row.color,
@@ -223,6 +300,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     });
   };
 
+
+
   // Handle save edit
   const handleSaveEdit = () => {
     if (!editFormData.sku || !editFormData.color || !editFormData.size || !editFormData.price) {
@@ -231,7 +310,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     }
 
     const updatedDate = new Date().toISOString().split('T')[0];
-    
+
     const updatedRows = rows.map(row => {
       if (row.id === editingId) {
         return {
@@ -322,6 +401,38 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     { value: 'coming soon', label: 'Coming Soon' },
     { value: 'discontinued', label: 'Discontinued' },
   ];
+
+
+  // Handle print area form submit
+  const handlePrintAreaSubmit = () => {
+    // Basic validation
+    if (!printAreaData.key || !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
+      alert('Please fill all fields!');
+      return;
+    }
+
+    // Here you would typically save the print area data
+    // For example: send to API, update state, etc.
+    const newPrintArea = {
+      id: Date.now(), // You might want to use UUID here
+      tib: printAreaData.tib || generateTIB(),
+      key: printAreaData.key,
+      displayName: printAreaData.displayName,
+      width: printAreaData.width,
+      height: printAreaData.height,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log('New Print Area Added:', newPrintArea);
+
+    // Show success message
+    alert('Print area added successfully!');
+
+    // You can add logic here to update your print areas list
+    // For example: setPrintAreas([...printAreas, newPrintArea]);
+
+    handleModalClose();
+  };
 
   return (
     <Box>
@@ -659,29 +770,32 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                     <TableCell>
                       {row.baseCost ? `£${row.baseCost.toFixed(2)}` : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{padding:"10px"}}>
                       <Box
                         sx={{
                           px: 1,
                           py: 0.5,
                           borderRadius: 1,
                           display: 'inline-block',
+                          textAlign:"center",
+                          width: "100px",
+                          padding:"10px",
                           backgroundColor:
                             row.available === 'available'
                               ? '#e8f5e9'
                               : row.available === 'out of stock'
-                              ? '#ffebee'
-                              : row.available === 'coming soon'
-                              ? '#fff3e0'
-                              : '#f5f5f5',
+                                ? '#ffebee'
+                                : row.available === 'coming soon'
+                                  ? '#fff3e0'
+                                  : '#f5f5f5',
                           color:
                             row.available === 'available'
                               ? '#2e7d32'
                               : row.available === 'out of stock'
-                              ? '#c62828'
-                              : row.available === 'coming soon'
-                              ? '#f57c00'
-                              : '#616161',
+                                ? '#c62828'
+                                : row.available === 'coming soon'
+                                  ? '#f57c00'
+                                  : '#616161',
                         }}
                       >
                         {row.available}
@@ -693,7 +807,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                     <TableCell>{formatDate(row.createdAt)}</TableCell>
                     <TableCell>{formatDate(row.updatedAt)}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         <IconButton
                           color="primary"
                           onClick={() => handleEditClick(row)}
@@ -710,7 +825,30 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                         >
                           <DeleteIcon />
                         </IconButton>
+
+                        {/* Conditional Button */}
+                        {isCustomPrintArea && (
+                          <Button
+                            variant='contained'
+                            size='small'
+                            onClick={() => handleModalOpen(row)}
+                            sx={{
+                              backgroundColor: '#3b6d92',
+                              color: '#fff !important',
+                              '&:hover': {
+                                backgroundColor: '#2a4d6e',
+                              },
+                              ml: 2,
+                              minWidth: '5px', // chhota button banane ke liye
+                              padding: '6px',
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </Button>
+                        )}
                       </Box>
+
+
                     </TableCell>
                   </>
                 )}
@@ -718,7 +856,98 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
             ))}
           </TableBody>
         </Table>
-        
+
+
+        {/* Modal for Print Area */}
+        <Dialog open={modalOpen} onClose={handleModalClose} maxWidth='sm' fullWidth>
+          <DialogTitle>Add Custom Print Area</DialogTitle>
+          <DialogContent>
+            <div className='space-y-4 mt-2'>
+              {/* TIB Field (Read-only, auto-generated) */}
+              <TextField
+                fullWidth
+                label='TIB'
+                value={printAreaData.tib || 'Will be auto-generated'}
+                variant='outlined'
+                size='small'
+                InputProps={{
+                  readOnly: true,
+                }}
+                helperText="Auto-generated unique identifier"
+              />
+
+              {/* Fulfill Key Field */}
+              <TextField
+                fullWidth
+                label='Fulfill Key *'
+                name='key'
+                value={printAreaData.key}
+                onChange={handlePrintAreaChange}
+                variant='outlined'
+                size='small'
+                required
+                placeholder='Enter Fulfill Key (e.g., Front, Back)'
+              />
+
+              {/* Display Name Field */}
+              <TextField
+                fullWidth
+                label='Display Name *'
+                name='displayName'
+                value={printAreaData.displayName}
+                onChange={handlePrintAreaChange}
+                variant='outlined'
+                size='small'
+                required
+                placeholder='Enter Display Name'
+              />
+
+              {/* Width and Height Fields */}
+              <div className='grid grid-cols-2 gap-4'>
+                <TextField
+                  label='Width (px) *'
+                  name='width'
+                  value={printAreaData.width}
+                  onChange={handlePrintAreaChange}
+                  variant='outlined'
+                  size='small'
+                  type='number'
+                  required
+                  placeholder='e.g., 1314'
+                />
+                <TextField
+                  label='Height (px) *'
+                  name='height'
+                  value={printAreaData.height}
+                  onChange={handlePrintAreaChange}
+                  variant='outlined'
+                  size='small'
+                  type='number'
+                  required
+                  placeholder='e.g., 1314'
+                />
+              </div>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleModalClose} color='secondary'>
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePrintAreaSubmit}
+              variant='contained'
+              sx={{
+                backgroundColor: '#3b6d92',
+                '&:hover': {
+                  backgroundColor: '#2a4d6e'
+                }
+              }}
+            >
+              Add Print Area
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {rows.length === 0 && (
           <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
             <Typography>No variants found. Click "New Variant" to add one.</Typography>
