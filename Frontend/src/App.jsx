@@ -7,6 +7,7 @@ import AdminLayout from "../layout/Admin/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Order from "./pages/Order";
 import Provider from "./pages/Provider";
+import Category from "./pages/Category";
 import { useEffect } from "react";
 
 function App() {
