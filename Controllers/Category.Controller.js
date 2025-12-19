@@ -1,5 +1,6 @@
 
 import Category from "../Models/Categories.Model.js";
+import Provider from "../Models/Provider.Model.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
 import fs from "fs";
 
@@ -58,9 +59,41 @@ const getAllCategory = async (req, res) => {
 
 const createProvider = async (req, res) => {
     try {
-        
-    } catch (error) {
+        const { provider } = req.body;
+        if (!provider) {
+            return res.status(400).json({
+                success: false,
+                message: "Provider name is required",
+            })
+        }
+        const newProvider = await Provider.create({
+            provider
+        });
+        return res.status(201).json({
+            success: true,
+            data: newProvider,
+        });
 
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
     }
 }
-export { createCategory, getAllCategory };  
+
+const getProviders = async (req, res) => {
+    try {
+        const providers = await Provider.find();
+        return res.status(200).json({
+            success: true,
+            data: providers,
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
+export { createCategory, getAllCategory, createProvider, getProviders };  
