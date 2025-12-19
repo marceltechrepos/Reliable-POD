@@ -193,25 +193,7 @@ function ProductVariant() {
               label="Custom Variant's Printarea"
               className='text-sm'
             />
-            
-            {/* Add Button - Shows when switch is checked */}
-            {isCustomPrintArea && (
-              <Button
-                variant='contained'
-                size='small'
-                onClick={handleModalOpen}
-                sx={{
-                  backgroundColor: '#3b6d92',
-                  color:'#fff !important',
-                  '&:hover': {
-                    backgroundColor: '#2a4d6e',
-                  },
-                  ml: 2,
-                }}
-              >
-                Add Print Area
-              </Button>
-            )}
+
           </div>
           <button
             type='button'
@@ -327,6 +309,7 @@ function ProductVariant() {
 
         {/* Pass props to BasicTable */}
         <BasicTable
+        isCustomPrintArea = {isCustomPrintArea}
           showForm={showForm}
           onFormClose={handleFormClose}
           deleteSelectedTrigger={deleteSelectedTrigger}
