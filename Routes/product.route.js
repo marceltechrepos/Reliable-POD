@@ -1,13 +1,15 @@
 import { Router } from "express";
 import {
   // =========> Base Product
-  createProduct,
-  deleteProduct,
   getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 
   // =========> Print Area
   addPrintArea,
   getPrintAreas,
+  updatePrintArea,
   removePrintArea,
 
   // =========> Variant
@@ -15,36 +17,85 @@ import {
   getVariant,
   updateVariant,
   removeVariant,
-  updateProduct,
 } from "../Controllers/product.controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 import { upload } from "../Middlewares/Multer/multer.js";
 
+const productRouter = Router();
 
-const router = Router();
+productRouter.get(
+  "/get-product",
+  // isLogin,
+  getProducts
+);
+productRouter.post(
+  "/create-product",
+  // isLogin,
+  createProduct
+);
 
-router.get("/get-product", isLogin, getProducts);
-router.post("/create-product", isLogin, createProduct);
-
-router.put(
+productRouter.put(
   "/update-product/:id",
-  isLogin,
+  // isLogin,
   upload.single("thumbnail"),
   updateProduct
 );
-router.delete("/delete-product/:id", deleteProduct);
+productRouter.delete(
+  "/delete-product/:id",
+  // isLogin,
+  deleteProduct
+);
 
 // =========> Print Area
-router.post("/:productId/print-areas", addPrintArea);
+productRouter.post(
+  "/:productId/print-areas",
+  // isLogin,
 
-router.get("/:productId/print-areas", getPrintAreas);
+  addPrintArea
+);
+productRouter.get(
+  "/:productId/print-areas",
+  // isLogin,
 
-router.delete("/:productId/print-areas/:printAreaId", removePrintArea);
+  getPrintAreas
+);
+productRouter.delete(
+  "/:productId/print-areas/:printAreaId",
+  // isLogin,
+
+  removePrintArea
+);
+productRouter.put(
+  "/:productId/print-areas/:printAreaId",
+  // isLogin,
+
+  updatePrintArea
+);
 
 // =========> Variant
-router.post("/:productId/variant", addVariant);
-router.get("/:productId/variant", getVariant);
-router.put("/:productId/:variantId/variant", updateVariant);
-router.delete("/:productId/:variantId/variant", removeVariant);
+productRouter.post(
+  "/:productId/create-variant",
+  // isLogin,
 
-export default router;
+  addVariant
+);
+productRouter.get(
+  "/:productId/get-variant",
+  // isLogin,
+
+  getVariant
+);
+productRouter.put(
+  "/:productId/update-variant/:variantId",
+  // isLogin,
+
+  updateVariant
+);
+productRouter.delete(
+  "/:productId/delete-variant/:variantId",
+  // isLogin,
+
+  removeVariant
+);
+
+export default productRouter;
