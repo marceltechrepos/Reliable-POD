@@ -2,6 +2,7 @@ import { model, Schema } from "mongoose";
 
 const ProviderSchema = new Schema({
     provider: { type: String, required: true },
+    description: { type: String, default: "" },
 });
 
 const Provider = model("Provider", ProviderSchema);
