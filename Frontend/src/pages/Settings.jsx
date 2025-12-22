@@ -232,9 +232,12 @@ export default function Settings() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold" style={{ color: BRAND.dark }}>
-                            settings
+                            Settings
                         </h1>
-                        <p className="mt-1 text-sm text-gray-500">manage account, providers & categories</p>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Configure system preferences, manage administrator accounts, providers, categories, and application-wide settings.
+                        </p>
+
                     </div>
                     <div className="flex items-center gap-3">
                         <button
@@ -689,9 +692,6 @@ export default function Settings() {
                     </div>
                 </main>
             </div>
-
-            {/* small footer */}
-            <div className="max-w-6xl mx-auto mt-6 text-xs text-gray-400">last updated: Dec 22, 2025</div>
         </div>
     );
 }
