@@ -15,6 +15,7 @@ import AddIcon from '@mui/icons-material/Add';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
+import AddMockup from '../components/Admin/AddMockup';
 
 function ProductBase() {
   /* ================== BASIC STATES ================== */
@@ -46,8 +47,8 @@ function ProductBase() {
   const [showAddMockupCategory, setShowAddMockupCategory] = useState(false);
 
   const [mockupImages, setMockupImages] = useState([
-    { id: 1, url: 'https://via.placeholder.com/300', title: 'T-Shirt Front', category: 'TIB' },
-    { id: 2, url: 'https://via.placeholder.com/300', title: 'T-Shirt Back', category: 'TIB' },
+    { id: 1, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Front', category: 'TIB' },
+    { id: 2, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Back', category: 'TIB' },
   ]);
 
   /* ================== HANDLERS ================== */
@@ -74,10 +75,7 @@ function ProductBase() {
     setOpenCategoryModal(false);
   };
 
-  const filteredMockups =
-    selectedMockupCategory === 'All'
-      ? mockupImages
-      : mockupImages.filter(m => m.category === selectedMockupCategory);
+
 
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -140,7 +138,8 @@ function ProductBase() {
               </div>
 
               <TextField type="number" label="Fulfillment catalog ID" fullWidth size="small" sx={{ mb: 2 }} />
-              <TextField label="Your Message" multiline rows={4} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Your Message" multiline rows={4} fullWidth
+                sx={{ mb: 2 }} />
 
               <button className="bg-ocean text-white px-4 py-2 rounded-md">Save</button>
             </div>
@@ -161,6 +160,14 @@ function ProductBase() {
       </div>
 
       {/* ================= MODALS ================= */}
+      <AddMockup
+        open={openMockupModal}
+        onClose={() => setOpenMockupModal(false)}
+        Mockupdata={mockupImages}
+      />
+
+
+
       <AddProviderModal
         open={open}
         onClose={() => setOpen(false)}
