@@ -112,7 +112,7 @@ function Signin() {
             password,
         }
 
-        loginApi(payload , setLoading)
+        loginApi(payload , setLoading , navigate)
 
     };
 

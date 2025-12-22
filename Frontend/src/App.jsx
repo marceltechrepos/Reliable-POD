@@ -11,21 +11,10 @@ import Order from "./pages/Order";
 import Provider from "./pages/Provider";
 import Category from "./pages/Category";
 import { useEffect } from "react";
+import { Settings } from "./pages/Settings";
 
 function App() {
-  const token = localStorage.getItem("token");
-  const getCategory = async () => {
-    try {
-      const response = await fetch("/api/Category/get-all-category")
-      const data = await response.json()
-      console.log(data , " <<<< datad");
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  useEffect(() => {
-    getCategory()
-  }, [])
+  // const token = localStorage.getItem("token");
   return (
     <Router>
       <Routes>
@@ -37,6 +26,7 @@ function App() {
           <Route path="product" element={<ProductBase />} />
           <Route path="category" element={<Category />} />
           <Route path="provider" element={<Provider />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* AUTH ROUTES */}
