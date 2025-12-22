@@ -11,7 +11,7 @@ function Breadcrumbs() {
 
   const newPath = '/' + pathSegments.join('/');
   const breadcrumbs = [
-    { name: 'Home', path: '/dashboard' },
+    { name: 'Home', path: '/admin/dashboard' },
     ...pathSegments.map((segment, index) => {
       const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const name = segment.charAt(0).toUpperCase() + segment.slice(1);

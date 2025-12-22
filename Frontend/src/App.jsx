@@ -11,7 +11,8 @@ import Order from "./pages/Order";
 import Provider from "./pages/Provider";
 import Category from "./pages/Category";
 import { useEffect } from "react";
-import { Settings } from "./pages/Settings";
+import Settings from "./pages/Settings";
+import AdminLogin from "./components/Admin/AdminLogin";
 
 function App() {
   // const token = localStorage.getItem("token");
@@ -28,6 +29,8 @@ function App() {
           <Route path="provider" element={<Provider />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+
+        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
