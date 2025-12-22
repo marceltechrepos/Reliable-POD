@@ -5,7 +5,9 @@ import IconProvider from "../components/Admin/IconProvider";
 import IconCategory from "../components/Admin/IconCategory";
 import Thumb from "../components/Admin/Thumb";
 import Accordion from "../components/Admin/Accordion";
+import ProviderAccordion from "../components/Admin/ProviderAccordion";
 import CloseIcon from '@mui/icons-material/Close';
+import { userInfoApi } from "../api/auth.api";
 
 const BRAND = {
     primary: "#3b6d92",
@@ -62,6 +64,7 @@ export default function Settings() {
     const [activeTab, setActiveTab] = useState("user");
     const [openProvider, setOpenProvider] = useState(null);
     const [openCategory, setOpenCategory] = useState(null);
+    const [loading, setLoading] = useState(false)
 
     // User info + profile image & edit state
     const [isEditing, setIsEditing] = useState(false);
@@ -127,16 +130,26 @@ export default function Settings() {
         setProfileImagePreview(url);
     };
 
-    const handleSaveUserInfo = () => {
-        // For now we just keep it in state. If you want to push to API, call it here.
-        setIsEditing(false);
-        setPasswordMessage(null);
-        // also if profileImageFile exists, we can "persist" preview into userInfo (as a URL).
-        // mark it so we can revoke on unmount if needed.
-        if (profileImagePreview) {
-            setUserInfo((prev) => ({ ...prev, profileImage: profileImagePreview }));
+    const handleSaveUserInfo = async () => {
+        if (!userInfo) return;
+
+        const payload = { ...userInfo };
+        // if profileImageFile exists, send it
+        if (profileImageFile) {
+            payload.profileImage = profileImageFile;
+        }
+
+        const updatedUser = await userInfoApi(payload, setLoading);
+
+        if (updatedUser) {
+            setUserInfo(updatedUser);
+            setProfileImageFile(null);
+            setProfileImagePreview(null);
+            setIsEditing(false);
+            setPasswordMessage(null);
         }
     };
+
 
     // ------------- PASSWORD: simple validation handler --------------
     const handleChangePassword = () => {
@@ -354,6 +367,7 @@ export default function Settings() {
                                                                 Update
                                                             </button>
                                                             <CloseIcon
+                                                                className="cursor-pointer"
                                                                 onClick={() => {
                                                                     if (profileImagePreview) {
                                                                         try {
@@ -514,7 +528,7 @@ export default function Settings() {
                                 <h2 className="text-xl font-semibold mb-4">providers</h2>
                                 <div className="space-y-3">
                                     {providers.map((p) => (
-                                        <Accordion
+                                        <ProviderAccordion
                                             key={p.id}
                                             open={openProvider === p.id}
                                             onToggle={() => setOpenProvider(openProvider === p.id ? null : p.id)}
@@ -583,7 +597,7 @@ export default function Settings() {
                                                     </div>
                                                 </div>
                                             )}
-                                        </Accordion>
+                                        </ProviderAccordion>
                                     ))}
                                 </div>
                             </section>

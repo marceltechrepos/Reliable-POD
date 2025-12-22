@@ -22,7 +22,7 @@ function App() {
 
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="order" element={<Order />} />
           <Route path="product" element={<ProductBase />} />
           <Route path="category" element={<Category />} />
@@ -30,7 +30,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
