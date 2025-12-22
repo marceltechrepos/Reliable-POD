@@ -18,6 +18,12 @@ const UserSchema = new Schema({
     enum: ["Admin", "User"],
     default: "Admin",
   },
+  profileImage: {
+    url: { type: String, default: "" },
+    public_id: { type: String, default: "" },
+    alt: { type: String, default: "Profile picture" },
+  },
+
   NotificationEmail: { type: Boolean, default: false },
   UpdatedEmail: { type: Boolean, default: false },
   PendingOrderEmail: { type: Boolean, default: false },
