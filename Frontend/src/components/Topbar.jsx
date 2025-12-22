@@ -5,6 +5,12 @@ import { Menu } from "lucide-react";
 function Topbar({ onMenuClick }) {
   const [open, setOpen] = useState(false);
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/admin/login"
+
+  }
+
   return (
     <header className="bg-[#81430085] shadow-lg px-4 sm:px-6 py-3 flex items-center justify-between">
 
@@ -54,7 +60,8 @@ function Topbar({ onMenuClick }) {
               Profile
             </button>
             <button
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 cursor-pointer"
+              onClick={() => logout()}
             >
               Logout
             </button>

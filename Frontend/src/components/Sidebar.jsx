@@ -24,8 +24,9 @@ function Sidebar({ isOpen, onClose }) {
       )}
 
       <aside
+        style={{ height: "auto" }}
         className={`fixed sm:static top-0 left-0 z-50 h-screen w-64 sm:w-1/6 bg-white shadow-sm p-5 transition-transform duration-300
-        ${isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"}`}
+        ${isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"} h-auto`}
       >
         <ul>
           {menuItems.map((item, index) => (
