@@ -19,62 +19,83 @@ import {
   removeVariant,
 } from "../Controllers/product.controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
-import {upload} from "../Middlewares/Multer/multer.js"
+import { upload } from "../Middlewares/Multer/multer.js";
 
-const router = Router();
+const productRouter = Router();
 
-router.get("/get-product",
- //  isLogin,
-    getProducts);
-router.post("/create-product", 
+productRouter.get(
+  "/get-product",
   // isLogin,
-   createProduct);
+  getProducts
+);
+productRouter.post(
+  "/create-product",
+  // isLogin,
+  createProduct
+);
 
-router.put(
+productRouter.put(
   "/update-product/:id",
   // isLogin,
   upload.single("thumbnail"),
   updateProduct
 );
-router.delete("/delete-product/:id",
+productRouter.delete(
+  "/delete-product/:id",
   // isLogin,
-  
-  deleteProduct);
+  deleteProduct
+);
 
 // =========> Print Area
-router.post("/:productId/print-areas",
+productRouter.post(
+  "/:productId/print-areas",
   // isLogin,
-  
-  addPrintArea);
-router.get("/:productId/print-areas",
+
+  addPrintArea
+);
+productRouter.get(
+  "/:productId/print-areas",
   // isLogin,
-  
-  getPrintAreas);
-router.delete("/:productId/print-areas/:printAreaId",
+
+  getPrintAreas
+);
+productRouter.delete(
+  "/:productId/print-areas/:printAreaId",
   // isLogin,
-  
-  removePrintArea);
-router.put("/:productId/print-areas/:printAreaId",
+
+  removePrintArea
+);
+productRouter.put(
+  "/:productId/print-areas/:printAreaId",
   // isLogin,
-  
-  updatePrintArea)
+
+  updatePrintArea
+);
 
 // =========> Variant
-router.post("/:productId/create-variant",
+productRouter.post(
+  "/:productId/create-variant",
   // isLogin,
-  
-  addVariant);
-router.get("/:productId/get-variant",
-  // isLogin,
-  
-  getVariant);
-router.put("/:productId/update-variant/:variantId",
-  // isLogin,
-  
-  updateVariant);
-router.delete("/:productId/delete-variant/:variantId",
-  // isLogin,
-  
-  removeVariant);
 
-export default router;
+  addVariant
+);
+productRouter.get(
+  "/:productId/get-variant",
+  // isLogin,
+
+  getVariant
+);
+productRouter.put(
+  "/:productId/update-variant/:variantId",
+  // isLogin,
+
+  updateVariant
+);
+productRouter.delete(
+  "/:productId/delete-variant/:variantId",
+  // isLogin,
+
+  removeVariant
+);
+
+export default productRouter;
