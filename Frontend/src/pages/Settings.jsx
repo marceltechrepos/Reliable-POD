@@ -5,6 +5,7 @@ import IconProvider from "../components/Admin/IconProvider";
 import IconCategory from "../components/Admin/IconCategory";
 import Thumb from "../components/Admin/Thumb";
 import Accordion from "../components/Admin/Accordion";
+import CloseIcon from '@mui/icons-material/Close';
 
 const BRAND = {
     primary: "#3b6d92",
@@ -52,9 +53,9 @@ const providersSample = [
 ];
 
 const categoriesSample = [
-    { id: 1, name: "Electronics", color: "#3b6d92", image: null },
-    { id: 2, name: "Home & Kitchen", color: "#f05a28", image: null },
-    { id: 3, name: "Apparel", color: "#747474", image: null },
+    { id: 1, name: "Electronics", color: "#3b6d92", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
+    { id: 2, name: "Home & Kitchen", color: "#f05a28", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
+    { id: 3, name: "Apparel", color: "#747474", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
 ];
 
 export default function Settings() {
@@ -245,7 +246,7 @@ export default function Settings() {
                                 alert("local state logged to console (simulate save all)");
                             }}
                         >
-                            save all
+                            Save
                         </button>
                         <button
                             className="cursor-pointer px-4 py-2 rounded-lg border font-medium"
@@ -260,7 +261,7 @@ export default function Settings() {
                                 setIsEditing(false);
                             }}
                         >
-                            cancel
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -274,19 +275,19 @@ export default function Settings() {
                         <TabButton
                             active={activeTab === "user"}
                             onClick={() => setActiveTab("user")}
-                            label="user info"
+                            label="User Info"
                             icon={<IconUser color={BRAND.primary} />}
                         />
                         <TabButton
                             active={activeTab === "provider"}
                             onClick={() => setActiveTab("provider")}
-                            label="provider"
+                            label="Provider"
                             icon={<IconProvider color={BRAND.secondary} />}
                         />
                         <TabButton
                             active={activeTab === "category"}
                             onClick={() => setActiveTab("category")}
-                            label="category"
+                            label="Category"
                             icon={<IconCategory color={BRAND.dark} />}
                         />
                     </nav>
@@ -298,7 +299,7 @@ export default function Settings() {
                         {/* ---------- USER TAB ---------- */}
                         {activeTab === "user" && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">user information</h2>
+                                <h2 className="text-xl font-semibold mb-4">User Info</h2>
 
                                 {/* Grid: image field + other fields together */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,12 +314,12 @@ export default function Settings() {
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="text-gray-400 text-xs">no image</div>
+                                                    <div className="text-gray-400 text-xs">No Image</div>
                                                 )}
                                             </div>
 
                                             <div className="flex-1">
-                                                <div className="text-xs text-gray-400 uppercase">profile image</div>
+                                                <div className="text-xs text-gray-400 uppercase">Profile</div>
 
                                                 {isEditing ? (
                                                     <div className="mt-2 flex flex-col gap-2">
@@ -333,8 +334,7 @@ export default function Settings() {
                                                                 }}
                                                                 className="hidden"
                                                             />
-                                                            <span className="px-3 py-1 rounded bg-gray-100 border text-xs">choose file</span>
-                                                            <span className="text-xs text-gray-500">PNG, JPG</span>
+                                                            <span className="px-3 py-1 rounded bg-gray-100 border text-xs">Upload</span>
                                                         </label>
 
                                                         <div className="flex gap-2 items-center">
@@ -348,10 +348,9 @@ export default function Settings() {
                                                                     }
                                                                 }}
                                                             >
-                                                                apply
+                                                                Update
                                                             </button>
-                                                            <button
-                                                                className="px-3 py-1 rounded-md text-xs border cursor-pointer"
+                                                            <CloseIcon
                                                                 onClick={() => {
                                                                     if (profileImagePreview) {
                                                                         try {
@@ -361,9 +360,7 @@ export default function Settings() {
                                                                     setProfileImagePreview(null);
                                                                     setProfileImageFile(null);
                                                                 }}
-                                                            >
-                                                                remove
-                                                            </button>
+                                                            />
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -388,7 +385,7 @@ export default function Settings() {
                                                             checked={v}
                                                             onChange={(e) => setUserInfo({ ...userInfo, [k]: e.target.checked })}
                                                         />
-                                                        <span>{v ? "enabled" : "disabled"}</span>
+                                                        <span>{v ? "Enabled" : "Disabled"}</span>
                                                     </label>
                                                 ) : isEditing ? (
                                                     <input
@@ -420,7 +417,7 @@ export default function Settings() {
                                                 style={{ background: BRAND.primary }}
                                                 onClick={() => handleSaveUserInfo()}
                                             >
-                                                save changes
+                                                Update
                                             </button>
 
                                             <button
@@ -438,7 +435,7 @@ export default function Settings() {
                                                     setProfileImageFile(null);
                                                 }}
                                             >
-                                                cancel
+                                                Cancel
                                             </button>
                                         </>
                                     )}
@@ -446,11 +443,11 @@ export default function Settings() {
 
                                 {/* --- CHANGE PASSWORD placed under update buttons as requested --- */}
                                 <div className="mt-6 p-4 rounded-lg border" style={{ borderColor: "#eee" }}>
-                                    <h3 className="text-sm font-semibold mb-3">change password</h3>
+                                    <h3 className="text-sm font-semibold mb-3">Change Password</h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="text-xs text-gray-500">current password</label>
+                                            <label className="text-xs text-gray-500">Current Password</label>
                                             <input
                                                 type="password"
                                                 className="mt-1 w-full border rounded px-3 py-2 text-sm"
@@ -460,7 +457,7 @@ export default function Settings() {
                                         </div>
 
                                         <div>
-                                            <label className="text-xs text-gray-500">new password</label>
+                                            <label className="text-xs text-gray-500">New Password</label>
                                             <input
                                                 type="password"
                                                 className="mt-1 w-full border rounded px-3 py-2 text-sm"
@@ -470,7 +467,7 @@ export default function Settings() {
                                         </div>
 
                                         <div>
-                                            <label className="text-xs text-gray-500">confirm password</label>
+                                            <label className="text-xs text-gray-500">Confirm Password</label>
                                             <input
                                                 type="password"
                                                 className="mt-1 w-full border rounded px-3 py-2 text-sm"
@@ -486,14 +483,14 @@ export default function Settings() {
                                             style={{ background: BRAND.primary }}
                                             onClick={handleChangePassword}
                                         >
-                                            change password
+                                            Update Password
                                         </button>
 
                                         <button
                                             className="px-4 py-2 rounded-md border"
                                             onClick={() => setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" })}
                                         >
-                                            reset
+                                            Reset
                                         </button>
 
                                         {passwordMessage && (
@@ -523,14 +520,14 @@ export default function Settings() {
                                         >
                                             {editingProviderId === p.id ? (
                                                 <div className="bg-gray-50 p-4 rounded-lg border">
-                                                    <label className="text-xs text-gray-500">provider name</label>
+                                                    <label className="text-xs text-gray-500">Provider</label>
                                                     <input
                                                         className="w-full mt-1 mb-3 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                                         value={editProviderData.name}
                                                         onChange={(e) => setEditProviderData({ ...editProviderData, name: e.target.value })}
                                                     />
 
-                                                    <label className="text-xs text-gray-500">description</label>
+                                                    <label className="text-xs text-gray-500">Description</label>
                                                     <textarea
                                                         className="w-full mt-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                                         rows={3}
@@ -549,11 +546,11 @@ export default function Settings() {
                                                             style={{ background: BRAND.primary }}
                                                             onClick={() => handleSaveProvider(p.id)}
                                                         >
-                                                            save
+                                                            Update
                                                         </button>
 
                                                         <button className="px-4 py-1.5 rounded-md text-xs border" onClick={() => setEditingProviderId(null)}>
-                                                            cancel
+                                                            Cancel
                                                         </button>
                                                     </div>
                                                 </div>
@@ -567,7 +564,7 @@ export default function Settings() {
                                                             style={{ background: BRAND.primary }}
                                                             onClick={() => handleEditClick(p)}
                                                         >
-                                                            edit
+                                                            Edit
                                                         </button>
 
                                                         <button
@@ -578,7 +575,7 @@ export default function Settings() {
                                                             }}
                                                             onClick={() => handleRemoveProvider(p.id)}
                                                         >
-                                                            remove
+                                                            Delete
                                                         </button>
                                                     </div>
                                                 </div>
@@ -592,7 +589,7 @@ export default function Settings() {
                         {/* ---------- CATEGORY TAB ---------- */}
                         {activeTab === "category" && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">categories</h2>
+                                <h2 className="text-xl font-semibold mb-4">Categories</h2>
                                 <div className="space-y-3">
                                     {categories.map((c) => (
                                         <Accordion
@@ -602,14 +599,14 @@ export default function Settings() {
                                             title={c.name}
                                             subtitle={
                                                 <span className="flex items-center gap-2">
-                                                    <Thumb color={c.color} image={c.image} />
-                                                     {/* {c.name} */}
+                                                    <Thumb image={c.image} />
+                                                    {/* {c.name} */}
                                                 </span>
                                             }
                                         >
                                             {editingCategoryId === c.id ? (
                                                 <div className="bg-gray-50 p-4 rounded-lg border">
-                                                    <label className="text-xs text-gray-500">category name</label>
+                                                    <label className="text-xs text-gray-500">Category</label>
                                                     <input
                                                         className="w-full mt-1 mb-3 border rounded-md px-3 py-2 text-sm focus:outline-none"
                                                         value={editCategoryData.name}
@@ -620,7 +617,7 @@ export default function Settings() {
                                                             {editCategoryData.imagePreview ? (
                                                                 <img src={editCategoryData.imagePreview} alt="cat" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="text-xs text-gray-400 flex items-center justify-center h-full">no image</div>
+                                                                <div className="text-xs text-gray-400 flex items-center justify-center h-full">NO IMAGE</div>
                                                             )}
                                                         </div>
 
@@ -642,14 +639,14 @@ export default function Settings() {
                                                             style={{ background: BRAND.primary }}
                                                             onClick={() => handleSaveCategory(c.id)}
                                                         >
-                                                            save
+                                                            Update
                                                         </button>
 
                                                         <button
                                                             className="px-4 py-1.5 rounded-md text-xs border"
                                                             onClick={() => setEditingCategoryId(null)}
                                                         >
-                                                            cancel
+                                                            Cancel
                                                         </button>
                                                     </div>
                                                 </div>
@@ -672,14 +669,14 @@ export default function Settings() {
                                                             style={{ border: `1px solid ${BRAND.light}` }}
                                                             onClick={() => handleEditCategoryClick(c)}
                                                         >
-                                                            edit
+                                                            Edit
                                                         </button>
                                                         <button
                                                             className="px-3 py-1 rounded-md"
                                                             style={{ border: `1px solid ${BRAND.light}`, color: "red" }}
                                                             onClick={() => handleRemoveCategory(c.id)}
                                                         >
-                                                            remove
+                                                            Delete
                                                         </button>
                                                     </div>
                                                 </div>
