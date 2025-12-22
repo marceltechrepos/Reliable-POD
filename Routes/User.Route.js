@@ -1,17 +1,23 @@
-import { Router } from "express";
 import {
-  addUserInformation,
+  Login,
   CreateUser,
   getUserDetail,
-  Login,
+  addUserInformation,
 } from "../Controllers/User.Controller.js";
-import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
+import { Router } from "express";
+import { upload } from "../Middlewares/Multer/multer.js";
+import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 const UserRouter = Router();
 
 UserRouter.post("/User/CreateUser", CreateUser);
 UserRouter.post("/User/Login", Login);
-UserRouter.post("/User/AddUserInfo", isLogin, addUserInformation);
+UserRouter.post(
+  "/User/AddUserInfo",
+  upload.single("profileImage"),
+  isLogin,
+  addUserInformation
+);
 
 UserRouter.get("/User/getUserDetail", isLogin, getUserDetail);
 export default UserRouter;

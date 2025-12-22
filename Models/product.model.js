@@ -1,6 +1,6 @@
 import { Schema, Types, model } from "mongoose";
 
-const productSchema = new Schema(
+const productSchema = new Schema( 
   {
     productTitle: String,
     internalName: String,
@@ -13,7 +13,7 @@ const productSchema = new Schema(
     },
     mockupImage: String,
     category: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Category",
       required: true,
     },
