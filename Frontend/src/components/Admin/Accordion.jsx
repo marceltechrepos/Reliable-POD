@@ -4,9 +4,9 @@ export default function Accordion({ open, onToggle, title, subtitle, children })
             {/* Header */}
             <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition">
                 {/* LEFT CONTENT */}
-                <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-gray-800">{title}</span>
+                <div className="flex justify-between align-items-center gap-5">
                     <span className="text-xs text-gray-500">{subtitle}</span>
+                    <span className="text-sm font-semibold text-gray-800">{title}</span>
                 </div>
 
                 {/* RIGHT ICON */}
