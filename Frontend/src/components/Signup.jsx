@@ -188,9 +188,7 @@ function Signup() {
             confirmPassword,
         }
 
-        registerAPi(payload , setLoading);
-
-        navigate("/login")
+        registerAPi(payload , setLoading ,navigate);
     };
 
     return (

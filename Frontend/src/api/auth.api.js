@@ -1,4 +1,4 @@
-export const registerAPi = async (payload, setLoading) => {
+export const registerAPi = async (payload, setLoading, navigate) => {
     try {
         setLoading(true)
         const res = await fetch("/api/User/CreateUser", {
@@ -10,12 +10,11 @@ export const registerAPi = async (payload, setLoading) => {
         });
 
         const data = await res.json();
-        console.log(data, "<<<< response");
         setLoading(false)
 
-        if (data.success) {
+        if (data.success === true) {
             alert(data.message);
-            navigate("/login")
+            navigate("/")
         } else {
             alert(data.message || "something went wrong");
         }
@@ -27,7 +26,7 @@ export const registerAPi = async (payload, setLoading) => {
 }
 
 
-export const loginApi = async (payload, setLoading) => {
+export const loginApi = async (payload, setLoading , navigate) => {
     try {
         setLoading(true);
 
@@ -40,16 +39,19 @@ export const loginApi = async (payload, setLoading) => {
         });
 
         const data = await res.json();
-        console.log(data, "<<<< login response");
 
         if (!data.success) {
             alert(data.message || "invalid credentials");
             setLoading(false);
             return;
+        } else {
+            alert(data.message)
+            localStorage.setItem("token", data.token);
+            setLoading(false);
+            navigate("/admin/dashboard")
         }
 
         // ✅ save token
-        localStorage.setItem("token", data.token);
 
     } catch (error) {
         console.log(error, "<<<< error");
