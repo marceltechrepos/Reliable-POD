@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
+import { Typography } from '@mui/material';
 
 function ProductBase() {
   /* ================== BASIC STATES ================== */
@@ -32,6 +33,7 @@ function ProductBase() {
 
   const [open, setOpen] = useState(false);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
+  const [selectedMockups, setSelectedMockups] = useState([]);
 
   const [newProvider, setNewProvider] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -75,8 +77,6 @@ function ProductBase() {
     setOpenCategoryModal(false);
   };
 
-
-
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     position: 'absolute',
@@ -84,6 +84,15 @@ function ProductBase() {
     height: 1,
     overflow: 'hidden',
   });
+
+  const handleMockupSelect = (selectedData) => {
+    setSelectedMockups(selectedData);
+  };
+
+  // ✅ REMOVE MOCKUP FUNCTION
+  const removeMockup = (id) => {
+    setSelectedMockups(prev => prev.filter(mockup => mockup.id !== id));
+  };
 
   /* ================== JSX ================== */
   return (
@@ -152,6 +161,92 @@ function ProductBase() {
                   Upload Mockup
                 </Button>
               </div>
+
+              {/* ================= SELECTED MOCKUPS ================= */}
+              {selectedMockups.length > 0 ? (
+                selectedMockups.map((mockup) => (
+                  <Box key={mockup.id} sx={{ marginTop: "20px" }}>
+                    <div className='flex items-center gap-5 bg-white p-4 rounded-xl shadow-sm'>
+                      <img
+                        src={mockup.url}
+                        alt={mockup.title}
+                        style={{
+                          width: 100,
+                          height: 100,
+                          objectFit: "cover",
+                          borderRadius: "10px"
+                        }}
+                      />
+                      <div className='flex-1'>
+                        <Typography sx={{
+                          marginBottom: "0",
+                          lineHeight: "14px",
+                          fontWeight: 500
+                        }}>
+                          {mockup.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                          {mockup.dimensions}
+                        </Typography>
+                        {mockup.category && (
+                          <Typography variant="caption" sx={{
+                            display: 'block',
+                            color: 'primary.main',
+                            mt: 0.5
+                          }}>
+                            Category: {mockup.category}
+                          </Typography>
+                        )}
+
+                        <Button
+                          variant="contained"
+                          sx={{
+                            display: "block",
+                            bgcolor: 'error.main',
+                            margin: "10px 0 0 0",
+                            padding: "5px 15px",
+                            fontSize: "12px",
+                            textTransform: "capitalize",
+                            '&:hover': {
+                              bgcolor: 'error.dark'
+                            }
+                          }}
+                          onClick={() => removeMockup(mockup.id)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  </Box>
+                ))
+              ) : (
+                <Box sx={{
+                  mt: 3,
+                  textAlign: 'center',
+                  py: 4,
+                  border: '1px dashed #ddd',
+                  borderRadius: 2,
+                  bgcolor: '#fafafa'
+                }}>
+                  <Typography color="text.secondary">
+                    No mockups selected. Click "Upload Mockup" to add.
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Optional: Clear All Button */}
+              {selectedMockups.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => setSelectedMockups([])}
+                  >
+                    Clear All Mockups
+                  </Button>
+                </Box>
+              )}
             </div>
           </div>
 
@@ -164,9 +259,8 @@ function ProductBase() {
         open={openMockupModal}
         onClose={() => setOpenMockupModal(false)}
         Mockupdata={mockupImages}
+        onSelect={handleMockupSelect}
       />
-
-
 
       <AddProviderModal
         open={open}
