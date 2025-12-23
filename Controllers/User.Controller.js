@@ -139,6 +139,8 @@ export const addUserInformation = async (req, res) => {
           resource_type: "image",
         });
 
+        console.log(req.file , " <<<<<< req.file")
+
         // Remove file from local storage
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
@@ -170,17 +172,7 @@ export const addUserInformation = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "User information updated successfully.",
-      user: {
-        id: user._id,
-        Name: user.Name,
-        userName: user.userName,
-        email: user.email, // Assuming you have email field
-        phone: user.phone,
-        company: user.company,
-        address: user.address,
-        profileImage: user.profileImage,
-        // Include other fields as needed
-      },
+      user: user
     });
   } catch (error) {
     console.error("addUserInformation Error:", error);
