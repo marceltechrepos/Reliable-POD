@@ -7,70 +7,32 @@ import Thumb from "../components/Admin/Thumb";
 import Accordion from "../components/Admin/Accordion";
 import ProviderAccordion from "../components/Admin/ProviderAccordion";
 import CloseIcon from '@mui/icons-material/Close';
-import { userInfoApi } from "../api/auth.api";
-
-const BRAND = {
-    primary: "#3b6d92",
-    secondary: "#f05a28",
-    dark: "#747474",
-    light: "#bfbfbf",
-};
-
-const userInfoSample = {
-    Name: "Syed Hamza",
-    userName: "hamza_dev",
-    phone: "0300-1234567",
-    company: "TechVision",
-    address: "House #123, Street 9",
-    town: "Gulshan",
-    Region: "Sindh",
-    country: "Pakistan",
-    postalCode: "75300",
-    taxNumber: "NTN-1234567",
-    NotificationEmail: true,
-    PendingOrderEmail: false,
-    OOSEmail: true,
-    UpdatedEmail: false,
-    // profileImage will be stored separately in state (preview URL)
-};
-
-const providersSample = [
-    {
-        id: 1,
-        name: "FastShip",
-        description:
-            "FastShip provides same-day shipping within major cities and affordable nationwide rates for bulk orders.",
-    },
-    {
-        id: 2,
-        name: "CloudCarrier",
-        description:
-            "CloudCarrier is specialised in fragile item handling with real-time tracking and insurance options.",
-    },
-    {
-        id: 3,
-        name: "LocalGo",
-        description: "Economical last-mile provider for smaller goods in urban areas.",
-    },
-];
-
-const categoriesSample = [
-    { id: 1, name: "Electronics", color: "#3b6d92", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
-    { id: 2, name: "Home & Kitchen", color: "#f05a28", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
-    { id: 3, name: "Apparel", color: "#747474", image: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg' },
-];
+import { userInfoApi, getUserDetail } from "../api/auth.api";
+import {
+    BRAND, FIELDS_CONFIG, buildDefaultUser, userInfoSample, providersSample, categoriesSample
+} from "../utils/data.js"
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("user");
     const [openProvider, setOpenProvider] = useState(null);
     const [openCategory, setOpenCategory] = useState(null);
     const [loading, setLoading] = useState(false)
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otp, setOtp] = useState("");
 
     // User info + profile image & edit state
     const [isEditing, setIsEditing] = useState(false);
-    const [userInfo, setUserInfo] = useState(userInfoSample);
+    const [isImageEditing, setIsImageEditing] = useState(false);
+
+    // ensure userInfo always contains all keys from FIELDS_CONFIG
+    const [userInfo, setUserInfo] = useState(() => ({ ...buildDefaultUser(), ...userInfoSample }));
+
     const [profileImageFile, setProfileImageFile] = useState(null); // file object
     const [profileImagePreview, setProfileImagePreview] = useState(null); // url
+
+
+    console.log(profileImageFile, "<<<<< profileImageFile")
 
     // Change password inputs
     const [passwords, setPasswords] = useState({
@@ -98,7 +60,7 @@ export default function Settings() {
         imagePreview: null,
     });
 
-    // --- Effects for profile preview cleanup
+    // --- Effects for profile preview cleanup ---
     useEffect(() => {
         return () => {
             // cleanup object URLs on unmount
@@ -107,7 +69,6 @@ export default function Settings() {
             // also cleanup category images stored in categories
             categories.forEach((c) => {
                 if (c.image && typeof c.image === "string" && c._isObjectURL) {
-                    // attempt revoke if marked
                     try {
                         URL.revokeObjectURL(c.image);
                     } catch { }
@@ -120,7 +81,7 @@ export default function Settings() {
     // ------------- USER: image handlers ----------------
     const handleProfileImageChange = (file) => {
         if (!file) return;
-        if (profileImagePreview) {
+        if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
             try {
                 URL.revokeObjectURL(profileImagePreview);
             } catch { }
@@ -133,22 +94,68 @@ export default function Settings() {
     const handleSaveUserInfo = async () => {
         if (!userInfo) return;
 
-        const payload = { ...userInfo };
-        // if profileImageFile exists, send it
-        if (profileImageFile) {
-            payload.profileImage = profileImageFile;
-        }
+        setLoading(true);
+        try {
+            // create payload - if there's a file use FormData
+            if (profileImageFile) {
+                console.log(profileImageFile, "<<<< profileImageFile")
+                const formData = new FormData();
+                // append all configured fields
+                FIELDS_CONFIG.forEach((f) => {
+                    const val = userInfo[f.key];
+                    // convert boolean to string for formdata
+                    if (f.type === "boolean") formData.append(f.key, val ? "true" : "false");
+                    else formData.append(f.key, val ?? "");
 
-        const updatedUser = await userInfoApi(payload, setLoading);
+                });
+                formData.append("profileImage", profileImageFile);
 
-        if (updatedUser) {
-            setUserInfo(updatedUser);
-            setProfileImageFile(null);
-            setProfileImagePreview(null);
-            setIsEditing(false);
-            setPasswordMessage(null);
+
+                formData.forEach((v) => {
+                    console.log(v, "<<< value")
+                })
+
+                const updatedUser = await userInfoApi(formData, setLoading, profileImageFile);
+                if (updatedUser) {
+                    const getInfo = await getUserDetail(setLoading);
+                    console.log(getInfo, "<<<<<<  getInfo")
+                    // assume API returns full user object
+                    setUserInfo((prev) => ({ ...buildDefaultUser(), ...updatedUser }));
+                    setProfileImageFile(null);
+                    // setProfileImagePreview(null);
+                    setIsEditing(false);
+                    setPasswordMessage(null);
+                }
+            } else {
+                // send JSON payload
+                const payload = {};
+                FIELDS_CONFIG.forEach((f) => {
+                    payload[f.key] = userInfo[f.key];
+                });
+
+                const updatedUser = await userInfoApi(payload, setLoading, profileImageFile);
+                if (updatedUser) {
+                    setUserInfo((prev) => ({ ...buildDefaultUser(), ...updatedUser }));
+                    setProfileImageFile(null);
+                    // set preview to new uploaded image URL
+                    setProfileImagePreview(updatedUser.profileImage?.url || null);
+                    setIsEditing(false);
+                    setPasswordMessage(null);
+                }
+
+                // if (updatedUser) {
+                //     setUserInfo((prev) => ({ ...buildDefaultUser(), ...updatedUser }));
+                //     setIsEditing(false);
+                //     setPasswordMessage(null);
+                // }
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
+
 
 
     // ------------- PASSWORD: simple validation handler --------------
@@ -206,7 +213,7 @@ export default function Settings() {
 
     const handleCategoryImageChange = (file) => {
         if (!file) return;
-        if (editCategoryData.imagePreview) {
+        if (editCategoryData.imagePreview && editCategoryData.imagePreview.startsWith("blob:")) {
             try {
                 URL.revokeObjectURL(editCategoryData.imagePreview);
             } catch { }
@@ -224,7 +231,7 @@ export default function Settings() {
                         name: editCategoryData.name,
                         color: editCategoryData.color,
                         image: editCategoryData.imagePreview,
-                        _isObjectURL: !!editCategoryData.imageFile, // flag to know it's an objectURL
+                        _isObjectURL: !!editCategoryData.imageFile,
                     }
                     : c
             )
@@ -237,6 +244,37 @@ export default function Settings() {
         setCategories((prev) => prev.filter((c) => c.id !== id));
         if (openCategory === id) setOpenCategory(null);
     };
+
+
+    // fetch logged-in user details on mount
+    useEffect(() => {
+        const loadUser = async () => {
+            setLoading(true);
+            const res = await getUserDetail(setLoading);
+            setLoading(false);
+            if (!res) return;
+
+            // API returns { success, message, user } or just user - normalize
+            const u = res.user || res;
+
+            // merge with default so missing keys still appear in UI
+            const merged = { ...buildDefaultUser(), ...u };
+
+            setUserInfo(merged);
+
+            // if profileImage exists, show its URL as preview (so UI shows avatar)
+            if (merged.profileImage && (merged.profileImage.url || merged.profileImage)) {
+                const url = merged.profileImage.url ? merged.profileImage.url : merged.profileImage;
+                setProfileImagePreview(url);
+            } else {
+                setProfileImagePreview(null);
+            }
+        };
+
+        loadUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     return (
         <div className="min-h-screen p-6 bg-[#f1f5f9]">
@@ -257,7 +295,6 @@ export default function Settings() {
                             className="cursor-pointer px-4 py-2 text-white rounded-lg shadow-sm font-medium"
                             style={{ background: BRAND.primary }}
                             onClick={() => {
-                                // Save all could send everything to backend — for now just console state
                                 console.log({ userInfo, providers, categories });
                                 alert("local state logged to console (simulate save all)");
                             }}
@@ -268,8 +305,7 @@ export default function Settings() {
                             className="cursor-pointer px-4 py-2 rounded-lg border font-medium"
                             style={{ borderColor: BRAND.light, color: BRAND.dark }}
                             onClick={() => {
-                                // simple reset demo
-                                setUserInfo(userInfoSample);
+                                setUserInfo({ ...buildDefaultUser(), ...userInfoSample });
                                 setProviders(providersSample);
                                 setCategories(categoriesSample);
                                 setProfileImageFile(null);
@@ -323,21 +359,25 @@ export default function Settings() {
                                     <div className="p-4 rounded-lg border flex items-center gap-4" style={{ borderColor: "#eee" }}>
                                         <div className="flex items-center gap-3 w-full">
                                             <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border">
-                                                {profileImagePreview || userInfo.profileImage ? (
+                                                {profileImagePreview ? (
                                                     <img
-                                                        src={profileImagePreview || userInfo.profileImage}
+                                                        src={profileImagePreview}
                                                         alt="profile"
                                                         className="w-full h-full object-cover"
                                                     />
+
                                                 ) : (
                                                     <div className="text-gray-400 text-xs">No Image</div>
                                                 )}
                                             </div>
 
                                             <div className="flex-1">
-                                                <div className="text-xs text-gray-400 uppercase">Profile</div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="text-xs text-gray-400 uppercase">Profile</div>
+                                                    <button style={{ borderRadius: "5px" }} className="bg-blue-600 py-2 px-3 cursor-pointer text-white" onClick={() => setIsImageEditing((pre) => !pre)}>{isImageEditing ? "Cancel" : "Change Profile"}</button>
+                                                </div>
 
-                                                {isEditing ? (
+                                                {isImageEditing ? (
                                                     <div className="mt-2 flex flex-col gap-2">
                                                         <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-blue-600">
                                                             <input
@@ -357,19 +397,16 @@ export default function Settings() {
                                                             <button
                                                                 className="px-3 py-1 rounded-md text-white text-xs cursor-pointer"
                                                                 style={{ background: BRAND.primary }}
-                                                                onClick={() => {
-                                                                    if (profileImagePreview) {
-                                                                        setUserInfo((prev) => ({ ...prev, profileImage: profileImagePreview }));
-                                                                        alert("profile image applied locally");
-                                                                    }
-                                                                }}
+                                                                onClick={
+                                                                    () => handleSaveUserInfo()
+                                                                }
                                                             >
                                                                 Update
                                                             </button>
                                                             <CloseIcon
                                                                 className="cursor-pointer"
                                                                 onClick={() => {
-                                                                    if (profileImagePreview) {
+                                                                    if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
                                                                         try {
                                                                             URL.revokeObjectURL(profileImagePreview);
                                                                         } catch { }
@@ -383,38 +420,51 @@ export default function Settings() {
                                                 ) : (
                                                     <div className="mt-2 text-sm text-gray-600">profile image (visible with the field)</div>
                                                 )}
+
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Other fields (rendered as fields in same grid) */}
-                                    {Object.entries(userInfo)
-                                        .filter(([k]) => k !== "profileImage") // don't show profileImage in list
-                                        .map(([k, v]) => (
-                                            <div key={k} className="p-4 rounded-lg border" style={{ borderColor: "#eee" }}>
-                                                <div className="text-xs text-gray-400 uppercase">{k}</div>
+                                    {/* Other fields (rendered using FIELDS_CONFIG) */}
+                                    {FIELDS_CONFIG.map((field) => {
+                                        const k = field.key;
+                                        const v = userInfo ? userInfo[k] : "";
 
-                                                {typeof v === "boolean" ? (
+                                        return (
+                                            <div key={k} className="p-4 rounded-lg border" style={{ borderColor: "#eee" }}>
+                                                <div className="text-xs text-gray-400 uppercase">{field.label}</div>
+
+                                                {field.type === "boolean" ? (
                                                     <label className="mt-2 flex items-center gap-2 text-sm">
                                                         <input
                                                             type="checkbox"
                                                             disabled={!isEditing}
-                                                            checked={v}
+                                                            checked={!!v}
                                                             onChange={(e) => setUserInfo({ ...userInfo, [k]: e.target.checked })}
                                                         />
                                                         <span>{v ? "Enabled" : "Disabled"}</span>
                                                     </label>
                                                 ) : isEditing ? (
                                                     <input
-                                                        className="mt-2 w-full border rounded px-3 py-2 text-sm"
-                                                        value={v}
-                                                        onChange={(e) => setUserInfo({ ...userInfo, [k]: e.target.value })}
+                                                        className={`mt-2 w-full px-3 py-2 text-sm rounded
+                                                                ${field.readOnly
+                                                                ? "border-none bg-transparent focus:outline-none focus:ring-0 cursor-default"
+                                                                : "border focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+                                                            }`}
+                                                        value={v ?? ""}
+                                                        onChange={(e) =>
+                                                            !field.readOnly &&
+                                                            setUserInfo({ ...userInfo, [k]: e.target.value })
+                                                        }
+                                                        readOnly={field.readOnly}
                                                     />
+
                                                 ) : (
-                                                    <div className="mt-2 text-sm font-medium text-gray-700">{v}</div>
+                                                    <div className="mt-2 text-sm font-medium text-gray-700">{v || "-"}</div>
                                                 )}
                                             </div>
-                                        ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {/* user action buttons (update/save) */}
@@ -425,7 +475,7 @@ export default function Settings() {
                                             style={{ background: BRAND.primary }}
                                             onClick={() => setIsEditing(true)}
                                         >
-                                            update profile
+                                            Update Profile
                                         </button>
                                     ) : (
                                         <>
@@ -441,9 +491,9 @@ export default function Settings() {
                                                 className="px-5 py-2 rounded-lg border"
                                                 style={{ borderColor: BRAND.light }}
                                                 onClick={() => {
-                                                    setUserInfo(userInfoSample);
+                                                    setUserInfo({ ...buildDefaultUser(), ...userInfoSample });
                                                     setIsEditing(false);
-                                                    if (profileImagePreview) {
+                                                    if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
                                                         try {
                                                             URL.revokeObjectURL(profileImagePreview);
                                                         } catch { }
@@ -454,71 +504,143 @@ export default function Settings() {
                                             >
                                                 Cancel
                                             </button>
+
+
                                         </>
                                     )}
+                                    <button
+                                        className="cursor-pointer flex px-5 py-2 rounded-lg text-white font-medium shadow"
+                                        style={{ background: BRAND.primary }}
+                                        onClick={() => setShowChangePassword((p) => !p)}
+                                    >
+                                        {showChangePassword ? "Hide" : "Change Password"}
+                                    </button>
+
+                                    <button
+                                        className="px-5 py-2 rounded-lg text-white font-medium shadow cursor-pointer"
+                                        style={{ background: "#dc2626" }}
+                                        onClick={() => setShowOtpModal(true)}
+                                    >
+                                        Disable Account
+                                    </button>
                                 </div>
 
                                 {/* --- CHANGE PASSWORD placed under update buttons as requested --- */}
-                                <div className="mt-6 p-4 rounded-lg border" style={{ borderColor: "#eee" }}>
-                                    <h3 className="text-sm font-semibold mb-3">Change Password</h3>
+                                {
+                                    showChangePassword && (
+                                        <div className="mt-6 p-4 rounded-lg border" style={{ borderColor: "#eee" }}>
+                                            <h3 className="text-sm font-semibold mb-3">Change Password</h3>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <div>
-                                            <label className="text-xs text-gray-500">Current Password</label>
-                                            <input
-                                                type="password"
-                                                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                                                value={passwords.currentPassword}
-                                                onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))}
-                                            />
-                                        </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                <div>
+                                                    <label className="text-xs text-gray-500">Current Password</label>
+                                                    <input
+                                                        type="password"
+                                                        className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                                                        value={passwords.currentPassword}
+                                                        onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))}
+                                                    />
+                                                </div>
 
-                                        <div>
-                                            <label className="text-xs text-gray-500">New Password</label>
-                                            <input
-                                                type="password"
-                                                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                                                value={passwords.newPassword}
-                                                onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))}
-                                            />
-                                        </div>
+                                                <div>
+                                                    <label className="text-xs text-gray-500">New Password</label>
+                                                    <input
+                                                        type="password"
+                                                        className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                                                        value={passwords.newPassword}
+                                                        onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))}
+                                                    />
+                                                </div>
 
-                                        <div>
-                                            <label className="text-xs text-gray-500">Confirm Password</label>
-                                            <input
-                                                type="password"
-                                                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                                                value={passwords.confirmPassword}
-                                                onChange={(e) => setPasswords((p) => ({ ...p, confirmPassword: e.target.value }))}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 flex items-center gap-3">
-                                        <button
-                                            className="px-4 py-2 rounded-md text-white"
-                                            style={{ background: BRAND.primary }}
-                                            onClick={handleChangePassword}
-                                        >
-                                            Update Password
-                                        </button>
-
-                                        <button
-                                            className="px-4 py-2 rounded-md border"
-                                            onClick={() => setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" })}
-                                        >
-                                            Reset
-                                        </button>
-
-                                        {passwordMessage && (
-                                            <div
-                                                className={`ml-auto text-sm ${passwordMessage.type === "error" ? "text-red-500" : "text-green-600"}`}
-                                            >
-                                                {passwordMessage.text}
+                                                <div>
+                                                    <label className="text-xs text-gray-500">Confirm Password</label>
+                                                    <input
+                                                        type="password"
+                                                        className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                                                        value={passwords.confirmPassword}
+                                                        onChange={(e) => setPasswords((p) => ({ ...p, confirmPassword: e.target.value }))}
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
+
+                                            <div className="mt-4 flex items-center gap-3">
+                                                <button
+                                                    className="px-4 py-2 rounded-md text-white"
+                                                    style={{ background: BRAND.primary }}
+                                                    onClick={handleChangePassword}
+                                                >
+                                                    Update Password
+                                                </button>
+
+                                                <button
+                                                    className="px-4 py-2 rounded-md border"
+                                                    onClick={() => setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" })}
+                                                >
+                                                    Reset
+                                                </button>
+
+                                                {passwordMessage && (
+                                                    <div
+                                                        className={`ml-auto text-sm ${passwordMessage.type === "error" ? "text-red-500" : "text-green-600"}`}
+                                                    >
+                                                        {passwordMessage.text}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                }
+
+                                {showOtpModal && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                                        <div className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6">
+
+                                            {/* Header */}
+                                            <h3 className="text-lg font-semibold text-gray-800">
+                                                Verify OTP
+                                            </h3>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                Please enter the OTP sent to your registered email.
+                                            </p>
+
+                                            {/* OTP input */}
+                                            <input
+                                                type="text"
+                                                maxLength={6}
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                                placeholder="Enter 6-digit OTP"
+                                                className="mt-4 w-full text-center tracking-widest text-lg border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+
+                                            {/* Actions */}
+                                            <div className="mt-6 flex items-center justify-end gap-3">
+                                                <button
+                                                    className="px-4 py-2 rounded-md border cursor-pointer"
+                                                    onClick={() => {
+                                                        setShowOtpModal(false);
+                                                        setOtp("");
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </button>
+
+                                                <button
+                                                    className="px-4 py-2 rounded-md text-white cursor-pointer"
+                                                    style={{ background: BRAND.primary }}
+                                                    onClick={() => {
+                                                        // yahan tum OTP verify wali API hit karna
+                                                        // success pe:
+                                                        // setUserInfo(u => ({ ...u, AccountOpen: false }))
+                                                        setShowOtpModal(false)
+                                                    }}
+                                                >
+                                                    Verify & Disable
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </section>
                         )}
 
@@ -671,16 +793,6 @@ export default function Settings() {
                                                 <div className="mt-2 text-sm text-gray-700">
 
                                                     <div className="mt-4 flex gap-2 items-center">
-                                                        {/* <button
-                                                            className="px-3 py-1 rounded-md text-white"
-                                                            style={{ background: BRAND.primary }}
-                                                            onClick={() => {
-                                                                // view could navigate to a category page - for demo we just alert
-                                                                alert(`open category: ${c.name}`);
-                                                            }}
-                                                        >
-                                                            view
-                                                        </button> */}
                                                         <button
                                                             className="px-3 py-1 rounded-md"
                                                             style={{ border: `1px solid ${BRAND.light}` }}
