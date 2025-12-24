@@ -27,7 +27,7 @@ export default function Accordion({ open, onToggle, title, subtitle, children })
             </button>
 
             {/* BODY (SMOOTH OPEN) */}
-            <div className={`transition-all duration-300 ease-in-out ${open ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"} overflow-hidden`}>
+            <div className={`transition-all duration-300 ease-in-out ${open ? "max-h-125 opacity-100" : "max-h-0 opacity-0"} overflow-hidden`}>
                 <div className="px-5 pb-5 pt-2">{children}</div>
             </div>
         </div>
