@@ -76,6 +76,9 @@ function ProductBase() {
   const [productCreated, setProductCreated] = useState(false); // initially false
   const [productId, setProductId] = useState(''); // created product id
 
+
+  console.log(productId, "<<<<< productId")
+
   const [mockupImages, setMockupImages] = useState([
     { id: 1, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Front', category: 'TIB' },
     { id: 2, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Back', category: 'TIB' },
