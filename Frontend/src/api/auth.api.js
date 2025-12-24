@@ -61,53 +61,14 @@ export const loginApi = async (payload, setLoading, navigate) => {
     }
 }
 
-// User Info Update API (FormData)
-// export const userInfoApi = async (formData) => {
-//     try {
-//         const token = localStorage.getItem("token"); // token required
-//         if (!token) throw new Error("User not authenticated");
 
-//         const res = await fetch("/api/User/Update", {
-//             method: "POST", // ya PUT depending on backend
-//             headers: {
-//                 "Authorization": `Bearer ${token}`, // JWT token
-//                 // "Content-Type": multipart/form-data nahi lagana, browser automatically set karega
-//             },
-//             body: formData, // FormData object
-//         });
-
-//         const data = await res.json();
-
-//         if (!data.success) {
-//             alert(data.message || "Failed to update user info");
-//             return null;
-//         }
-
-//         // update localStorage
-//         localStorage.setItem("user", JSON.stringify(data.user));
-
-//         alert(data.message || "User info updated successfully");
-//         return data.user;
-
-//     } catch (error) {
-//         console.error(error);
-//         alert("Server error");
-//         return null;
-//     }
-// };
-
-// ===================================
-
-export const userInfoApi = async (payload, setLoading ,profileImageFile) => {
+export const userInfoApi = async (payload, setLoading, profileImageFile) => {
     try {
         setLoading(true);
 
         const formData = new FormData();
 
-        console.log(formData, "<<<< formData")
-        console.log(payload, "<<<< payload")
-
-        if(profileImageFile) {
+        if (profileImageFile) {
             formData.append("profileImage", profileImageFile);
         }
 
@@ -167,7 +128,7 @@ export const userInfoApi = async (payload, setLoading ,profileImageFile) => {
         });
 
         const data = await res.json();
-        console.log("API Response:", data);
+
         if (!data.success) {
             alert(data.message || "Failed to update user info");
             return null;
@@ -186,73 +147,6 @@ export const userInfoApi = async (payload, setLoading ,profileImageFile) => {
 };
 
 
-
-
-// ===============================
-
-// export const userInfoApi = async (payload, setLoading) => {
-//     try {
-//         setLoading(true);
-
-//         // ✅ Check if payload is already FormData
-//         let formData;
-//         if (payload instanceof FormData) {
-//             formData = payload;
-//         } else {
-//             // If payload is object, convert to FormData
-//             formData = new FormData();
-
-//             for (const key in payload) {
-//                 if (payload[key] !== null && payload[key] !== undefined) {
-//                     if (key === "profileImage" && payload[key] instanceof File) {
-//                         formData.append("profileImage", payload[key]);
-//                     } else if (typeof payload[key] === "boolean") {
-//                         formData.append(key, payload[key].toString());
-//                     } else {
-//                         formData.append(key, payload[key]);
-//                     }
-//                 }
-//             }
-//         }
-
-//         // ✅ DEBUG: FormData ke contents check karein
-//         console.log("FormData contents:");
-//         for (let pair of formData.entries()) {
-//             console.log(pair[0] + ': ', pair[1]);
-//         }
-
-//         const token = localStorage.getItem("token");
-
-//         const res = await fetch("/api/User/addUserInformation", {
-//             method: "POST",
-//             headers: {
-//                 Authorization: `Bearer ${token}`,
-//                 // NOTE: FormData ke liye Content-Type set nahi karna
-//             },
-//             body: formData,
-//         });
-
-//         const data = await res.json();
-//         console.log("API Response:", data);
-
-//         if (!data.success) {
-//             alert(data.message || "Failed to update user info");
-//             return null;
-//         }
-
-//         alert(data.message || "User info updated successfully");
-//         return data.user;
-
-//     } catch (error) {
-//         console.log("API Error:", error);
-//         alert("Server error");
-//         return null;
-//     } finally {
-//         setLoading(false);
-//     }
-// };
-
-
 export const getUserDetail = async (setLoading = () => { }) => {
     try {
         setLoading(true);
@@ -266,17 +160,16 @@ export const getUserDetail = async (setLoading = () => { }) => {
         const res = await fetch("/api/User/getUserDetail", {
             headers: {
                 Authorization: `Bearer ${token}`,
-                // no Content-Type when no JSON/body or when sending FormData
+
             },
-            // no body required by your endpoint (based on your note)
+
         });
 
         const data = await res.json();
 
         if (!data || !data.success) {
             console.error("getUserDetail failed:", data);
-            // optional: show message
-            // alert(data?.message || "failed to fetch user details");
+
             return null;
         }
 

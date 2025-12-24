@@ -139,7 +139,6 @@ export const addUserInformation = async (req, res) => {
           resource_type: "image",
         });
 
-        console.log(req.file , " <<<<<< req.file")
 
         // Remove file from local storage
         if (fs.existsSync(req.file.path)) {
