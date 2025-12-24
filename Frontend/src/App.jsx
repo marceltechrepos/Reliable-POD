@@ -13,6 +13,7 @@ import Category from "./pages/Category";
 import { useEffect } from "react";
 import Settings from "./pages/Settings";
 import AdminLogin from "./components/Admin/AdminLogin";
+import Editor from "./pages/AdminEditor/Editor";
 
 function App() {
   // const token = localStorage.getItem("token");
@@ -31,7 +32,7 @@ function App() {
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />
-
+        <Route path="/admin/editor" element={<Editor />} />
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
