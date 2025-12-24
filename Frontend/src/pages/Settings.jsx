@@ -32,8 +32,6 @@ export default function Settings() {
     const [profileImagePreview, setProfileImagePreview] = useState(null); // url
 
 
-    console.log(profileImageFile, "<<<<< profileImageFile")
-
     // Change password inputs
     const [passwords, setPasswords] = useState({
         currentPassword: "",
@@ -98,7 +96,6 @@ export default function Settings() {
         try {
             // create payload - if there's a file use FormData
             if (profileImageFile) {
-                console.log(profileImageFile, "<<<< profileImageFile")
                 const formData = new FormData();
                 // append all configured fields
                 FIELDS_CONFIG.forEach((f) => {
@@ -111,14 +108,9 @@ export default function Settings() {
                 formData.append("profileImage", profileImageFile);
 
 
-                formData.forEach((v) => {
-                    console.log(v, "<<< value")
-                })
-
                 const updatedUser = await userInfoApi(formData, setLoading, profileImageFile);
                 if (updatedUser) {
                     const getInfo = await getUserDetail(setLoading);
-                    console.log(getInfo, "<<<<<<  getInfo")
                     // assume API returns full user object
                     setUserInfo((prev) => ({ ...buildDefaultUser(), ...updatedUser }));
                     setProfileImageFile(null);
@@ -295,7 +287,6 @@ export default function Settings() {
                             className="cursor-pointer px-4 py-2 text-white rounded-lg shadow-sm font-medium"
                             style={{ background: BRAND.primary }}
                             onClick={() => {
-                                console.log({ userInfo, providers, categories });
                                 alert("local state logged to console (simulate save all)");
                             }}
                         >
