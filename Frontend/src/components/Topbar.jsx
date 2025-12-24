@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// import logo from "../../public/expressPODLogo.png"; 
+import logo from "../../public/POD-logo.png"; 
 import { Menu } from "lucide-react";
 
 function Topbar({ onMenuClick }) {
@@ -12,7 +12,7 @@ function Topbar({ onMenuClick }) {
   }
 
   return (
-    <header className="bg-[#81430085] shadow-lg px-4 sm:px-6 py-3 flex items-center justify-between">
+    <header className="bg-ocean shadow-lg px-4 sm:px-6 py-2 flex items-center justify-between">
 
       {/* Left */}
       <div className="flex items-center gap-3">
@@ -25,9 +25,9 @@ function Topbar({ onMenuClick }) {
         </button>
 
         <img
-          src="/expressPODLogo.png"
+          src={logo}
           alt="ExpressPOD"
-          className="h-8 w-auto object-contain"
+          className="h-8 w-auto object-contain bg-white"
         />
       </div>
 
