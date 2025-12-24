@@ -17,7 +17,7 @@ const AdminLayout = () => {
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                 />
-                <main className="flex-1 p-6 bg-gray-50">
+                <main className="flex-1 w-5/6 bg-gray-50">
                     <Outlet />
                 </main>
             </div>
