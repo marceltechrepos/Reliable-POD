@@ -13,4 +13,20 @@ const getAllCategory = async () => {
   }
 }
 
-export { getAllCategory };
+
+const createCategory = async (payload) => {
+  try {
+    const response = await fetch('/api/Category/create-category', {
+      method: 'POST',
+      body: payload, // FormData
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Create category error:', error);
+    return { success: false };
+  }
+};
+
+export { getAllCategory, createCategory };
