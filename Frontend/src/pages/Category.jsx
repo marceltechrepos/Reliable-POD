@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "../components/Breadcrumbs";
 import AddCategoryModal from "../components/Admin/AddCategoryModal";
 import IMG from "../assets/images/download.png"
+import { createCategory, getAllCategory } from "../api/category.api";
 
 function CategoryPage() {
     const [openCategoryModal, setOpenCategoryModal] = useState(false);
@@ -9,43 +10,61 @@ function CategoryPage() {
     const [categoryThumbnail, setCategoryThumbnail] = useState(null);
     const [categoryThumbnailPreview, setCategoryThumbnailPreview] = useState("");
 
-    const [categories, setCategories] = useState([
-        {
-            label: "T-Shirt",
-            value: "t-shirt",
-            thumbnail: { IMG },
-            createdAt: "2024-10-01",
-        },
-        {
-            label: "T-Shirt",
-            value: "t-shirt",
-            thumbnail: { IMG },
-            createdAt: "2024-10-01",
-        },
-    ]);
+    const [categories, setCategories] = useState([]);
 
-    const addCategoryHandler = () => {
-        if (!newCategory.trim()) return;
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await getAllCategory();
 
-        const value = newCategory
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "");
+                const formattedCategories = data.map((item) => ({
+                    id: item._id,
+                    label: item.category,
+                    value: item.category.toLowerCase().replace(/\s+/g, "-"),
+                    thumbnail: item.thumbnail.url,
+                    createdAt: item.createdAt,
+                }));
+                setCategories(formattedCategories);
+            } catch (error) {
+                console.error("Failed to fetch categories", error);
+            }
+        };
 
-        setCategories((prev) => [
-            ...prev,
-            {
-                label: newCategory.trim(),
-                value,
-                thumbnail: categoryThumbnailPreview,
-                createdAt: new Date().toISOString().split("T")[0],
-            },
-        ]);
+        fetchCategories();
+    }, []);
 
-        setNewCategory("");
-        setCategoryThumbnail(null);
-        setCategoryThumbnailPreview("");
-        setOpenCategoryModal(false);
+
+
+    const addCategoryHandler = async () => {
+        if (!newCategory.trim() || !categoryThumbnail) return;
+
+        const formData = new FormData();
+        formData.append("category", newCategory.trim());
+        formData.append("thumbnail", categoryThumbnail);
+
+        try {
+            const res = await createCategory(formData);
+
+            if (!res.success) return;
+
+            setCategories((prev) => [
+                ...prev,
+                {
+                    id: res.data._id,
+                    label: res.data.category,
+                    value: res.data.category.toLowerCase().replace(/\s+/g, "-"),
+                    thumbnail: res.data.thumbnail.url,
+                    createdAt: new Date(res.data.createdAt).toLocaleDateString(),
+                },
+            ]);
+
+            setNewCategory("");
+            setCategoryThumbnail(null);
+            setCategoryThumbnailPreview("");
+            setOpenCategoryModal(false);
+        } catch (error) {
+            console.error("Add category failed:", error);
+        }
     };
 
     return (
@@ -54,7 +73,7 @@ function CategoryPage() {
                 <Breadcrumbs />
 
                 {/* Header */}
-                <div className="flex justify-between items-center mt-6">
+                <div className="flex justify-between items-center mt-6 mb-6">
                     <h1 className="text-2xl font-bold text-gray-800">Categories</h1>
 
                     <button
@@ -66,17 +85,17 @@ function CategoryPage() {
                 </div>
 
                 {/* Category Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt- cursor-pointer">
                     {categories.map((cat, index) => (
                         <div
                             key={index}
                             className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border"
                         >
-                            {/* Thumbnail */}
-                            <div className="h-40 bg-gray-100">
+                            {/* Image wrapper */}
+                            <div className="relative h-56 bg-gray-100 group overflow-hidden">
                                 {cat.thumbnail ? (
                                     <img
-                                        src={IMG}
+                                        src={cat.thumbnail}
                                         alt={cat.label}
                                         className="w-full h-full object-cover"
                                     />
@@ -85,35 +104,33 @@ function CategoryPage() {
                                         No Image
                                     </div>
                                 )}
-                            </div>
 
-                            {/* Content */}
-                            <div className="p-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    {cat.label}
-                                </h3>
+                                {/* Hover Overlay */}
+                                <div className="
+          absolute bottom-0 left-0 w-full h-[35%]
+          bg-black/80 text-white
+          translate-y-full group-hover:translate-y-0
+          transition-transform duration-300 ease-in-out
+          flex flex-col justify-between p-4
+        ">
+                                    <h3 className="text-md font-bold  text-center">
+                                        {cat.label}
+                                    </h3>
 
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Slug: {cat.value}
-                                </p>
-
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Created: {cat.createdAt}
-                                </p>
-
-                                {/* Actions */}
-                                <div className="flex justify-between items-center mt-4">
-                                    <button className="cursor-pointer text-sm text-ocean hover:underline">
-                                        Edit
-                                    </button>
-                                    <button className="cursor-pointer text-sm text-red-500 hover:underline">
-                                        Delete
-                                    </button>
+                                    <div className="flex justify-between text-sm">
+                                        <button className="hover:underline">
+                                            Edit
+                                        </button>
+                                        <button className="text-red-400 hover:underline">
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
+
             </div>
 
             {/* Add Category Modal */}
