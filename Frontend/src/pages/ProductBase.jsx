@@ -13,6 +13,8 @@ import Box from '@mui/material/Box';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
+import { useParams, useNavigate } from "react-router-dom";
+
 import { getAllProvider } from '../api/provider.api';
 import { createProduct } from '../api/product.api';
 
@@ -44,6 +46,12 @@ function ProductBase() {
   const [description, setDescription] = useState('');
 
 
+  const { id: productId } = useParams(); // 👈 yahin se sab decide hoga
+  const navigate = useNavigate();
+
+  const isEditMode = Boolean(productId); // true if param exists
+
+
 
   const [providers, setProviders] = useState([
     { label: 'Print-On-Demand.App', value: 'print-on-demand-app' }
@@ -73,11 +81,7 @@ function ProductBase() {
   const [selectedMockupCategory, setSelectedMockupCategory] = useState('All');
   const [showAddMockupCategory, setShowAddMockupCategory] = useState(false);
 
-  const [productCreated, setProductCreated] = useState(false); // initially false
-  const [productId, setProductId] = useState(''); // created product id
 
-
-  console.log(productId, "<<<<< productId")
 
   const [mockupImages, setMockupImages] = useState([
     { id: 1, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Front', category: 'TIB' },
@@ -123,14 +127,10 @@ function ProductBase() {
     const data = await createProduct(payload);
 
     if (data.success) {
-      setProductCreated(true);
-      setProductId(data.data._id);
 
-      window.history.replaceState(
-        null,
-        '',
-        `/admin/product/${data.data._id}`
-      );
+      if (data.success) {
+        navigate(`/admin/product/${data.data._id}`, { replace: true });
+      }
     }
   };
 
@@ -138,8 +138,8 @@ function ProductBase() {
   useEffect(() => {
     const idFromUrl = window.location.pathname.split('/').pop();
     if (idFromUrl) {
-      setProductId(idFromUrl);
-      setProductCreated(true);
+      // setProductId(idFromUrl);
+      // setProductCreated(true);
     }
   }, []);
 
@@ -152,9 +152,6 @@ function ProductBase() {
     overflow: 'hidden',
   });
 
-  // const handleMockupSelect = (selectedData) => {
-  //   setSelectedMockups(selectedData);
-  // };
 
   const handleMockupSelect = (selectedData) => {
     const updatedMockups = [...selectedMockups, ...selectedData];
@@ -163,9 +160,7 @@ function ProductBase() {
   };
 
   // ✅ REMOVE MOCKUP FUNCTION
-  // const removeMockup = (id) => {
-  //   setSelectedMockups(prev => prev.filter(mockup => mockup.id !== id));
-  // };
+
   const removeMockup = (id) => {
     const updatedMockups = selectedMockups.filter(mockup => mockup.id !== id);
     setSelectedMockups(updatedMockups);
@@ -299,7 +294,7 @@ function ProductBase() {
 
             {/* ================= RIGHT MOCKUP ================= */}
             {
-              productCreated && (
+              isEditMode && (
                 <div className="w-1/2">
                   <div className="flex justify-between bg-white mt-5 p-4 rounded-xl border-s-5 border-ocean">
                     <h2 className="text-2xl font-bold">Mockup</h2>
@@ -427,7 +422,7 @@ function ProductBase() {
             }
           </div>
 
-          {productCreated && (
+          {isEditMode  && (
             <BasicTabs productId={productId} />
           )}
         </div>

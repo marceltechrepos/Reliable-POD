@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { addPrintArea } from '../api/printArea.api';
-import { useParams } from "react-router-dom";
 import { getProductById } from '../api/product.api';
 
-function PrintArea() {
-  const { id: productId } = useParams();
+function PrintArea({ productId }) {
   const [showForm, setShowForm] = useState(false);
   const [printAreas, setPrintAreas] = useState([]);
   const [editingId, setEditingId] = useState(null);
