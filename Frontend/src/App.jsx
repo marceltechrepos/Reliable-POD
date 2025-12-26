@@ -25,8 +25,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="order" element={<Order />} />
-          <Route path="product" element={<ProductBase />} />
-          <Route path="product/:id" element={<ProductBase />} />
+          <Route path="product/:id?" element={<ProductBase />} />
           <Route path="category" element={<Category />} />
           <Route path="provider" element={<Provider />} />
           <Route path="settings" element={<Settings />} />
