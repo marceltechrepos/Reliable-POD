@@ -13,8 +13,9 @@ const mockupImageSchema = new Schema(
       },
     },
     category: {
-      type: Types.ObjectId,
-      ref: "Category",
+      type: String,
+      // type: Types.ObjectId,
+      // ref: "Category",
       required: true,
     },
     name: String,
