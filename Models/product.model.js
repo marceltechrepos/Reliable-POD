@@ -1,6 +1,6 @@
 import { Schema, Types, model } from "mongoose";
 
-const productSchema = new Schema( 
+const productSchema = new Schema(
   {
     productTitle: String,
     internalName: String,
@@ -37,6 +37,8 @@ const productSchema = new Schema(
         comparePrice: Number,
         createdAt: String,
         updatedAt: String,
+        available: { type: String, default: "available", enum: ["available", "coming soon", "out of stock"] },
+        addToCampaigns: { type: Boolean, default: false },
       },
     ],
   },
