@@ -8,10 +8,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Breadcrumbs from '../components/Breadcrumbs';
 import MenuItem from '@mui/material/MenuItem';
 import BasicTabs from '../components/PrintareaAndVariantTabs';
-import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -422,7 +419,7 @@ function ProductBase() {
             }
           </div>
 
-          {isEditMode  && (
+          {isEditMode && (
             <BasicTabs productId={productId} />
           )}
         </div>
