@@ -71,5 +71,3 @@ const productSchema = new Schema(
 );
 
 export default model("Product", productSchema);
-// available: { type: String, default: "available", enum: ["available", "coming soon", "out of stock"] },
-// addToCampaigns: { type: Boolean, default: false },
