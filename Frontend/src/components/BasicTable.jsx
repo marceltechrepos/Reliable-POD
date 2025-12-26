@@ -1105,8 +1105,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
             price: item.basePrice ?? 0,
             comparePrice: null,
             baseCost: null,
-            available: "available",
-            addToCampaigns: false,
+            available: item.available ?? "available",
+            addToCampaigns: item.addToCampaigns ?? false,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           }));
@@ -1155,6 +1155,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         color: formData.color,
         colorHex: formData.colorHex,
         basePrice: parseFloat(formData.price),
+        available: formData.available.toLowerCase().trim(),
+        addToCampaigns: formData.addToCampaigns,
       };
 
       const res = await fetch(`/api/${id}/create-variant`, {
@@ -1177,8 +1179,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
           price: item.basePrice ?? parseFloat(formData.price),
           comparePrice: null,
           baseCost: null,
-          available: "available",
-          addToCampaigns: false,
+          available: formData.available.toLowerCase().trim(), // ✅ yahan formData se
+          addToCampaigns: formData.addToCampaigns,          // ✅ yahan formData se
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: item.updatedAt || new Date().toISOString(),
         };
@@ -1231,6 +1233,9 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         color: editFormData.color,
         colorHex: editFormData.colorHex,
         basePrice: parseFloat(editFormData.price),
+
+        available: editFormData.available.toLowerCase().trim(),
+        addToCampaigns: editFormData.addToCampaigns,
       };
 
       console.log("UPDATE PAYLOAD 👉", payload);
@@ -1255,7 +1260,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
           price: item.basePrice ?? parseFloat(editFormData.price),
           comparePrice: null,
           baseCost: null,
-          available: editFormData.available,
+          available: editFormData.available?.toLowerCase().trim(),
           addToCampaigns: editFormData.addToCampaigns,
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: item.updatedAt || new Date().toISOString(),
