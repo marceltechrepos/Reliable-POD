@@ -12,14 +12,14 @@ import Box from '@mui/material/Box';
 
 import { useParams, useNavigate } from "react-router-dom";
 
-import { getAllProvider } from '../api/provider.api';
+import { getAllProvider, createProvider } from '../api/provider.api';
 import { createProduct } from '../api/product.api';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
-import { getAllCategory } from '../api/category.api';
+import { getAllCategory, createCategory } from '../api/category.api';
 
 // Local storage se data load karne ka function
 const loadMockupsFromStorage = () => {
@@ -43,10 +43,10 @@ function ProductBase() {
   const [description, setDescription] = useState('');
 
 
-  const { id: productId } = useParams(); // 👈 yahin se sab decide hoga
+  const { id: productId } = useParams();
   const navigate = useNavigate();
 
-  const isEditMode = Boolean(productId); // true if param exists
+  const isEditMode = Boolean(productId);
 
 
 
@@ -69,6 +69,10 @@ function ProductBase() {
   const [newCategory, setNewCategory] = useState('');
   const [categoryThumbnail, setCategoryThumbnail] = useState(null);
   const [categoryThumbnailPreview, setCategoryThumbnailPreview] = useState('');
+  const [editId, setEditId] = useState("69523b56f0e3246bac25f3da");
+
+  
+
 
   /* ================== MOCKUP STATES ================== */
   const [openMockupModal, setOpenMockupModal] = useState(false);
@@ -91,25 +95,80 @@ function ProductBase() {
 
 
 
-  const addProviderHandler = () => {
+  // const addProviderHandler = () => {
+  //   if (!newProvider.trim()) return;
+  //   const value = newProvider.toLowerCase().replace(/\s+/g, '-');
+  //   setProviders(prev => [...prev, { label: newProvider, value }]);
+  //   setProvider(value);
+  //   setNewProvider('');
+  //   setOpen(false);
+  // };
+
+  const addProviderHandler = async () => {
     if (!newProvider.trim()) return;
-    const value = newProvider.toLowerCase().replace(/\s+/g, '-');
-    setProviders(prev => [...prev, { label: newProvider, value }]);
-    setProvider(value);
-    setNewProvider('');
-    setOpen(false);
+
+    const payload = {
+      provider: newProvider
+    };
+
+    const res = await createProvider(payload);
+
+    if (res.success) {
+      const newItem = {
+        label: res.data.provider,
+        value: res.data._id,
+      };
+
+      setProviders(prev => [...prev, newItem]);
+      setProvider(res.data._id);
+
+      setNewProvider('');
+      setOpen(false);
+
+      alert("Provider Added")
+    }
   };
 
-  const addCategoryHandler = () => {
+
+  // const addCategoryHandler = () => {
+  //   if (!newCategory.trim()) return;
+  //   const value = newCategory.toLowerCase().replace(/\s+/g, '-');
+  //   setCategories(prev => [...prev, { label: newCategory, value, thumbnail: categoryThumbnailPreview }]);
+  //   setCategory(value);
+  //   setNewCategory('');
+  //   setCategoryThumbnail(null);
+  //   setCategoryThumbnailPreview('');
+  //   setOpenCategoryModal(false);
+  // };
+
+  const addCategoryHandler = async () => {
     if (!newCategory.trim()) return;
-    const value = newCategory.toLowerCase().replace(/\s+/g, '-');
-    setCategories(prev => [...prev, { label: newCategory, value, thumbnail: categoryThumbnailPreview }]);
-    setCategory(value);
-    setNewCategory('');
-    setCategoryThumbnail(null);
-    setCategoryThumbnailPreview('');
-    setOpenCategoryModal(false);
+
+    const formData = new FormData();
+    formData.append("category", newCategory);
+    formData.append("thumbnail", categoryThumbnail);
+
+    const res = await createCategory(formData);
+
+    if (res.success) {
+      const newItem = {
+        label: res.data.category,
+        value: res.data._id,
+      };
+
+      setCategories(prev => [...prev, newItem]);
+      setCategory(res.data._id);
+
+      setNewCategory('');
+      setCategoryThumbnail(null);
+      setCategoryThumbnailPreview('');
+      setOpenCategoryModal(false);
+
+      alert("Category Added")
+    }
   };
+
+
 
   const saveProductHandler = async () => {
     const payload = {
@@ -126,10 +185,13 @@ function ProductBase() {
     if (data.success) {
 
       if (data.success) {
+        setEditId(data.data._id)
         navigate(`/admin/product/${data.data._id}`, { replace: true });
       }
     }
   };
+
+  console.log(editId, "<<<< editId")
 
 
   useEffect(() => {
@@ -176,7 +238,7 @@ function ProductBase() {
     localStorage.setItem('mockupToEdit', JSON.stringify(mockup));
 
     // Redirect to editor page
-    window.location.href = '/admin/editor';
+    window.location.href = `/admin/editor${editId ? `/${editId}` : ''}`;
   };
 
   // ==================
