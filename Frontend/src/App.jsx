@@ -32,7 +32,7 @@ function App() {
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/editor" element={<Editor />} />
+        <Route path="/admin/editor/:editId?" element={<Editor />} />
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
