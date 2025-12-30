@@ -69,9 +69,9 @@ function ProductBase() {
   const [newCategory, setNewCategory] = useState('');
   const [categoryThumbnail, setCategoryThumbnail] = useState(null);
   const [categoryThumbnailPreview, setCategoryThumbnailPreview] = useState('');
-  const [editId, setEditId] = useState("69523b56f0e3246bac25f3da");
+  const [editId, setEditId] = useState(productId);
 
-  
+
 
 
   /* ================== MOCKUP STATES ================== */
