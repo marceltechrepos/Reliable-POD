@@ -93,14 +93,14 @@ function AddCategoryModal({
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm border rounded-md"
+            className="px-4 py-2 text-sm border rounded-md cursor-pointer"
           >
             Cancel
           </button>
 
           <button
             onClick={onAdd}
-            className="px-4 py-2 text-sm bg-ocean text-white rounded-md"
+            className="px-4 py-2 text-sm bg-ocean text-white rounded-md cursor-pointer"
           >
             Add Category
           </button>

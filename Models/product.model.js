@@ -26,6 +26,20 @@ const productSchema = new Schema(
       },
     ],
 
+    // Variants: [
+    //   {
+    //     sku: String,
+    //     size: Number,
+    //     weight: Number,
+    //     color: String,
+    //     colorHex: String,
+    //     basePrice: Number,
+    //     comparePrice: Number,
+    //     createdAt: String,
+    //     updatedAt: String,
+
+    //   },
+    // ],
     Variants: [
       {
         sku: String,
@@ -35,12 +49,23 @@ const productSchema = new Schema(
         colorHex: String,
         basePrice: Number,
         comparePrice: Number,
+
+        // 🔥 ADD THESE
+        available: {
+          type: String,
+          enum: ['available', 'out of stock', 'coming soon', 'discontinued'],
+          default: 'available',
+        },
+        addToCampaigns: {
+          type: Boolean,
+          default: false,
+        },
+
         createdAt: String,
         updatedAt: String,
-        available: { type: String, default: "available", enum: ["available", "coming soon", "out of stock"] },
-        addToCampaigns: { type: Boolean, default: false },
       },
     ],
+
   },
   { timestamps: true }
 );
