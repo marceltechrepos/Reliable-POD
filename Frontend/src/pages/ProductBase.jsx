@@ -740,7 +740,7 @@ function ProductBase() {
   return (
     <>
       <div className="w-full bg-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
           <Breadcrumbs />
 
           {/* Responsive layout: stack on small, 2 columns on md+ */}
