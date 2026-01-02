@@ -47,6 +47,7 @@ export const loginApi = async (payload, setLoading, navigate) => {
         } else {
             alert(data.message)
             localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
             setLoading(false);
             navigate("/admin/dashboard")
         }

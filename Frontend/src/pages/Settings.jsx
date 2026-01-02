@@ -726,11 +726,10 @@ export default function Settings() {
                                             key={c.id}
                                             open={openCategory === c.id}
                                             onToggle={() => setOpenCategory(openCategory === c.id ? null : c.id)}
-                                            title={c.name}
+                                            title={c.name.toUpperCase()}
                                             subtitle={
                                                 <span className="flex items-center gap-2">
                                                     <Thumb image={c.image} />
-                                                    {/* {c.name} */}
                                                 </span>
                                             }
                                         >

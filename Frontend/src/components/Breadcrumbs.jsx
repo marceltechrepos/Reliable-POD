@@ -33,7 +33,8 @@ function Breadcrumbs() {
               </span>
             ) : (
               <Link
-                to={crumb.path}
+                // to={crumb.path}
+                to={crumb.name === "Product" ? crumb.path = "/admin/product" : crumb.path}
                 className="text-gray-700 hover:text-blue-600"
               >
                 {crumb.name}
