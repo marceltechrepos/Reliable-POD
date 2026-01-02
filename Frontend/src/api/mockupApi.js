@@ -1,8 +1,10 @@
 // src/api/mockupApi.js
 
+import { authFetch } from "./product.api";
+
 export const getMockups = async () => {
     try {
-        const res = await fetch('/api/get-mockup-image');
+        const res = await authFetch('/api/get-mockup-image');
         const json = await res.json();
 
         if (json.success) {
@@ -34,7 +36,7 @@ export const uploadMockupImage = async (file, categoryId) => {
     formData.append("size", Math.round(file.size / 1024));
 
     try {
-        const res = await fetch("/api/create-mockup-image", {
+        const res = await authFetch("/api/create-mockup-image", {
             method: "POST",
             body: formData,
         });

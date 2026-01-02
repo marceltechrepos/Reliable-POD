@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
 import { loginApi } from '../../api/auth.api';
 
@@ -27,6 +27,11 @@ function AdminLogin() {
         const payload = { email, password };
         loginApi(payload, setLoading, navigate);
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) navigate("/admin/dashboard");
+    }, []);
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-[#f1f5f9]">

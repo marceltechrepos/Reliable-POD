@@ -1,8 +1,9 @@
-export const addPrintArea = async (productId, payload) => {
+import { authFetch } from "./product.api";
 
-  console.log("addPrintArea ,", productId)
+// ADD PRINT AREA
+export const addPrintArea = async (productId, payload) => {
   try {
-    const response = await fetch(`/api/${productId}/print-areas`, {
+    const response = await authFetch(`/api/${productId}/print-areas`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -17,11 +18,10 @@ export const addPrintArea = async (productId, payload) => {
   }
 };
 
-
 // UPDATE PRINT AREA
 export const updatePrintArea = async (productId, areaId, payload) => {
   try {
-    const res = await fetch(`/api/${productId}/print-areas/${areaId}`, {
+    const res = await authFetch(`/api/${productId}/print-areas/${areaId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -40,8 +40,10 @@ export const updatePrintArea = async (productId, areaId, payload) => {
 // DELETE PRINT AREA
 export const deletePrintArea = async (productId, areaId) => {
   try {
-    const res = await fetch(`/api/${productId}/print-areas/${areaId}`, {
+    const res = await authFetch(`/api/${productId}/print-areas/${areaId}`, {
       method: "DELETE",
+      headers: {
+      },
     });
 
     const data = await res.json();

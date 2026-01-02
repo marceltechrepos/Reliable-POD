@@ -6,7 +6,7 @@ import fs from "fs";
 
 export const CreateUser = async (req, res) => {
   try {
-    const { email, password, UpdatedEmail } = req.body;
+    const { email, password, UpdatedEmail = false } = req.body;
 
     // Validation
     const validation = [
@@ -72,9 +72,11 @@ export const Login = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password." });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_TOKEN, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      process.env.JWT_TOKEN,
+      { expiresIn: "1d" }
+    );
 
     return res
       .status(200)
