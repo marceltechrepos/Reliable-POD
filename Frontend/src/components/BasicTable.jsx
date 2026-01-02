@@ -302,35 +302,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
   };
 
 
-  // delete selected (multiple)
-  // const handleDeleteSelected = async () => {
-  //   if (selectedRows.length === 0) {
-  //     alert('Please select at least one row to delete.');
-  //     return;
-  //   }
-
-  //   if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} selected variant(s)?`)) return;
-
-  //   try {
-  //     const deletePromises = selectedRows.map(variantId =>
-  //       fetch(`/api/${id}/delete-variant/${variantId}`, { method: 'DELETE' })
-  //         .then(res => res.json())
-  //     );
-
-  //     const results = await Promise.all(deletePromises);
-  //     const failed = results.filter(r => !r.success);
-  //     if (failed.length > 0) {
-  //       console.warn('Some deletions failed', failed);
-  //       alert('Some deletions failed. Check console.');
-  //     }
-  //     setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
-  //     setSelectedRows([]);
-  //   } catch (err) {
-  //     console.error('delete selected error', err);
-  //     alert('Bulk delete failed. Check console.');
-  //   }
-  // };
-
   const handleCheckboxChange = (id) => {
     if (selectedRows.includes(id)) {
       setSelectedRows(selectedRows.filter(rowId => rowId !== id));
