@@ -1,6 +1,8 @@
+import { authFetch } from "./product.api";
+
 const getAllProvider = async () => {
   try {
-    const response = await fetch("/api/Provider/get-all-provider");
+    const response = await authFetch("/api/Provider/get-all-provider");
     const data = await response.json();
 
     if (data.success) {
@@ -16,7 +18,7 @@ const getAllProvider = async () => {
 
 const createProvider = async (payload) => {
   try {
-    const response = await fetch("/api/Provider/create-provider", {
+    const response = await authFetch("/api/Provider/create-provider", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

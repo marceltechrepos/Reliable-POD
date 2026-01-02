@@ -271,7 +271,7 @@ export default function Settings() {
     return (
         <div className="min-h-screen p-6 bg-[#f1f5f9]">
             {/* Page header */}
-            <div className="max-w-6xl mx-auto mb-6">
+            <div className="mx-auto mb-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold" style={{ color: BRAND.dark }}>
@@ -311,7 +311,7 @@ export default function Settings() {
             </div>
 
             {/* Tabs + content */}
-            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Left - Tabs */}
                 <aside className="col-span-1 bg-white rounded-2xl p-4 shadow">
                     <nav className="space-y-2">
@@ -726,11 +726,10 @@ export default function Settings() {
                                             key={c.id}
                                             open={openCategory === c.id}
                                             onToggle={() => setOpenCategory(openCategory === c.id ? null : c.id)}
-                                            title={c.name}
+                                            title={c.name.toUpperCase()}
                                             subtitle={
                                                 <span className="flex items-center gap-2">
                                                     <Thumb image={c.image} />
-                                                    {/* {c.name} */}
                                                 </span>
                                             }
                                         >
