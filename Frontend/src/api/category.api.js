@@ -1,6 +1,8 @@
+import { authFetch } from "./product.api";
+
 const getAllCategory = async () => {
   try {
-    const response = await fetch("/api/Category/get-all-category");
+    const response = await authFetch("/api/Category/get-all-category");
     const data = await response.json();
 
     if (data.success) {
@@ -16,7 +18,7 @@ const getAllCategory = async () => {
 
 const createCategory = async (payload) => {
   try {
-    const response = await fetch('/api/Category/create-category', {
+    const response = await authFetch('/api/Category/create-category', {
       method: 'POST',
       body: payload, // FormData
     });
@@ -31,7 +33,7 @@ const createCategory = async (payload) => {
 
 const updateCategory = async (id, payload) => {
   try {
-    const response = await fetch(
+    const response = await authFetch(
       `/api/Category/update-category/${id}`,
       {
         method: "PUT",
@@ -47,7 +49,7 @@ const updateCategory = async (id, payload) => {
 
 const deleteCategory = async (id) => {
   try {
-    const response = await fetch(
+    const response = await authFetch(
       `/api/Category/delete-category/${id}`,
       {
         method: "DELETE",

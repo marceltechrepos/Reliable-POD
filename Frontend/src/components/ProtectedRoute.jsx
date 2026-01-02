@@ -1,14 +1,36 @@
+// import { Navigate, Outlet } from "react-router-dom";
+
+// const ProtectedRoute = () => {
+//   const token = localStorage.getItem("token");
+
+//   // agar token nahi → login
+//   if (!token) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   // token hai → andar jane do
+//   return <Outlet />;
+// };
+
+// export default ProtectedRoute;
+
+
 import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ adminOnly = false }) => {
   const token = localStorage.getItem("token");
 
-  // agar token nahi → login
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
-  // token hai → andar jane do
+  // OPTIONAL: role check (best)
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (adminOnly && user?.role !== "Admin") {
+    return <Navigate to="/" replace />;
+  }
+
   return <Outlet />;
 };
 
