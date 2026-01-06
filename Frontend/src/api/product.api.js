@@ -1,0 +1,66 @@
+// src/api/product.api.js
+
+const createProduct = async (payload) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch('/api/create-product', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.log(error, '<<<< create product error');
+        return { success: false };
+    }
+};
+
+
+const getProductById = async (productId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/get-product", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // product find by id
+            const product = data.data.find(
+                (item) => item._id === productId
+            );
+
+            return product || null;
+        }
+    } catch (error) {
+        console.log(error, "<<<< getProductById error");
+        return null;
+    }
+};
+
+ const authFetch = async (url, options = {}) => {
+  const token = localStorage.getItem("token");
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+
+
+export {
+    createProduct,
+    getProductById,
+    authFetch
+};

@@ -18,27 +18,27 @@ const CategoryRouter = Router();
 
 CategoryRouter.post(
   "/Category/create-category",
-  //  isAdmin,
+   isAdmin,
   upload.single("thumbnail"),
   createCategory
 );
 
 CategoryRouter.get(
   "/Category/get-all-category",
-  //  isAdmin,
+   isAdmin,
   getAllCategory
 );
 
 CategoryRouter.put(
   "/Category/update-category/:categoryId",
-  //  isAdmin,
+   isAdmin,
   upload.single("thumbnail"),
   updateCategory
 );
 
 CategoryRouter.delete(
   "/Category/delete-category/:categoryId",
-  //  isAdmin,
+   isAdmin,
   deleteCategory
 );
 
@@ -46,23 +46,23 @@ CategoryRouter.delete(
 
 CategoryRouter.post(
   "/Provider/create-provider",
-  //  isAdmin,
+   isAdmin,
   createProvider
 );
 CategoryRouter.get(
   "/Provider/get-all-provider",
-  //  isAdmin,
+   isAdmin,
   getProviders
 );
 
 CategoryRouter.put(
   "/Provider/update-provider/:providerId",
-  //  isAdmin,
+   isAdmin,
   updateProvider
 );
 CategoryRouter.delete(
   "/Provider/delete-provider/:providerId",
-  //  isAdmin,
+   isAdmin,
   deleteProvider
 );
 export default CategoryRouter;

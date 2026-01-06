@@ -1,60 +1,87 @@
 import React, { useState } from "react";
-// import logo from "../../public/expressPODLogo.png"; 
+import logo from "/POD-logo.png";
 import { Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Topbar({ onMenuClick }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/admin/login")
+  };
+
+  const profile = () => {
+    navigate("/admin/settings")
+  }
+
 
   return (
-    <header className="bg-[#81430085] shadow-lg px-4 sm:px-6 py-3 flex items-center justify-between">
+    <header className="  bg-ocean shadow-lg
+  h-14 sm:h-16
+  px-3 sm:px-4 md:px-6
+  flex items-center justify-between
+  w-full
+  fixed top-0 left-0 z-50">
 
       {/* Left */}
       <div className="flex items-center gap-3">
-        {/* Mobile Menu Button */}
+        {/* Menu Button → ONLY xs + sm */}
         <button
-          className="sm:hidden text-white"
+          className="md:hidden text-white"
           onClick={onMenuClick}
         >
           <Menu size={24} />
         </button>
 
         <img
-          src="/expressPODLogo.png"
+          src={logo}
           alt="ExpressPOD"
-          className="h-8 w-auto object-contain"
+          className="h-7 sm:h-8 md:h-9 w-auto object-contain bg-white px-1 rounded"
         />
       </div>
 
-      {/* Search (hidden on mobile) */}
-      <div className="hidden sm:flex flex-1 max-w-md mx-6">
+      {/* Search */}
+      <div className="hidden md:flex flex-1 max-w-sm lg:max-w-md xl:max-w-lg mx-4">
         <input
           type="text"
           placeholder="Search..."
-          className="w-full px-4 py-2 rounded-lg outline-none text-sm border border-white focus:ring-2 focus:ring-amber-600 text-white placeholder:text-white bg-transparent"
+          className="
+            w-full px-4 py-2 rounded-lg text-sm
+            outline-none
+            border border-white/60
+            bg-transparent text-white placeholder:text-white/70
+            focus:ring-2 focus:ring-amber-600
+          "
         />
       </div>
 
       {/* Profile */}
-      <div className="relative">
+      <div className="relative ">
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg text-white"
+          className="flex items-center gap-2 bg-white/20 px-2 sm:px-3 py-1.5 rounded-lg text-white cursor-pointer"
         >
           <img
             src="https://i.pravatar.cc/40"
             alt="profile"
             className="w-8 h-8 rounded-full border-2 border-white"
           />
-          <span className="hidden sm:block text-sm font-medium">Admin</span>
+          <span className="hidden sm:block text-sm font-medium">
+            Admin
+          </span>
         </button>
 
         {open && (
           <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg overflow-hidden z-50">
-            <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+            <button onClick={profile} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer">
               Profile
             </button>
             <button
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              onClick={logout}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 cursor-pointer"
             >
               Logout
             </button>

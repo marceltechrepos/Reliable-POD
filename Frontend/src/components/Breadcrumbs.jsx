@@ -11,7 +11,7 @@ function Breadcrumbs() {
 
   const newPath = '/' + pathSegments.join('/');
   const breadcrumbs = [
-    { name: 'Home', path: '/dashboard' },
+    { name: 'Home', path: '/admin/dashboard' },
     ...pathSegments.map((segment, index) => {
       const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const name = segment.charAt(0).toUpperCase() + segment.slice(1);
@@ -33,7 +33,8 @@ function Breadcrumbs() {
               </span>
             ) : (
               <Link
-                to={crumb.path}
+                // to={crumb.path}
+                to={crumb.name === "Product" ? crumb.path = "/admin/product" : crumb.path}
                 className="text-gray-700 hover:text-blue-600"
               >
                 {crumb.name}
