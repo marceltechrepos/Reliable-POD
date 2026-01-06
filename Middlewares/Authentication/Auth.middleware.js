@@ -3,33 +3,27 @@ import User from "../../Models/User.Model.js";
 
 export const isLogin = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Access denied. No token provided.",
-      });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    jwt.verify(token, process.env.JWT_TOKEN, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid or expired token. Please log in again.",
-        });
-      }
 
-      req.user = decoded;
-      next();
-    });
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(401).json({ message: "User no longer exists" });
+    }
+
+    req.user = user; // FULL USER
+    next();
   } catch (error) {
-    console.error("Auth Middleware Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Authentication failed due to a server error.",
-    });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
 
 export const isAdmin = async (req, res, next) => {
   try {

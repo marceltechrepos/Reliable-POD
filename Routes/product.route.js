@@ -18,56 +18,61 @@ import {
   updateVariant,
   removeVariant,
 } from "../Controllers/product.controller.js";
-import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
+import {
+  isLogin, isAdmin,
+} from "../Middlewares/Authentication/Auth.middleware.js";
 import { upload } from "../Middlewares/Multer/multer.js";
 
 const productRouter = Router();
 
 productRouter.get(
   "/get-product",
-  // isLogin,
+  isLogin,
   getProducts
 );
 productRouter.post(
   "/create-product",
-  // isLogin,
+  isLogin,
+  isAdmin,
   createProduct
 );
 
 productRouter.put(
   "/update-product/:id",
-  // isLogin,
+  isLogin,
+  isAdmin,
   upload.single("thumbnail"),
   updateProduct
 );
 productRouter.delete(
   "/delete-product/:id",
-  // isLogin,
+  isLogin,
+  isAdmin,
   deleteProduct
 );
 
 // =========> Print Area
 productRouter.post(
   "/:productId/print-areas",
-  // isLogin,
+  isLogin,
 
   addPrintArea
 );
 productRouter.get(
   "/:productId/print-areas",
-  // isLogin,
+  isLogin,
 
   getPrintAreas
 );
 productRouter.delete(
   "/:productId/print-areas/:printAreaId",
-  // isLogin,
+  isLogin,
 
   removePrintArea
 );
 productRouter.put(
   "/:productId/print-areas/:printAreaId",
-  // isLogin,
+  isLogin,
 
   updatePrintArea
 );
@@ -75,25 +80,25 @@ productRouter.put(
 // =========> Variant
 productRouter.post(
   "/:productId/create-variant",
-  // isLogin,
+  isLogin,
 
   addVariant
 );
 productRouter.get(
   "/:productId/get-variant",
-  // isLogin,
+  isLogin,
 
   getVariant
 );
 productRouter.put(
   "/:productId/update-variant/:variantId",
-  // isLogin,
+  isLogin,
 
   updateVariant
 );
 productRouter.delete(
   "/:productId/delete-variant/:variantId",
-  // isLogin,
+  isLogin,
 
   removeVariant
 );

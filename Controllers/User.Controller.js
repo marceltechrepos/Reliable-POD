@@ -6,7 +6,7 @@ import fs from "fs";
 
 export const CreateUser = async (req, res) => {
   try {
-    const { email, password, UpdatedEmail } = req.body;
+    const { email, password, UpdatedEmail = false } = req.body;
 
     // Validation
     const validation = [
@@ -72,9 +72,11 @@ export const Login = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password." });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_TOKEN, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      process.env.JWT_TOKEN,
+      { expiresIn: "1d" }
+    );
 
     return res
       .status(200)
@@ -139,6 +141,7 @@ export const addUserInformation = async (req, res) => {
           resource_type: "image",
         });
 
+
         // Remove file from local storage
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
@@ -170,17 +173,7 @@ export const addUserInformation = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "User information updated successfully.",
-      user: {
-        id: user._id,
-        Name: user.Name,
-        userName: user.userName,
-        email: user.email, // Assuming you have email field
-        phone: user.phone,
-        company: user.company,
-        address: user.address,
-        profileImage: user.profileImage,
-        // Include other fields as needed
-      },
+      user: user
     });
   } catch (error) {
     console.error("addUserInformation Error:", error);
