@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "/POD-logo.png";
+import logo from "../assets/images/POD-logo.png";
 import { Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
