@@ -521,6 +521,7 @@ function Editor() {
   //   setDraggingCorner({ layerId, cornerIndex });
   // };
 
+
   const startCornerDrag = (e, layerId, cornerIndex) => {
     e.stopPropagation();
     e.preventDefault();
