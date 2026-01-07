@@ -79,15 +79,21 @@ export default function Settings() {
     // ------------- USER: image handlers ----------------
     const handleProfileImageChange = (file) => {
         if (!file) return;
-        if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
+
+        if (
+            typeof profileImagePreview === "string" &&
+            profileImagePreview.startsWith("blob:")
+        ) {
             try {
                 URL.revokeObjectURL(profileImagePreview);
             } catch { }
         }
+
         const url = URL.createObjectURL(file);
         setProfileImageFile(file);
         setProfileImagePreview(url);
     };
+
 
     const handleSaveUserInfo = async () => {
         if (!userInfo) return;

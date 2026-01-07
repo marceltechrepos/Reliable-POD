@@ -1,13 +1,21 @@
 import multer, { diskStorage } from "multer";
+import fs from "fs";
+import path from "path";
 
-const dir = "public/images";
+const uploadDir = path.join(process.cwd(), "public", "images");
+
+// create folder only if it doesn't exist
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const storage = diskStorage({
-  destination: function (_, file, cb) {
-    cb(null, dir);
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
-  filename: function (_, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.replace(/\s+/g, "-");
+    cb(null, `${Date.now()}-${safeName}`);
   },
 });
 

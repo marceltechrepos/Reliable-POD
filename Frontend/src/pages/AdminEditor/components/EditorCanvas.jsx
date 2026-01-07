@@ -272,11 +272,11 @@ const EditorCanvas = ({
                               textAlign: "center",
                               overflow: "hidden",
                               transform: `
-                                rotateX(${layer.rotateX || 0}deg)
-                                rotateY(${layer.rotateY || 0}deg)
-                                rotateZ(${layer.rotateZ || 0}deg)
-                                skewX(${layer.skewX || 0}deg)
-                                skewY(${layer.skewY || 0}deg)
+                                RotateX(${layer.rotateX || 0}deg)
+                                RotateY(${layer.rotateY || 0}deg)
+                                RotateZ(${layer.rotateZ || 0}deg)
+                                SkewX(${layer.skewX || 0}deg)
+                                SkewY(${layer.skewY || 0}deg)
                               `,
                               transformOrigin: layer.transformOrigin || "center center",
                             }}
