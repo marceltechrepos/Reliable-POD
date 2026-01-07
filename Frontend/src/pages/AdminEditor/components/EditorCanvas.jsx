@@ -1,5 +1,6 @@
 import React from "react";
 import { Rnd } from "react-rnd";
+import WarpedImage from "./WarpedImage";
 
 const EditorCanvas = ({
   mockup,
@@ -198,7 +199,7 @@ const EditorCanvas = ({
                       </div>
                     )}
 
-                    {layer.type === "image" && (
+                    {/* {layer.type === "image" && (
                       <div
                         style={{
                           width: "100%",
@@ -226,9 +227,134 @@ const EditorCanvas = ({
                           }}
                         />
                       </div>
+                    )} */}
+
+                    {layer.type === "image" && (
+                      layer.enablePerspective && layer.corners ? (
+                        // Canvas-based warping (4-point perspective)
+                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                          <WarpedImage
+                          key={`${layer.id}-${layer.src}`} 
+                            src={layer.src}
+                            corners={layer.corners}
+                            width={layer.width}
+                            height={layer.height}
+                            fit={layer.fit || "contain"}
+                          />
+                        </div>
+                      ) : (
+                        // Normal image (no perspective)
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            perspective: `${layer.perspective || 0}px`,
+                            transformStyle: "preserve-3d",
+                          }}
+                        >
+                          <img
+                            src={layer.src}
+                            alt="layer"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: layer.fit || "contain",
+                              pointerEvents: "none",
+                              transform: `
+            rotateX(${layer.rotateX || 0}deg)
+            rotateY(${layer.rotateY || 0}deg)
+            rotateZ(${layer.rotateZ || 0}deg)
+            skewX(${layer.skewX || 0}deg)
+            skewY(${layer.skewY || 0}deg)
+          `,
+                              transformOrigin: layer.transformOrigin || "center center",
+                            }}
+                          />
+                        </div>
+                      )
                     )}
 
                     {layer.type === "printarea" && (
+                      layer.enablePerspective && layer.corners && layer.hasImage ? (
+                        // Canvas-based warping (4-point perspective)
+                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                          <WarpedImage
+                          key={`${layer.id}-${layer.imageSrc}`} 
+                            src={layer.imageSrc}
+                            corners={layer.corners}
+                            width={layer.width}
+                            height={layer.height}
+                            fit={layer.fit || "cover"}
+                          />
+                        </div>
+                      ) : (
+                        // Normal rendering (no perspective or no image)
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            perspective: `${layer.perspective || 0}px`,
+                            transformStyle: "preserve-3d",
+                          }}
+                        >
+                          {layer.hasImage ? (
+                            <img
+                              src={layer.imageSrc}
+                              alt="Print area"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: layer.fit || "cover",
+                                pointerEvents: "none",
+                                transform: `
+              rotateX(${layer.rotateX || 0}deg)
+              rotateY(${layer.rotateY || 0}deg)
+              rotateZ(${layer.rotateZ || 0}deg)
+              skewX(${layer.skewX || 0}deg)
+              skewY(${layer.skewY || 0}deg)
+            `,
+                                transformOrigin: layer.transformOrigin || "center center",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                background: "rgba(34,197,94,0.08)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 14,
+                                color: "#22c55e",
+                                fontWeight: 600,
+                                userSelect: "none",
+                                textAlign: "center",
+                                overflow: "hidden",
+                                transform: `
+              rotateX(${layer.rotateX || 0}deg)
+              rotateY(${layer.rotateY || 0}deg)
+              rotateZ(${layer.rotateZ || 0}deg)
+              skewX(${layer.skewX || 0}deg)
+              skewY(${layer.skewY || 0}deg)
+            `,
+                                transformOrigin: layer.transformOrigin || "center center",
+                              }}
+                            >
+                              {layer.name || "Print Area"}
+                              <br />
+                              {layer.width} × {layer.height}
+                              <br />
+                              <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
+                                Upload image from properties panel
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+
+                    {/* {layer.type === "printarea" && (
                       <div
                         style={{
                           width: "100%",
@@ -291,10 +417,10 @@ const EditorCanvas = ({
                           </div>
                         )}
                       </div>
-                    )}
+                    )} */}
 
                     {/* Perspective Handles - 8 points */}
-                    {showPerspectiveHandles && layer.corners && (
+                    {/* {showPerspectiveHandles && layer.corners && (
                       <>
                         {layer.corners.map((corner, index) => (
                           <div
@@ -311,6 +437,32 @@ const EditorCanvas = ({
                               border: "2px solid white",
                               cursor: "move",
                               zIndex: 9999,
+                            }}
+                            title={`Drag to adjust perspective (Point ${index + 1})`}
+                          />
+                        ))}
+                      </>
+                    )} */}
+
+                    {/* Perspective Handles - 4 points */}
+                    {showPerspectiveHandles && layer.corners && (
+                      <>
+                        {layer.corners.slice(0, 4).map((corner, index) => ( // ✅ Only 4 points
+                          <div
+                            key={`corner-${index}`}
+                            onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
+                            style={{
+                              position: "absolute",
+                              left: corner.x - 6,  // ✅ Bigger handle
+                              top: corner.y - 6,
+                              width: 12,
+                              height: 12,
+                              backgroundColor: "#f59e0b",
+                              borderRadius: "50%",
+                              border: "2px solid white",
+                              cursor: "move",
+                              zIndex: 9999,
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
                             }}
                             title={`Drag to adjust perspective (Point ${index + 1})`}
                           />

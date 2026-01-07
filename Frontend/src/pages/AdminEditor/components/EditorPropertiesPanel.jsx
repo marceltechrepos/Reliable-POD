@@ -148,74 +148,9 @@ const EditorPropertiesPanel = ({
 
                 {selectedLayer.enablePerspective && (
                   <div className="space-y-4">
-                    <p className="text-xs text-gray-400">✅ Perspective enabled! Drag the 8 yellow points on canvas to adjust.</p>
-
-                    {/* Perspective (Depth) */}
-                    <div className="mb-3">
-                      <div className="flex justify-between">
-                        <p className="text-gray-400 font-medium">Perspective</p>
-                        <span className="text-xs text-gray-400">{selectedLayer.perspective || 0}px</span>
-                      </div>
-                      <input type="range" min="0" max="1000" step="10" value={selectedLayer.perspective || 0}
-                        onChange={(e) => operations.updateLayer(selectedLayer.id, { perspective: parseInt(e.target.value) || 0 })} className="w-full" />
-                      <div className="flex justify-between text-xs text-gray-400">
-                        <span>0px</span>
-                        <span>500px</span>
-                        <span>1000px</span>
-                      </div>
-                    </div>
-
-                    {/* 3D Rotation */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div>
-                        <p className="text-gray-400 text-sm">Rotate X</p>
-                        <input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateX || 0}
-                          onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateX: parseInt(e.target.value) || 0 })} min="-180" max="180" />
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Rotate Y</p>
-                        <input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateY || 0}
-                          onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateY: parseInt(e.target.value) || 0 })} min="-180" max="180" />
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Rotate Z</p>
-                        <input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateZ || 0}
-                          onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateZ: parseInt(e.target.value) || 0 })} min="-180" max="180" />
-                      </div>
-                    </div>
-
-                    {/* Skew */}
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div>
-                        <p className="text-gray-400 text-sm">Skew X</p>
-                        <input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.skewX || 0}
-                          onChange={(e) => operations.updateLayer(selectedLayer.id, { skewX: parseInt(e.target.value) || 0 })} min="-45" max="45" />
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Skew Y</p>
-                        <input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.skewY || 0}
-                          onChange={(e) => operations.updateLayer(selectedLayer.id, { skewY: parseInt(e.target.value) || 0 })} min="-45" max="45" />
-                      </div>
-                    </div>
-
-                    {/* Transform Origin */}
-                    <div>
-                      <p className="text-gray-400 font-medium">Transform Origin</p>
-                      <select value={selectedLayer.transformOrigin || "center center"} onChange={(e) => operations.updateLayer(selectedLayer.id, { transformOrigin: e.target.value })}
-                        className="w-full p-2 rounded bg-gray-700 text-white">
-                        <option value="center center">Center</option>
-                        <option value="top left">Top Left</option>
-                        <option value="top center">Top Center</option>
-                        <option value="top right">Top Right</option>
-                        <option value="center left">Center Left</option>
-                        <option value="center right">Center Right</option>
-                        <option value="bottom left">Bottom Left</option>
-                        <option value="bottom center">Bottom Center</option>
-                        <option value="bottom right">Bottom Right</option>
-                      </select>
-                    </div>
 
                     {/* Reset Button */}
+
                     <button onClick={() => operations.updateLayer(selectedLayer.id, {
                       perspective: 0,
                       rotateX: 0,
@@ -224,15 +159,11 @@ const EditorPropertiesPanel = ({
                       skewX: 0,
                       skewY: 0,
                       transformOrigin: "center center",
-                      corners: [
-                        { x: 0, y: 0 },
-                        { x: selectedLayer.width / 2, y: 0 },
-                        { x: selectedLayer.width, y: 0 },
-                        { x: selectedLayer.width, y: selectedLayer.height / 2 },
-                        { x: selectedLayer.width, y: selectedLayer.height },
-                        { x: selectedLayer.width / 2, y: selectedLayer.height },
-                        { x: 0, y: selectedLayer.height },
-                        { x: 0, y: selectedLayer.height / 2 },
+                      corners: selectedLayer.corners || [
+                        { x: 0, y: 0 },                                  // top-left
+                        { x: selectedLayer.width, y: 0 },                // top-right
+                        { x: selectedLayer.width, y: selectedLayer.height }, // bottom-right
+                        { x: 0, y: selectedLayer.height }                // bottom-left
                       ]
                     })} className="w-full mt-3 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
                       Reset Perspective
@@ -298,28 +229,32 @@ const EditorPropertiesPanel = ({
 
                 {selectedLayer.enablePerspective && (
                   <div className="space-y-4">
-                    <p className="text-xs text-gray-400">✅ Perspective enabled! Drag the 8 yellow points on canvas to adjust.</p>
 
-                    {/* Same perspective controls as image layer */}
-                    <div className="mb-3">
-                      <div className="flex justify-between">
-                        <p className="text-gray-400 font-medium">Perspective</p>
-                        <span className="text-xs text-gray-400">{selectedLayer.perspective || 0}px</span>
-                      </div>
-                      <input type="range" min="0" max="1000" step="10" value={selectedLayer.perspective || 0}
-                        onChange={(e) => operations.updateLayer(selectedLayer.id, { perspective: parseInt(e.target.value) || 0 })} className="w-full" />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div><input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateX || 0}
-                        onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateX: parseInt(e.target.value) || 0 })} placeholder="Rotate X" /></div>
-                      <div><input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateY || 0}
-                        onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateY: parseInt(e.target.value) || 0 })} placeholder="Rotate Y" /></div>
-                      <div><input type="number" className="w-full p-2 rounded bg-gray-700 text-white" value={selectedLayer.rotateZ || 0}
-                        onChange={(e) => operations.updateLayer(selectedLayer.id, { rotateZ: parseInt(e.target.value) || 0 })} placeholder="Rotate Z" /></div>
-                    </div>
+                    <button
+                      onClick={() =>
+                        operations.updateLayer(selectedLayer.id, {
+                          perspective: 0,
+                          rotateX: 0,
+                          rotateY: 0,
+                          rotateZ: 0,
+                          skewX: 0,
+                          skewY: 0,
+                          transformOrigin: "center center",
+                          corners: selectedLayer.corners || [
+                            { x: 0, y: 0 },
+                            { x: selectedLayer.width, y: 0 },
+                            { x: selectedLayer.width, y: selectedLayer.height },
+                            { x: 0, y: selectedLayer.height }
+                          ]
+                        })
+                      }
+                      className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded transition"
+                    >
+                      Reset Perspective
+                    </button>
                   </div>
                 )}
+
               </div>
             </>
           )}
