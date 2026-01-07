@@ -85,7 +85,7 @@ const EditorHeader = ({
             <button onClick={operations.handleZoomOut} className="px-2 py-1 rounded hover:bg-gray-600" title="Zoom out (Ctrl+-)">−</button>
             <div className="px-2 text-sm">{Math.round(scale * 100)}%</div>
             <button onClick={operations.handleZoomIn} className="px-2 py-1 rounded hover:bg-gray-600" title="Zoom in (Ctrl+= / Ctrl++)">+</button>
-            <button onClick={operations.handleZoomReset} className="px-2 py-1 rounded hover:bg-gray-600" title="Reset zoom (Ctrl+0)">reset</button>
+            <button onClick={operations.handleZoomReset} className="px-2 py-1 rounded hover:bg-gray-600" title="Reset zoom (Ctrl+0)">Reset</button>
           </div>
         </div>
       </div>

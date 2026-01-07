@@ -10,7 +10,7 @@ import CategoryRouter from "./Routes/Category.Route.js";
 const app = express();
 
 app.use(
-  cors({ origin: "http://localhost:5173/", methods: ["GET", "POST", "DELETE"] })
+  cors({ origin: "*", methods: ["GET", "POST", "DELETE"] })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
