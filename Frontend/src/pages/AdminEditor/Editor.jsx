@@ -181,37 +181,37 @@ function Editor() {
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
-  const updateLayer = (id, updates) => {
-    setLayersWithHistory((prev) =>
-      prev.map((layer) => {
-        if (layer.id !== id) return layer;
-        const updatedLayer = { ...layer, ...updates };
+  // const updateLayer = (id, updates) => {
+  //   setLayersWithHistory((prev) =>
+  //     prev.map((layer) => {
+  //       if (layer.id !== id) return layer;
+  //       const updatedLayer = { ...layer, ...updates };
 
-        // ✅ Agar enablePerspective disable ho raha hai, toh CORNERS PRESERVE KAREIN
-        // Yeh line IMPORTANT hai
-        if (updates.enablePerspective === false) {
-          // Sirf enablePerspective update karein, corners ko nahi
-          // Corners preserve rahenge for future use
-          return { ...layer, enablePerspective: false };
-        }
+  //       // ✅ Agar enablePerspective disable ho raha hai, toh CORNERS PRESERVE KAREIN
+  //       // Yeh line IMPORTANT hai
+  //       if (updates.enablePerspective === false) {
+  //         // Sirf enablePerspective update karein, corners ko nahi
+  //         // Corners preserve rahenge for future use
+  //         return { ...layer, enablePerspective: false };
+  //       }
 
-        // ✅ Size change pe corners reset (4 points only)
-        if ((updates.width !== undefined && updates.width !== layer.width) ||
-          (updates.height !== undefined && updates.height !== layer.height)) {
-          const newWidth = updates.width !== undefined ? updates.width : layer.width;
-          const newHeight = updates.height !== undefined ? updates.height : layer.height;
-          updatedLayer.corners = [
-            { x: 0, y: 0 },                     // top-left
-            { x: newWidth, y: 0 },              // top-right
-            { x: newWidth, y: newHeight },      // bottom-right
-            { x: 0, y: newHeight }              // bottom-left
-          ];
-        }
+  //       // ✅ Size change pe corners reset (4 points only)
+  //       if ((updates.width !== undefined && updates.width !== layer.width) ||
+  //         (updates.height !== undefined && updates.height !== layer.height)) {
+  //         const newWidth = updates.width !== undefined ? updates.width : layer.width;
+  //         const newHeight = updates.height !== undefined ? updates.height : layer.height;
+  //         updatedLayer.corners = [
+  //           { x: 0, y: 0 },                     // top-left
+  //           { x: newWidth, y: 0 },              // top-right
+  //           { x: newWidth, y: newHeight },      // bottom-right
+  //           { x: 0, y: newHeight }              // bottom-left
+  //         ];
+  //       }
 
-        return updatedLayer;
-      })
-    );
-  };
+  //       return updatedLayer;
+  //     })
+  //   );
+  // };
 
   // const updateLayer = (id, updates) => {
   //   setLayersWithHistory((prev) =>
@@ -262,6 +262,33 @@ function Editor() {
   //     })
   //   );
   // };
+
+
+  const updateLayer = (id, updates) => {
+    setLayersWithHistory((prev) =>
+      prev.map((layer) => {
+        if (layer.id !== id) return layer;
+
+        const updatedLayer = { ...layer, ...updates };
+
+        // ✅ IMPORTANT: When size changes, reset corners to rectangle
+        if ((updates.width !== undefined && updates.width !== layer.width) ||
+          (updates.height !== undefined && updates.height !== layer.height)) {
+          const newWidth = updates.width !== undefined ? updates.width : layer.width;
+          const newHeight = updates.height !== undefined ? updates.height : layer.height;
+
+          updatedLayer.corners = [
+            { x: 0, y: 0 },
+            { x: newWidth, y: 0 },
+            { x: newWidth, y: newHeight },
+            { x: 0, y: newHeight }
+          ];
+        }
+
+        return updatedLayer;
+      })
+    );
+  };
 
   const removeLayer = (id) => {
     const layer = layers.find((l) => l.id === id);
@@ -522,6 +549,45 @@ function Editor() {
   // };
 
 
+  // const startCornerDrag = (e, layerId, cornerIndex) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  //   const layer = layers.find((l) => l.id === layerId);
+  //   if (!layer) return;
+
+  //   const canvasEl = innerCanvasRef.current;
+  //   if (!canvasEl) return;
+
+  //   const canvasRect = canvasEl.getBoundingClientRect();
+  //   const startX = e.clientX;
+  //   const startY = e.clientY;
+  //   const startCorners = [...layer.corners];
+
+  //   const onMove = (ev) => {
+  //     const deltaX = (ev.clientX - startX) / scale;
+  //     const deltaY = (ev.clientY - startY) / scale;
+
+  //     const newCorners = [...startCorners];
+  //     newCorners[cornerIndex] = {
+  //       x: Math.max(0, Math.min(layer.width, startCorners[cornerIndex].x + deltaX)),
+  //       y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
+  //     };
+
+  //     // ✅ SIRF CORNERS UPDATE - KOI TRANSFORM VALUES CALCULATE NAHI
+  //     updateLayer(layerId, { corners: newCorners });
+  //   };
+
+  //   const onUp = () => {
+  //     window.removeEventListener("mousemove", onMove);
+  //     window.removeEventListener("mouseup", onUp);
+  //     setDraggingCorner(null);
+  //   };
+
+  //   window.addEventListener("mousemove", onMove);
+  //   window.addEventListener("mouseup", onUp);
+  //   setDraggingCorner({ layerId, cornerIndex });
+  // };
+
   const startCornerDrag = (e, layerId, cornerIndex) => {
     e.stopPropagation();
     e.preventDefault();
@@ -534,7 +600,14 @@ function Editor() {
     const canvasRect = canvasEl.getBoundingClientRect();
     const startX = e.clientX;
     const startY = e.clientY;
-    const startCorners = [...layer.corners];
+
+    // ✅ Use existing corners or create default
+    const startCorners = layer.corners || [
+      { x: 0, y: 0 },
+      { x: layer.width, y: 0 },
+      { x: layer.width, y: layer.height },
+      { x: 0, y: layer.height }
+    ];
 
     const onMove = (ev) => {
       const deltaX = (ev.clientX - startX) / scale;
@@ -546,7 +619,7 @@ function Editor() {
         y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
       };
 
-      // ✅ SIRF CORNERS UPDATE - KOI TRANSFORM VALUES CALCULATE NAHI
+      // ✅ DIRECT UPDATE - No transform calculations
       updateLayer(layerId, { corners: newCorners });
     };
 

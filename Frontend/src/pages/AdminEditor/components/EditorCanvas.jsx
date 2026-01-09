@@ -1,6 +1,7 @@
 import React from "react";
 import { Rnd } from "react-rnd";
 import WarpedImage from "./WarpedImage";
+import ThreeWarpedImage from "./WarpedImage";
 
 const EditorCanvas = ({
   mockup,
@@ -27,7 +28,7 @@ const EditorCanvas = ({
       width: "100%",
       height: "100%",
       pointerEvents: "none",
-      zIndex: 0,
+      zIndex: 999,
     };
 
     // ✅ ADD BACK THE RESPONSIVE CHECK
@@ -46,7 +47,7 @@ const EditorCanvas = ({
               y1="0"
               x2={i * gridSize}
               y2={getCanvasSize().height}
-              stroke="rgba(255, 255, 255, 0.15)"
+              stroke="rgba(255, 255, 255, 0.7)"
               strokeWidth="1"
             />
           ))}
@@ -57,7 +58,7 @@ const EditorCanvas = ({
               y1={i * gridSize}
               x2={getCanvasSize().width}
               y2={i * gridSize}
-              stroke="rgba(255, 255, 255, 0.15)"
+              stroke="rgba(255, 255, 255, 0.7)"
               strokeWidth="1"
             />
           ))}
@@ -229,12 +230,78 @@ const EditorCanvas = ({
                       </div>
                     )} */}
 
-                    {layer.type === "image" && (
+                    {/* {layer.type === "image" && (
                       layer.enablePerspective && layer.corners ? (
                         // Canvas-based warping (4-point perspective)
                         <div style={{ width: "100%", height: "100%", position: "relative" }}>
                           <WarpedImage
-                          key={`${layer.id}-${layer.src}`} 
+                            key={`${layer.id}-${layer.src}`}
+                            src={layer.src}
+                            corners={layer.corners}
+                            width={layer.width}
+                            height={layer.height}
+                            fit={layer.fit || "contain"}
+                          />
+                        </div>
+                      ) */}
+                    {/* {layer.type === "image" && (
+                      layer.enablePerspective && layer.corners ? (
+                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                          <ThreeWarpedImage // ✅ Change from WarpedImage to ThreeWarpedImage
+                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+                            src={layer.src}
+                            corners={layer.corners}
+                            width={layer.width}
+                            height={layer.height}
+                            fit={layer.fit || "contain"}
+                          />
+                        </div>
+                      )
+                        :
+                        (
+                          // Normal image (no perspective)
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              perspective: `${layer.perspective || 0}px`,
+                              transformStyle: "preserve-3d",
+                            }}
+                          >
+                            <img
+                              src={layer.src}
+                              alt="layer"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: layer.fit || "contain",
+                                pointerEvents: "none",
+                                transform: `
+            rotateX(${layer.rotateX || 0}deg)
+            rotateY(${layer.rotateY || 0}deg)
+            rotateZ(${layer.rotateZ || 0}deg)
+            skewX(${layer.skewX || 0}deg)
+            skewY(${layer.skewY || 0}deg)
+          `,
+                                transformOrigin: layer.transformOrigin || "center center",
+                              }}
+                            />
+                          </div>
+                        )
+                    )} */}
+
+                    {layer.type === "image" && (
+                      layer.enablePerspective && layer.corners ? (
+                        <div style={{
+                          width: "100%",
+                          height: "100%",
+                          position: "relative",
+                          transform: `scaleY(1)`,
+                          // transform: `rotate(${layer.rotation || 0}deg)`,
+                          transformOrigin: "center center"
+                        }}>
+                          <ThreeWarpedImage
+                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
                             src={layer.src}
                             corners={layer.corners}
                             width={layer.width}
@@ -244,14 +311,12 @@ const EditorCanvas = ({
                         </div>
                       ) : (
                         // Normal image (no perspective)
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            perspective: `${layer.perspective || 0}px`,
-                            transformStyle: "preserve-3d",
-                          }}
-                        >
+                        <div style={{
+                          width: "100%",
+                          height: "100%",
+                          perspective: `${layer.perspective || 0}px`,
+                          transformStyle: "preserve-3d",
+                        }}>
                           <img
                             src={layer.src}
                             alt="layer"
@@ -274,12 +339,12 @@ const EditorCanvas = ({
                       )
                     )}
 
-                    {layer.type === "printarea" && (
+                    {/* {layer.type === "printarea" && (
                       layer.enablePerspective && layer.corners && layer.hasImage ? (
                         // Canvas-based warping (4-point perspective)
                         <div style={{ width: "100%", height: "100%", position: "relative" }}>
                           <WarpedImage
-                          key={`${layer.id}-${layer.imageSrc}`} 
+                            key={`${layer.id}-${layer.imageSrc}`}
                             src={layer.imageSrc}
                             corners={layer.corners}
                             width={layer.width}
@@ -287,71 +352,94 @@ const EditorCanvas = ({
                             fit={layer.fit || "cover"}
                           />
                         </div>
-                      ) : (
-                        // Normal rendering (no perspective or no image)
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            perspective: `${layer.perspective || 0}px`,
-                            transformStyle: "preserve-3d",
-                          }}
-                        >
-                          {layer.hasImage ? (
-                            <img
-                              src={layer.imageSrc}
-                              alt="Print area"
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: layer.fit || "cover",
-                                pointerEvents: "none",
-                                transform: `
-              rotateX(${layer.rotateX || 0}deg)
-              rotateY(${layer.rotateY || 0}deg)
-              rotateZ(${layer.rotateZ || 0}deg)
-              skewX(${layer.skewX || 0}deg)
-              skewY(${layer.skewY || 0}deg)
-            `,
-                                transformOrigin: layer.transformOrigin || "center center",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                background: "rgba(34,197,94,0.08)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 14,
-                                color: "#22c55e",
-                                fontWeight: 600,
-                                userSelect: "none",
-                                textAlign: "center",
-                                overflow: "hidden",
-                                transform: `
-              rotateX(${layer.rotateX || 0}deg)
-              rotateY(${layer.rotateY || 0}deg)
-              rotateZ(${layer.rotateZ || 0}deg)
-              skewX(${layer.skewX || 0}deg)
-              skewY(${layer.skewY || 0}deg)
-            `,
-                                transformOrigin: layer.transformOrigin || "center center",
-                              }}
-                            >
-                              {layer.name || "Print Area"}
-                              <br />
-                              {layer.width} × {layer.height}
-                              <br />
-                              <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
-                                Upload image from properties panel
-                              </span>
-                            </div>
-                          )}
+                      ) */}
+                    {/* // Printarea section (~line 250) UPDATE karo: */}
+                    {layer.type === "printarea" && (
+                      layer.enablePerspective && layer.corners && layer.hasImage ? (
+                        <div style={{
+                          width: "100%",
+                          height: "100%",
+                          position: "relative",
+                          transform: `scaleY(1)`,
+                          // transform: `rotate(${layer.rotation || 0}deg)`,
+                          transformOrigin: "center center"
+                        }}>
+                          <ThreeWarpedImage
+                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+                            src={layer.imageSrc}
+                            corners={layer.corners}
+                            width={layer.width}
+                            height={layer.height}
+                            fit={layer.fit || "cover"}
+                          />
                         </div>
                       )
+                        :
+                        (
+                          // Normal rendering (no perspective or no image)
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              perspective: `${layer.perspective || 0}px`,
+                              transformStyle: "preserve-3d",
+                            }}
+                          >
+                            {layer.hasImage ? (
+                              <img
+                                src={layer.imageSrc}
+                                alt="Print area"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: layer.fit || "cover",
+                                  pointerEvents: "none",
+                                  transform: `
+              rotateX(${layer.rotateX || 0}deg)
+              rotateY(${layer.rotateY || 0}deg)
+              rotateZ(${layer.rotateZ || 0}deg)
+              skewX(${layer.skewX || 0}deg)
+              skewY(${layer.skewY || 0}deg)
+            `,
+                                  transformOrigin: layer.transformOrigin || "center center",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  background: "rgba(34,197,94,0.08)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 14,
+                                  color: "#22c55e",
+                                  fontWeight: 600,
+                                  userSelect: "none",
+                                  textAlign: "center",
+                                  overflow: "hidden",
+                                  transform: `
+              rotateX(${layer.rotateX || 0}deg)
+              rotateY(${layer.rotateY || 0}deg)
+              rotateZ(${layer.rotateZ || 0}deg)
+              skewX(${layer.skewX || 0}deg)
+              skewY(${layer.skewY || 0}deg)
+            `,
+                                  transformOrigin: layer.transformOrigin || "center center",
+                                }}
+                              >
+                                {layer.name || "Print Area"}
+                                <br />
+                                {layer.width} × {layer.height}
+                                <br />
+                                <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
+                                  Upload image from properties panel
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )
                     )}
 
                     {/* {layer.type === "printarea" && (
