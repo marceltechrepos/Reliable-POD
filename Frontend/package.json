@@ -14,6 +14,8 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@reduxjs/toolkit": "^2.11.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tiptap/extension-image": "^3.13.0",
@@ -30,6 +32,7 @@
     "react-toast": "^1.0.3",
     "recharts": "^3.6.0",
     "tailwindcss": "^4.1.18",
+    "three": "^0.182.0",
     "tiptap": "^1.32.2",
     "uuid": "^13.0.0"
   },
