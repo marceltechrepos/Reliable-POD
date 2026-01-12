@@ -1,9 +1,10 @@
 // src/api/product.api.js
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const createProduct = async (payload) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await fetch('/api/create-product', {
+        const response = await fetch(`${BASE_URL}/api/create-product`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -24,7 +25,7 @@ const createProduct = async (payload) => {
 const getProductById = async (productId) => {
     try {
         const token = localStorage.getItem("token");
-        const res = await fetch("/api/get-product", {
+        const res = await fetch(`${BASE_URL}/api/get-product`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
