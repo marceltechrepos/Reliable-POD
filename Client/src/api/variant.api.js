@@ -2,10 +2,11 @@
 // All variant-related API calls
 
 import { authFetch } from "./product.api";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const getVariants = async (productId) => {
   try {
-    const res = await authFetch(`/api/${productId}/get-variant`);
+    const res = await authFetch(`${BASE_URL}/api/${productId}/get-variant`);
     return await res.json();
   } catch (err) {
     console.error('getVariants error', err);
@@ -15,7 +16,7 @@ export const getVariants = async (productId) => {
 
 export const createVariant = async (productId, payload) => {
   try {
-    const res = await authFetch(`/api/${productId}/create-variant`, {
+    const res = await authFetch(`${BASE_URL}/api/${productId}/create-variant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -29,7 +30,7 @@ export const createVariant = async (productId, payload) => {
 
 export const updateVariant = async (productId, variantId, payload) => {
   try {
-    const res = await authFetch(`/api/${productId}/update-variant/${variantId}`, {
+    const res = await authFetch(`${BASE_URL}/api/${productId}/update-variant/${variantId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -43,7 +44,7 @@ export const updateVariant = async (productId, variantId, payload) => {
 
 export const deleteVariant = async (productId, variantId) => {
   try {
-    const res = await authFetch(`/api/${productId}/delete-variant/${variantId}`, {
+    const res = await authFetch(`${BASE_URL}/api/${productId}/delete-variant/${variantId}`, {
       method: 'DELETE',
     });
     return await res.json();
