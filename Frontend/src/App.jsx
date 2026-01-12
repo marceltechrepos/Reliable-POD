@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import AdminLogin from "./components/Admin/AdminLogin";
 import Editor from "./pages/AdminEditor/Editor";
 import ProtectedRoute from "./components/ProtectedRoute"
+import PerspectiveWarp from "./pages/PerspectiveImage";
 
 function App() {
   // const token = localStorage.getItem("token");
@@ -35,6 +36,7 @@ function App() {
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/per" element={<PerspectiveWarp />} />
         <Route path="/admin/editor/:editId?" element={<Editor />} />
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
