@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "nodemon index.js",
     "dev:frontend": "cd frontend && npm run dev",
-    "start": "concurrently \"npm run dev\" \"npm run dev:frontend\""
+    "start": "concurrently \"npm run dev\" \"cd ../Client && npm run dev\""
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
