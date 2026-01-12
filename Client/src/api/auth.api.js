@@ -1,7 +1,9 @@
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 export const registerAPi = async (payload, setLoading, navigate) => {
     try {
         setLoading(true)
-        const res = await fetch("/api/User/CreateUser", {
+        const res = await fetch(`${BASE_URL}/api/User/CreateUser`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -30,7 +32,7 @@ export const loginApi = async (payload, setLoading, navigate) => {
     try {
         setLoading(true);
 
-        const res = await fetch("/api/User/Login", {
+        const res = await fetch(`${BASE_URL}/api/User/Login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -120,7 +122,7 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
 
         const token = localStorage.getItem("token");
 
-        const res = await fetch("/api/User/AddUserInfo", {
+        const res = await fetch(`${BASE_URL}/api/User/AddUserInfo`, {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`, // token required
@@ -158,7 +160,7 @@ export const getUserDetail = async (setLoading = () => { }) => {
             return null;
         }
 
-        const res = await fetch("/api/User/getUserDetail", {
+        const res = await fetch(`${BASE_URL}/api/User/getUserDetail`, {
             headers: {
                 Authorization: `Bearer ${token}`,
 

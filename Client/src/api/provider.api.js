@@ -1,8 +1,9 @@
 import { authFetch } from "./product.api";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getAllProvider = async () => {
   try {
-    const response = await authFetch("/api/Provider/get-all-provider");
+    const response = await authFetch(`${BASE_URL}/api/Provider/get-all-provider`);
     const data = await response.json();
 
     if (data.success) {
@@ -18,7 +19,7 @@ const getAllProvider = async () => {
 
 const createProvider = async (payload) => {
   try {
-    const response = await authFetch("/api/Provider/create-provider", {
+    const response = await authFetch(`${BASE_URL}/api/Provider/create-provider`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
