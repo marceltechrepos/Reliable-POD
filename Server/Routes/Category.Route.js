@@ -29,6 +29,7 @@ CategoryRouter.get(
   getAllCategory
 );
 
+
 CategoryRouter.put(
   "/Category/update-category/:categoryId",
    isAdmin,

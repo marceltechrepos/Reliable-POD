@@ -59,6 +59,8 @@ export const getAllCategory = async (req, res) => {
   }
 };
 
+
+
 export const updateCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
