@@ -2,11 +2,20 @@ import fs from "fs";
 import Provider from "../Models/Provider.Model.js";
 import Category from "../Models/Categories.Model.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
+import slugify from "slugify";
+import mongoose from "mongoose";
 
 // =======> Category
 export const createCategory = async (req, res) => {
   try {
-    const { category, description } = req.body;
+    const { name, description, parent = null } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Category name is required",
+      });
+    }
 
     if (!req.file) {
       return res.status(400).json({
@@ -15,17 +24,31 @@ export const createCategory = async (req, res) => {
       });
     }
 
-    // Upload image to Cloudinary
+    // Check parent category
+    let level = 0;
+    if (parent) {
+      const parentCategory = await Category.findById(parent);
+      if (!parentCategory) {
+        return res.status(404).json({
+          success: false,
+          message: "Parent category not found",
+        });
+      }
+      level = parentCategory.level + 1;
+    }
+
+    // Upload image
     const uploadResult = await cloudinary.uploader.upload(req.file.path, {
       folder: "categories",
     });
-
-    // Remove file from local storage after upload
     fs.unlinkSync(req.file.path);
 
-    const newCategory = await Category.create({
-      category,
+    const category = await Category.create({
+      name,
+      slug: slugify(name, { lower: true }),
       description,
+      parent,
+      level,
       thumbnail: {
         url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
@@ -34,7 +57,7 @@ export const createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: newCategory,
+      data: category,
     });
   } catch (error) {
     res.status(400).json({
@@ -44,9 +67,11 @@ export const createCategory = async (req, res) => {
   }
 };
 
-export const getAllCategory = async (req, res) => {
+export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find({ isActive: true })
+      .sort({ level: 1, createdAt: -1 });
+
     res.status(200).json({
       success: true,
       data: categories,
@@ -59,16 +84,12 @@ export const getAllCategory = async (req, res) => {
   }
 };
 
-
-
 export const updateCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { category, description } = req.body;
+    const { name, description, parent } = req.body;
 
-    // Find existing category
     const existingCategory = await Category.findById(categoryId);
-
     if (!existingCategory) {
       return res.status(404).json({
         success: false,
@@ -76,41 +97,44 @@ export const updateCategory = async (req, res) => {
       });
     }
 
-    let updateData = {};
+    const updateData = {};
 
-    // Update category name if provided
-    if (category !== undefined) {
-      updateData.category = category;
+    if (name) {
+      updateData.name = name;
+      updateData.slug = slugify(name, { lower: true });
     }
 
-    // Update description if provided
     if (description !== undefined) {
       updateData.description = description;
     }
 
-    // If new image is uploaded
+    if (parent !== undefined) {
+      if (parent) {
+        const parentCategory = await Category.findById(parent);
+        if (!parentCategory) {
+          return res.status(404).json({
+            success: false,
+            message: "Parent category not found",
+          });
+        }
+        updateData.parent = parent;
+        updateData.level = parentCategory.level + 1;
+      } else {
+        updateData.parent = null;
+        updateData.level = 0;
+      }
+    }
+
     if (req.file) {
-      // Upload new image to Cloudinary
       const uploadResult = await cloudinary.uploader.upload(req.file.path, {
         folder: "categories",
       });
-
-      // Remove file from local storage after upload
       fs.unlinkSync(req.file.path);
 
-      // Delete old image from Cloudinary if exists
-      if (existingCategory.thumbnail && existingCategory.thumbnail.public_id) {
-        try {
-          await cloudinary.uploader.destroy(
-            existingCategory.thumbnail.public_id
-          );
-        } catch (cloudinaryError) {
-          console.error(
-            "Error deleting old image from Cloudinary:",
-            cloudinaryError
-          );
-          // Continue with update even if delete fails
-        }
+      if (existingCategory.thumbnail?.public_id) {
+        await cloudinary.uploader.destroy(
+          existingCategory.thumbnail.public_id
+        );
       }
 
       updateData.thumbnail = {
@@ -119,7 +143,6 @@ export const updateCategory = async (req, res) => {
       };
     }
 
-    // Update category
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
       updateData,
@@ -131,7 +154,7 @@ export const updateCategory = async (req, res) => {
       data: updatedCategory,
     });
   } catch (error) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
@@ -141,26 +164,158 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const category = await Category.findByIdAndDelete(categoryId);
+
+    const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
         message: "Category not found",
       });
     }
-    return res.status(200).json({
+
+    category.isActive = false;
+    await category.save();
+
+    res.status(200).json({
       success: true,
-      message: "Category deleted successfully",
+      message: "Category disabled successfully",
     });
   } catch (error) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// ======> Providers
+export const getCategoryTree = async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true });
+
+    const map = {};
+    const roots = [];
+
+    categories.forEach(cat => {
+      map[cat._id] = { ...cat._doc, children: [] };
+    });
+
+    categories.forEach(cat => {
+      if (cat.parent) {
+        map[cat.parent]?.children.push(map[cat._id]);
+      } else {
+        roots.push(map[cat._id]);
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: roots,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getCategoryChildren = async (req, res) => {
+  try {
+    const { parentId } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(parentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid parent category ID",
+      });
+    }
+
+    const parentCategory = await Category.findById(parentId);
+    if (!parentCategory) {
+      return res.status(404).json({
+        success: false,
+        message: "Parent category not found",
+      });
+    }
+
+    const categories = await Category.find({ isActive: true }).lean();
+
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat._id.toString()] = {
+        ...cat,
+        children: [],
+      };
+    });
+
+    categories.forEach(cat => {
+      if (cat.parent) {
+        const parentKey = cat.parent.toString();
+        categoryMap[parentKey]?.children.push(
+          categoryMap[cat._id.toString()]
+        );
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: categoryMap[parentId]?.children || [],
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getRootCategoriesDropdown = async (req, res) => {
+  try {
+    // 1️⃣ Fetch all active categories
+    const categories = await Category.find({ isActive: true })
+      .select("_id name parent")
+      .sort({ name: 1 })
+      .lean(); // lean for faster queries & plain JS objects
+
+    // 2️⃣ Build a lookup map
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat._id.toString()] = {
+        _id: cat._id,
+        name: cat.name,
+        children: []
+      };
+    });
+
+    // 3️⃣ Attach children to parents
+    categories.forEach(cat => {
+      if (cat.parent) {
+        const parentKey = cat.parent.toString();
+        if (categoryMap[parentKey]) {
+          categoryMap[parentKey].children.push(categoryMap[cat._id.toString()]);
+        }
+      }
+    });
+
+    // 4️⃣ Get only root categories
+    const roots = categories
+      .filter(cat => !cat.parent)
+      .map(cat => categoryMap[cat._id.toString()]);
+
+    res.status(200).json({
+      success: true,
+      data: roots,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// ======> Providers ======>
 export const createProvider = async (req, res) => {
   try {
     const { provider, description } = req.body;
@@ -208,7 +363,7 @@ export const updateProvider = async (req, res) => {
     const updateData = {};
     if (provider !== undefined) updateData.provider = provider;
     if (description !== undefined) updateData.description = description;
-    
+
     const updatedProvider = await Provider.findByIdAndUpdate(
       providerId,
       updateData,
