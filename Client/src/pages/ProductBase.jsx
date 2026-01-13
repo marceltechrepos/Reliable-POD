@@ -19,12 +19,12 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { getAllProvider, createProvider } from '../api/provider.api';
 import { createProduct } from '../api/product.api';
+import { getAllCategory, createCategory, getCategoryDropdown } from '../api/category.api';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
-import { getAllCategory, createCategory } from '../api/category.api';
 
 // Local storage se data load karne ka function
 const loadMockupsFromStorage = () => {
@@ -40,7 +40,14 @@ const saveMockupsToStorage = (mockups) => {
 function ProductBase() {
   /* ================== BASIC STATES ================== */
   const [provider, setProvider] = useState('');
-  const [category, setCategory] = useState('');
+  // const [category, setCategory] = useState('');
+
+  const [parentCategory, setParentCategory] = useState(''); // parent _id
+  const [subCategory, setSubCategory] = useState('');       // selected child _id
+
+  // hold fetched dropdown structure
+  const [categoryTree, setCategoryTree] = useState([]); // array of { _id, name, children: [...] }
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
   const [productTitle, setProductTitle] = useState('');
   const [internalName, setInternalName] = useState('');
@@ -64,6 +71,7 @@ function ProductBase() {
     { label: 'T-Shirt', value: 't-shirt', thumbnail: '/images/categories/tshirt.png' }
   ]);
 
+
   const [open, setOpen] = useState(false);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
   const [selectedMockups, setSelectedMockups] = useState(() => loadMockupsFromStorage());
@@ -86,6 +94,16 @@ function ProductBase() {
     { id: 1, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Front', category: 'TIB' },
     { id: 2, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Back', category: 'TIB' },
   ]);
+
+  useEffect(() => {
+    const fetchDropdown = async () => {
+      const data = await getCategoryDropdown();
+      // data shape: [{ _id, name, children: [{ _id, name, children: [...] }, ...] }, ...]
+      setCategoryTree(data || []);
+      setCategoriesLoaded(true);
+    };
+    fetchDropdown();
+  }, []);
 
   /* ================== HANDLERS ================== */
   const fulfillmentHandler = (e) => setProvider(e.target.value);
@@ -115,9 +133,11 @@ function ProductBase() {
     formData.append("thumbnail", categoryThumbnail);
 
     const res = await createCategory(formData);
+    console.log(res, "REsponse ");
 
     if (res?.success) {
-      const newItem = { label: res.data.category, value: res.data._id };
+      const newItem = { label: res.data[0].name, value: res.data._id };
+
       setCategories(prev => [...prev, newItem]);
       setCategory(res.data._id);
       setNewCategory('');
@@ -129,11 +149,17 @@ function ProductBase() {
   };
 
   const saveProductHandler = async () => {
+
+    if (!subCategory) {
+      alert("Please select a sub category");
+      return;
+    }
+
     const payload = {
       productTitle,
       internalName,
       fulfilmentProvider: provider,
-      category,
+      category: subCategory,
       fulfilmentCatalogID,
       description
     };
@@ -198,8 +224,9 @@ function ProductBase() {
     const fetchCategories = async () => {
       const data = await getAllCategory();
       if (data && data.length > 0) {
-        const formattedCategories = data.map(c => ({ label: c.category, value: c._id }));
+        const formattedCategories = data.map(c => ({ label: c.slug, value: c.name, thumbnail: c.thumbnail, name: c.name, id: c._id }));
         setCategories(formattedCategories);
+        console.log(formattedCategories, " <<<< formattedCategories");
       }
     };
     fetchCategories();
@@ -257,24 +284,51 @@ function ProductBase() {
 
               <FormControl fullWidth size="small" className="mb-2">
                 <InputLabel>Fulfillment Category</InputLabel>
-                <Select value={category} onChange={fulfillmentCategoryHandler}>
+                <Select
+                  value={parentCategory}
+                  onChange={(e) => {
+                    const parentId = e.target.value;
+                    setParentCategory(parentId);
+                    setSubCategory(''); // reset child when parent changes
+                  }}
+                  label="Fulfillment Category"
+                >
                   <MenuItem value=""><em>Choose an option</em></MenuItem>
-                  {categories.map((c, i) => (
-                    <MenuItem key={i} value={c.value}>{c.label}</MenuItem>
+                  {categoryTree.map((c) => (
+                    <MenuItem key={c._id} value={c._id}>{c.name}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <div
-                onClick={() => setOpenCategoryModal(true)}
+                onClick={() => navigate("/admin/category")}
                 className="text-sm text-ocean underline text-right mb-5 cursor-pointer"
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpenCategoryModal(true); }}
+              // onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpenCategoryModal(true); }}
               >
                 Add Category
               </div>
 
+
+              {parentCategory && categoryTree.find(p => p._id === parentCategory)?.children?.length > 0 && (
+                <FormControl fullWidth size="small" className="mb-4">
+                  <InputLabel>Fulfillment Sub Category</InputLabel>
+                  <Select
+                    value={subCategory}
+                    onChange={(e) => setSubCategory(e.target.value)}
+                    label="Fulfillment Sub Category"
+                  >
+                    <MenuItem value=""><em>Choose an option</em></MenuItem>
+                    {(categoryTree.find(p => p._id === parentCategory)?.children || []).map((child) => (
+                      <MenuItem key={child._id} value={child._id}>{child.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
               <TextField
+                style={{ marginTop: '12px' }}
+                className='mt-3'
                 type="number"
                 label="Fulfillment catalog ID"
                 fullWidth
