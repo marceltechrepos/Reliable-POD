@@ -21,46 +21,46 @@ const CategoryRouter = Router();
 
 CategoryRouter.post(
   "/Category/create-category",
-  // isAdmin,
+  isAdmin,
   upload.single("thumbnail"),
   createCategory
 );
 
 CategoryRouter.get(
   "/Category/get-all-category",
-  // isAdmin,
+  isAdmin,
   getAllCategories
 );
 
 CategoryRouter.get(
   "/Category/get-category-tree",
-  // isAdmin,
+  isAdmin,
   getCategoryTree
 );
 
 CategoryRouter.get(
   "/Category/get-category-children",
-  // isAdmin,
+  isAdmin,
   getCategoryChildren
 );
 
 CategoryRouter.get(
   "/Category/get-category-dropdown",
-  // isAdmin,
+  isAdmin,
   getRootCategoriesDropdown
 );
 
 
 CategoryRouter.put(
   "/Category/update-category/:categoryId",
-  // isAdmin,
+  isAdmin,
   upload.single("thumbnail"),
   updateCategory
 );
 
 CategoryRouter.delete(
   "/Category/delete-category/:categoryId",
-  // isAdmin,
+  isAdmin,
   deleteCategory
 );
 
