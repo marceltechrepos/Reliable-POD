@@ -4,7 +4,12 @@ const productSchema = new Schema(
   {
     productTitle: String,
     internalName: String,
-    fulfilmentProvider: String,
+    fulfilmentProvider: {
+      type: Types.ObjectId,
+      ref: "Provider", // ye model ka naam hoga
+      required: true,
+    },
+    // fulfilmentProvider: String,
     fulfilmentCatalogID: String,
     description: String,
     thumbnail: {

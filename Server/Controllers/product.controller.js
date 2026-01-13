@@ -1,6 +1,8 @@
 import productModel from "../Models/product.model.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
- 
+import mongoose from "mongoose";
+
+
 export const getProducts = async (req, res) => {
   try {
     const products = await productModel.find().populate("category");
@@ -9,6 +11,103 @@ export const getProducts = async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 };
+
+
+// export const getProductsByCategoryId = async (req, res) => {
+//   try {
+//     const { categoryId } = req.params;
+
+//     // 1️⃣ Required check
+//     if (!categoryId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Category ID is required",
+//       });
+//     }
+
+//     // 2️⃣ ObjectId validation
+//     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid category ID",
+//       });
+//     }
+
+//     // 3️⃣ Query
+//     const products = await productModel.find({ category: categoryId });
+
+//     // 4️⃣ No data case
+//     if (products.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No products found for this category",
+//         data: [],
+//       });
+//     }
+
+//     // 5️⃣ Success
+//     return res.status(200).json({
+//       success: true,
+//       data: products,
+//     });
+
+//   } catch (error) {
+//     console.error("getProductsByCategoryId error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
+
+export const getProductsByCategoryId = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    if (!categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: "Category ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category ID",
+      });
+    }
+
+    // 🔥 Populate category and fulfilmentProvider
+    const products = await productModel.find({ category: categoryId })
+      .populate("category")
+      .populate("fulfilmentProvider");
+
+    if (products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No products found for this category",
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
+
+  } catch (error) {
+    console.error("getProductsByCategoryId error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 export const createProduct = async (req, res) => {
   try {
@@ -115,7 +214,7 @@ export const updateProduct = async (req, res) => {
     }
 
     // If thumbnail is provided, upload to Cloudinary
-    console.log({thumbnail})
+    console.log({ thumbnail })
     if (thumbnail) {
       const uploadResult = await cloudinary.uploader.upload(
         thumbnail.path,
@@ -375,7 +474,7 @@ export const updatePrintArea = async (req, res) => {
       ...updateData,
       updatedAt: new Date(), // Add updated timestamp
     };
-    
+
     await product.save();
 
     res.status(200).json({
