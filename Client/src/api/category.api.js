@@ -25,6 +25,7 @@ const createCategory = async (payload) => {
     });
 
     const data = await response.json();
+    console.log('Create category response:', data);
     return data;
   } catch (error) {
     console.error('Create category error:', error);
@@ -63,8 +64,20 @@ const deleteCategory = async (id) => {
   }
 };
 
+const getCategoryDropdown = async () => {
+  try {
+    const response = await authFetch(`${BASE_URL}/api/Category/get-category-dropdown`);
+    const data = await response.json();
+    if (data.success) return data.data;
+    return [];
+  } catch (err) {
+    console.error("getCategoryDropdown error:", err);
+    return [];
+  }
+};
+
 
 export {
   getAllCategory, createCategory, updateCategory,
-  deleteCategory,
+  deleteCategory,getCategoryDropdown
 };
