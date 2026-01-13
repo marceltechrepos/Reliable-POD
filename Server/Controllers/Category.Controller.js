@@ -5,7 +5,7 @@ import cloudinary from "../Utils/Cloudinary.Config.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 
-// =======> Category
+// <======= Category =======>
 export const createCategory = async (req, res) => {
   try {
     const { name, description, parent = null } = req.body;
@@ -315,7 +315,7 @@ export const getRootCategoriesDropdown = async (req, res) => {
 };
 
 
-// ======> Providers ======>
+// <====== Providers ======>
 export const createProvider = async (req, res) => {
   try {
     const { provider, description } = req.body;
