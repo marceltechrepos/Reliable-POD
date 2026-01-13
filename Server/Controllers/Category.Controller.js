@@ -69,7 +69,7 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true })
+    const categories = await Category.find({ isActive: true, parent: null })
       .sort({ level: 1, createdAt: -1 });
 
     res.status(200).json({

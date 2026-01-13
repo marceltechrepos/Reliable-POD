@@ -19,15 +19,18 @@ function CategoryPage() {
     const [isEdit, setIsEdit] = useState(false);
     const [editCategoryId, setEditCategoryId] = useState(null);
 
+    console.log(categories , "<<<<< categories")
+
     // Fetch all categories
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const data = await getAllCategory();
+                console.log(data, "<<<< category page data")
                 const formattedCategories = data.map((item) => ({
                     id: item._id,
-                    label: item.category,
-                    value: item.category.toLowerCase().replace(/\s+/g, "-"),
+                    label: item.slug,
+                    value: item.name.toLowerCase().replace(/\s+/g, "-"),
                     thumbnail: item.thumbnail.url,
                     createdAt: item.createdAt,
                 }));
@@ -81,7 +84,7 @@ function CategoryPage() {
         }
 
         const formData = new FormData();
-        formData.append("category", newCategory.trim());
+        formData.append("name", newCategory.trim());
         if (categoryThumbnail) formData.append("thumbnail", categoryThumbnail);
 
         let res;
@@ -105,7 +108,7 @@ function CategoryPage() {
             setCategories((prev) =>
                 prev.map((cat) =>
                     cat.id === editCategoryId
-                        ? { ...cat, label: res.data.category, thumbnail: res.data.thumbnail.url }
+                        ? { ...cat, label: res.data.name, thumbnail: res.data.thumbnail.url }
                         : cat
                 )
             );
@@ -113,11 +116,11 @@ function CategoryPage() {
             setCategories((prev) => [
                 ...prev,
                 {
-                    id: res.data._id,
-                    label: res.data.category,
-                    value: res.data.category.toLowerCase().replace(/\s+/g, "-"),
-                    thumbnail: res.data.thumbnail.url,
-                    createdAt: res.data.createdAt,
+                    id: res?.data?._id,
+                    label: res?.data?.name,
+                    value: res?.data?.name?.toLowerCase().replace(/\s+/g, "-"),
+                    thumbnail: res?.data?.thumbnail?.url,
+                    createdAt: res?.data?.createdAt,
                 },
             ]);
         }
@@ -150,33 +153,37 @@ function CategoryPage() {
                 {/* Category Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4 cursor-pointer">
                     {categories.map((cat) => (
-                        <Link to={`/admin/category/${cat.id}`} key={cat.id}>
-                            <div
-                                key={cat.id}
-                                className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border"
-                            >
-                                <div className="relative h-56 bg-gray-100 group overflow-hidden">
-                                    {cat.thumbnail ? (
-                                        <img src={cat.thumbnail} alt={cat.label} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
-                                    )}
 
-                                    {/* Hover Overlay */}
-                                    <div className="absolute bottom-0 left-0 w-full h-[35%] bg-black/80 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out flex flex-col justify-between p-4">
-                                        <h3 className="text-md font-bold text-center">{cat.label}</h3>
-                                        <div className="flex justify-between text-sm">
-                                            <button onClick={() => openEditModal(cat)} className="hover:underline cursor-pointer">
-                                                Edit
-                                            </button>
-                                            <button onClick={() => deleteCategoryHandler(cat.id)} className="text-red-400 hover:underline cursor-pointer">
-                                                Delete
-                                            </button>
-                                        </div>
+                        <div
+                            key={cat.id}
+                            className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border"
+                        >
+                            <div className="relative h-56 bg-gray-100 group overflow-hidden">
+                                {cat.thumbnail ? (
+                                    <Link to={`/admin/category/${cat.id}`} key={cat.id}>
+                                        <img src={cat.thumbnail} alt={cat.label} className="w-full h-full object-cover" />
+                                    </Link>
+                                ) : (
+                                    <Link to={`/admin/category/${cat.id}`} key={cat.id}>
+                                        <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                                    </Link>
+                                )}
+
+                                {/* Hover Overlay */}
+                                <div className="absolute bottom-0 left-0 w-full h-[35%] bg-black/80 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out flex flex-col justify-between p-4">
+                                    <h3 className="text-md font-bold text-center">{cat.label}</h3>
+                                    <div className="flex justify-between text-sm">
+                                        <button onClick={() => openEditModal(cat)} className="hover:underline cursor-pointer">
+                                            Edit
+                                        </button>
+                                        <button onClick={() => deleteCategoryHandler(cat?.id)} className="text-red-400 hover:underline cursor-pointer">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </Link>
+                        </div>
+                        // </Link>
                     ))}
                 </div>
             </div>
