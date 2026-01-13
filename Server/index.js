@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 ConnectDB();
-
+app.get("/", (req, res) => res.send("Hello World!"));
 
 const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter];
 routes.forEach((route) => app.use("/api", route));

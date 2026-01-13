@@ -1,33 +1,49 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 const CategorySchema = new Schema(
   {
-    category: {
+    name: {
       type: String,
-      required: [true, "Category name is required"],
+      required: true,
       trim: true,
-      unique: true,
-      minlength: [2, "Category name must be at least 2 characters long"],
+      minlength: 2,
     },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     description: {
       type: String,
       default: "",
     },
+
     thumbnail: {
-      url: {
-        type: String,
-        required: [true, "Image URL is required"],
-      },
-      public_id: {
-        type: String,
-        required: [true, "Public ID is required"],
-      },
+      url: String,
+      public_id: String,
+    },
+
+    parent: {
+      type: Types.ObjectId,
+      ref: "Category",
+      default: null, // null = top-level category
+    },
+
+    level: {
+      type: Number,
+      default: 0, // 0 = category, 1 = subcategory, 2 = child, etc.
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
-  {
-    timestamps: true, // Adds createdAt and updatedAt automatically
-  }
+  { timestamps: true }
 );
 
-const Category = model("Category", CategorySchema);
-export default Category;
+export default model("Category", CategorySchema);
