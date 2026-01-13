@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   // =========> Base Product
   getProducts,
+  getProductsByCategoryId,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -29,6 +30,12 @@ productRouter.get(
   "/get-product",
   isLogin,
   getProducts
+);
+
+productRouter.get(
+  "/get-product-by-category/:categoryId",
+  isLogin,
+  getProductsByCategoryId
 );
 productRouter.post(
   "/create-product",
