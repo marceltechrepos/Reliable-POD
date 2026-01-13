@@ -54,7 +54,7 @@ export default function AddMockup({ open, onClose, onSelect }) {
 
     const handleFiles = async (files) => {
         for (const file of Array.from(files)) {
-            const tempId = crypto.randomUUID();
+            const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             const tempPreview = {
                 id: tempId,
                 url: URL.createObjectURL(file),

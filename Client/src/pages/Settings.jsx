@@ -9,6 +9,14 @@ import ProviderAccordion from "../components/Admin/ProviderAccordion";
 import CloseIcon from '@mui/icons-material/Close';
 import { userInfoApi, getUserDetail } from "../api/auth.api";
 import {
+    getAllProvider,
+    createProvider,
+    updateProvider, deleteProvider
+} from "../api/provider.api.js"
+import {
+    getAllCategory, createCategory, updateCategory, deleteCategory
+} from "../api/category.api.js"
+import {
     BRAND, FIELDS_CONFIG, buildDefaultUser, userInfoSample, providersSample, categoriesSample
 } from "../utils/data.js"
 
@@ -48,8 +56,10 @@ export default function Settings() {
         description: "",
     });
 
+    console.log(providers, " <<<< providers")
+
     // Categories state & editing
-    const [categories, setCategories] = useState(categoriesSample);
+    const [categories, setCategories] = useState();
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [editCategoryData, setEditCategoryData] = useState({
         name: "",
@@ -58,6 +68,41 @@ export default function Settings() {
         imagePreview: null,
     });
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const data = await getAllCategory();
+
+            const mappedCategories = data.map((c) => ({
+                id: c._id,
+                name: c.name,
+                image: c.thumbnail?.url || null,
+                slug: c.slug,
+                description: c.description,
+                parent: c.parent,
+                level: c.level,
+                isActive: c.isActive,
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt,
+            }));
+
+            setCategories(mappedCategories);
+        };
+
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        const fetchProvider = async () => {
+            const data = await getAllProvider();
+            setProviders(data);
+        }
+
+
+        fetchProvider();
+    }, [])
+
+
+
     // --- Effects for profile preview cleanup ---
     useEffect(() => {
         return () => {
@@ -65,7 +110,7 @@ export default function Settings() {
             if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
             if (editCategoryData.imagePreview) URL.revokeObjectURL(editCategoryData.imagePreview);
             // also cleanup category images stored in categories
-            categories.forEach((c) => {
+            categories?.forEach((c) => {
                 if (c.image && typeof c.image === "string" && c._isObjectURL) {
                     try {
                         URL.revokeObjectURL(c.image);
@@ -180,68 +225,122 @@ export default function Settings() {
 
     // ------------- PROVIDERS: handlers ----------------
     const handleEditClick = (provider) => {
-        setEditingProviderId(provider.id);
+        setEditingProviderId(provider._id);
         setEditProviderData({
-            name: provider.name,
-            description: provider.description,
+            name: provider.provider,
+            description: provider.description || "",
         });
     };
 
-    const handleSaveProvider = (id) => {
-        setProviders((prev) => prev.map((p) => (p.id === id ? { ...p, ...editProviderData } : p)));
-        setEditingProviderId(null);
-        setEditProviderData({ name: "", description: "" });
+    const handleSaveProvider = async (id) => {
+        try {
+            const payload = {
+                provider: editProviderData.name,
+                description: editProviderData.description,
+            };
+            const res = await updateProvider(id, payload);
+            if (res.success) {
+                setProviders((prev) =>
+                    prev.map((p) => (p._id === id ? { ...p, ...payload } : p))
+                );
+                setEditingProviderId(null);
+                setEditProviderData({ name: "", description: "" });
+            } else {
+                alert("Failed to update provider");
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
-
-    const handleRemoveProvider = (id) => {
-        setProviders((prev) => prev.filter((p) => p.id !== id));
-        if (openProvider === id) setOpenProvider(null);
+    const handleRemoveProvider = async (id) => {
+        try {
+            const res = await deleteProvider(id);
+            if (res.success) {
+                setProviders((prev) => prev.filter((p) => p._id !== id));
+                if (openProvider === id) setOpenProvider(null);
+            } else {
+                alert("Failed to delete provider");
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     // ------------- CATEGORIES: handlers ----------------
-    const handleEditCategoryClick = (cat) => {
-        setEditingCategoryId(cat.id);
-        setEditCategoryData({
-            name: cat.name,
-            color: cat.color || "#3b6d92",
-            imageFile: null,
-            imagePreview: cat.image || null,
-        });
-    };
+    // const handleEditCategoryClick = (cat) => {
+    //     setEditingCategoryId(cat.id);
+    //     setEditCategoryData({
+    //         name: cat.name,
+    //         color: cat.color || "#3b6d92",
+    //         imageFile: null,
+    //         imagePreview: cat.image || null,
+    //     });
+    // };
 
-    const handleCategoryImageChange = (file) => {
-        if (!file) return;
-        if (editCategoryData.imagePreview && editCategoryData.imagePreview.startsWith("blob:")) {
-            try {
-                URL.revokeObjectURL(editCategoryData.imagePreview);
-            } catch { }
-        }
-        const url = URL.createObjectURL(file);
-        setEditCategoryData((prev) => ({ ...prev, imageFile: file, imagePreview: url }));
-    };
+    // const handleCategoryImageChange = (file) => {
+    //     if (!file) return;
+    //     if (editCategoryData.imagePreview && editCategoryData.imagePreview.startsWith("blob:")) {
+    //         try {
+    //             URL.revokeObjectURL(editCategoryData.imagePreview);
+    //         } catch { }
+    //     }
+    //     const url = URL.createObjectURL(file);
+    //     setEditCategoryData((prev) => ({ ...prev, imageFile: file, imagePreview: url }));
+    // };
 
-    const handleSaveCategory = (id) => {
-        setCategories((prev) =>
-            prev.map((c) =>
-                c.id === id
-                    ? {
-                        ...c,
-                        name: editCategoryData.name,
-                        color: editCategoryData.color,
-                        image: editCategoryData.imagePreview,
-                        _isObjectURL: !!editCategoryData.imageFile,
-                    }
-                    : c
-            )
-        );
-        setEditingCategoryId(null);
-        setEditCategoryData({ name: "", color: "#3b6d92", imageFile: null, imagePreview: null });
-    };
+    // const handleSaveCategory = async (id) => {
+    //     const formData = new FormData();
+    //     formData.append("name", editCategoryData.name);
+    //     if (editCategoryData.imageFile) {
+    //         formData.append("thumbnail", editCategoryData.imageFile);
+    //     }
 
-    const handleRemoveCategory = (id) => {
-        setCategories((prev) => prev.filter((c) => c.id !== id));
-        if (openCategory === id) setOpenCategory(null);
-    };
+    //     const res = await updateCategory(id, formData);
+    //     if (!res.success) return;
+
+    //     setCategories((prev) =>
+    //         prev.map((c) =>
+    //             c.id === id
+    //                 ? {
+    //                     ...c,
+    //                     name: res.data.name,       // response me updated name
+    //                     image: res.data.thumbnail?.url,
+    //                     slug: res.data.slug,
+    //                     description: res.data.description,
+    //                     parent: res.data.parent,
+    //                     level: res.data.level,
+    //                     isActive: res.data.isActive,
+    //                     updatedAt: res.data.updatedAt,
+    //                 }
+    //                 : c
+    //         )
+    //     );
+
+    //     setEditingCategoryId(null);
+    //     setEditCategoryData({
+    //         name: "",
+    //         color: "#3b6d92",
+    //         imageFile: null,
+    //         imagePreview: null,
+    //     });
+    // };
+
+    // const handleRemoveCategory = async (id) => {
+    //     const confirm = window.confirm("Delete this category?");
+    //     if (!confirm) return;
+
+    //     const res = await deleteCategory(id);
+    //     if (!res.success) return;
+
+    //     setCategories((prev) => prev.filter((c) => c.id !== id));
+    // };
+
+
+
+    // const handleRemoveCategory = (id) => {
+    //     setCategories((prev) => prev.filter((c) => c.id !== id));
+    //     if (openCategory === id) setOpenCategory(null);
+    // };
 
 
     // fetch logged-in user details on mount
@@ -333,12 +432,12 @@ export default function Settings() {
                             label="Provider"
                             icon={<IconProvider color={BRAND.secondary} />}
                         />
-                        <TabButton
+                        {/* <TabButton
                             active={activeTab === "category"}
                             onClick={() => setActiveTab("category")}
                             label="Category"
                             icon={<IconCategory color={BRAND.dark} />}
-                        />
+                        /> */}
                     </nav>
                 </aside>
 
@@ -641,89 +740,79 @@ export default function Settings() {
                             </section>
                         )}
 
-                        {/* ---------- PROVIDER TAB ---------- */}
                         {activeTab === "provider" && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">providers</h2>
-                                <div className="space-y-3">
+                                <h2 className="text-xl font-semibold mb-4">Providers</h2>
+
+                                <div className="space-y-4">
                                     {providers.map((p) => (
-                                        <ProviderAccordion
-                                            key={p.id}
-                                            open={openProvider === p.id}
-                                            onToggle={() => setOpenProvider(openProvider === p.id ? null : p.id)}
-                                            title={p.name}
-                                            subtitle={p.description}
-                                        >
-                                            {editingProviderId === p.id ? (
-                                                <div className="bg-gray-50 p-4 rounded-lg border">
-                                                    <label className="text-xs text-gray-500">Provider</label>
-                                                    <input
-                                                        className="w-full mt-1 mb-3 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                                        value={editProviderData.name}
-                                                        onChange={(e) => setEditProviderData({ ...editProviderData, name: e.target.value })}
-                                                    />
+                                        <div key={p._id} className="bg-white border-gray-100 rounded-lg shadow p-4 border flex flex-col md:flex-row md:items-center justify-between">
 
-                                                    <label className="text-xs text-gray-500">Description</label>
-                                                    <textarea
-                                                        className="w-full mt-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                                        rows={3}
-                                                        value={editProviderData.description}
-                                                        onChange={(e) =>
-                                                            setEditProviderData({
-                                                                ...editProviderData,
-                                                                description: e.target.value,
-                                                            })
-                                                        }
-                                                    />
+                                            {/* Provider info / Editable inputs */}
+                                            <div className="flex-1 mb-2 md:mb-0 flex flex-col md:flex-row md:items-center gap-2">
+                                                {editingProviderId === p._id ? (
+                                                    <>
+                                                        <input
+                                                            className="border rounded-md px-2 py-1 text-sm w-100"
+                                                            value={editProviderData.name}
+                                                            onChange={(e) =>
+                                                                setEditProviderData((prev) => ({ ...prev, name: e.target.value }))
+                                                            }
+                                                        />
+                                                        
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <h3 className="font-medium text-gray-800">{p.provider}</h3>
+                                                        {/* <p className="text-sm text-gray-600">{p.description || "No description"}</p> */}
+                                                    </>
+                                                )}
+                                            </div>
 
-                                                    <div className="mt-4 flex gap-2">
+                                            {/* Buttons */}
+                                            <div className="flex gap-2">
+                                                {editingProviderId === p._id ? (
+                                                    <>
                                                         <button
-                                                            className="px-4 py-1.5 rounded-md text-white text-xs"
-                                                            style={{ background: BRAND.primary }}
-                                                            onClick={() => handleSaveProvider(p.id)}
+                                                            className="px-3 py-1 rounded-md bg-green-600 text-white text-xs"
+                                                            onClick={() => handleSaveProvider(p._id)}
                                                         >
-                                                            Update
+                                                            Save
                                                         </button>
-
-                                                        <button className="px-4 py-1.5 rounded-md text-xs border" onClick={() => setEditingProviderId(null)}>
+                                                        <button
+                                                            className="px-3 py-1 rounded-md border text-xs"
+                                                            onClick={() => setEditingProviderId(null)}
+                                                        >
                                                             Cancel
                                                         </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="mt-3 p-4 rounded-lg bg-white border">
-                                                    <p className="text-sm text-gray-600 leading-relaxed">{p.description}</p>
-
-                                                    <div className="mt-4 flex items-center gap-2 ">
+                                                    </>
+                                                ) : (
+                                                    <>
                                                         <button
-                                                            className="px-4 py-1.5 rounded-md text-white text-xs font-medium"
-                                                            style={{ background: BRAND.primary }}
+                                                            className="px-3 py-1 rounded-md bg-blue-600 text-white text-xs cursor-pointer"
                                                             onClick={() => handleEditClick(p)}
                                                         >
                                                             Edit
                                                         </button>
-
                                                         <button
-                                                            className="px-4 py-1.5 rounded-md text-xs font-medium"
-                                                            style={{
-                                                                border: `1px solid ${BRAND.light}`,
-                                                                color: BRAND.dark,
-                                                            }}
-                                                            onClick={() => handleRemoveProvider(p.id)}
+                                                            className="px-3 py-1 rounded-md border text-xs text-red-600 cursor-pointer"
+                                                            onClick={() => handleRemoveProvider(p._id)}
                                                         >
                                                             Delete
                                                         </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </ProviderAccordion>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </section>
                         )}
 
+
+
                         {/* ---------- CATEGORY TAB ---------- */}
-                        {activeTab === "category" && (
+                        {/* {activeTab === "category" && (
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">Categories</h2>
                                 <div className="space-y-3">
@@ -810,7 +899,7 @@ export default function Settings() {
                                     ))}
                                 </div>
                             </section>
-                        )}
+                        )} */}
                     </div>
                 </main>
             </div>
