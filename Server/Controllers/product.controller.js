@@ -13,55 +13,6 @@ export const getProducts = async (req, res) => {
 };
 
 
-// export const getProductsByCategoryId = async (req, res) => {
-//   try {
-//     const { categoryId } = req.params;
-
-//     // 1️⃣ Required check
-//     if (!categoryId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Category ID is required",
-//       });
-//     }
-
-//     // 2️⃣ ObjectId validation
-//     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid category ID",
-//       });
-//     }
-
-//     // 3️⃣ Query
-//     const products = await productModel.find({ category: categoryId });
-
-//     // 4️⃣ No data case
-//     if (products.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "No products found for this category",
-//         data: [],
-//       });
-//     }
-
-//     // 5️⃣ Success
-//     return res.status(200).json({
-//       success: true,
-//       data: products,
-//     });
-
-//   } catch (error) {
-//     console.error("getProductsByCategoryId error:", error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
-
 export const getProductsByCategoryId = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -635,9 +586,7 @@ export const addVariant = async (req, res) => {
 
     // Validate required fields
     const variantValidations = [
-      { field: "sku", required: true, errorMessage: "SKU is required" },
-      { field: "color", required: true, errorMessage: "Color is required" },
-      { field: "size", required: true, errorMessage: "Size is required" },
+      { field: "sku", required: true, errorMessage: "SKU is required" }, 
       {
         field: "basePrice",
         required: true,
@@ -661,29 +610,29 @@ export const addVariant = async (req, res) => {
     }
 
     // Convert numeric fields
-    if (variantData.size !== undefined) {
-      variantData.size = Number(variantData.size);
-      if (isNaN(variantData.size)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Size must be a valid number",
-          field: "size",
-        });
-      }
-    }
+    // if (variantData.size !== undefined) {
+    //   variantData.size = Number(variantData.size);
+    //   if (isNaN(variantData.size)) {
+    //     return res.status(400).json({
+    //       status: 400,
+    //       success: false,
+    //       message: "Size must be a valid number",
+    //       field: "size",
+    //     });
+    //   }
+    // }
 
-    if (variantData.weight !== undefined) {
-      variantData.weight = Number(variantData.weight);
-      if (isNaN(variantData.weight)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Weight must be a valid number",
-          field: "weight",
-        });
-      }
-    }
+    // if (variantData.weight !== undefined) {
+    //   variantData.weight = Number(variantData.weight);
+    //   if (isNaN(variantData.weight)) {
+    //     return res.status(400).json({
+    //       status: 400,
+    //       success: false,
+    //       message: "Weight must be a valid number",
+    //       field: "weight",
+    //     });
+    //   }
+    // }
 
     if (variantData.basePrice !== undefined) {
       variantData.basePrice = Number(variantData.basePrice);
@@ -821,29 +770,29 @@ export const updateVariant = async (req, res) => {
     }
 
     // Convert numeric fields if provided
-    if (updateData.size !== undefined) {
-      updateData.size = Number(updateData.size);
-      if (isNaN(updateData.size)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Size must be a valid number",
-          field: "size",
-        });
-      }
-    }
+    // if (updateData.size !== undefined) {
+    //   updateData.size = Number(updateData.size);
+    //   if (isNaN(updateData.size)) {
+    //     return res.status(400).json({
+    //       status: 400,
+    //       success: false,
+    //       message: "Size must be a valid number",
+    //       field: "size",
+    //     });
+    //   }
+    // }
 
-    if (updateData.weight !== undefined) {
-      updateData.weight = Number(updateData.weight);
-      if (isNaN(updateData.weight)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Weight must be a valid number",
-          field: "weight",
-        });
-      }
-    }
+    // if (updateData.weight !== undefined) {
+    //   updateData.weight = Number(updateData.weight);
+    //   if (isNaN(updateData.weight)) {
+    //     return res.status(400).json({
+    //       status: 400,
+    //       success: false,
+    //       message: "Weight must be a valid number",
+    //       field: "weight",
+    //     });
+    //   }
+    // }
 
     if (updateData.basePrice !== undefined) {
       updateData.basePrice = Number(updateData.basePrice);
@@ -857,17 +806,17 @@ export const updateVariant = async (req, res) => {
       }
     }
 
-    if (updateData.salePrice !== undefined) {
-      updateData.salePrice = Number(updateData.salePrice);
-      if (isNaN(updateData.salePrice)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Sale Price must be a valid number",
-          field: "salePrice",
-        });
-      }
-    }
+    // if (updateData.salePrice !== undefined) {
+    //   updateData.salePrice = Number(updateData.salePrice);
+    //   if (isNaN(updateData.salePrice)) {
+    //     return res.status(400).json({
+    //       status: 400,
+    //       success: false,
+    //       message: "Sale Price must be a valid number",
+    //       field: "salePrice",
+    //     });
+    //   }
+    // }
 
     // Update the variant
     product.Variants[variantIndex] = {
