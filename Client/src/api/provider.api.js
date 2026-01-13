@@ -35,7 +35,39 @@ const createProvider = async (payload) => {
 };
 
 
+// ---------- NEW: Update Provider ----------
+const updateProvider = async (id, payload) => {
+  try {
+    const response = await authFetch(`${BASE_URL}/api/Provider/update-provider/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update provider error:", error);
+    return { success: false };
+  }
+};
+
+// ---------- NEW: Delete Provider ----------
+const deleteProvider = async (id) => {
+  try {
+    const response = await authFetch(`${BASE_URL}/api/Provider/delete-provider/${id}`, {
+      method: "DELETE",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Delete provider error:", error);
+    return { success: false };
+  }
+};
+
 export {
   getAllProvider,
-  createProvider
+  createProvider,
+  updateProvider,
+  deleteProvider,
 }
