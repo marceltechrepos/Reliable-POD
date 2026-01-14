@@ -47,50 +47,62 @@ const getProductById = async (productId) => {
 };
 
 
- const deleteProductById = async (productId) => {
+const deleteProductById = async (productId) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/api/delete-product/${productId}`,{
-        method:"DELETE",
-        headers:{
-            Authorization:`Bearer ${token}`
+    const res = await fetch(`${BASE_URL}/api/delete-product/${productId}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`
         }
     })
-//   const res = await axios.delete(`${BASE_URL}/api/delete-product/${productId}`);
-  return res.data;
+    //   const res = await axios.delete(`${BASE_URL}/api/delete-product/${productId}`);
+    return res.data;
 };
 
 
 export const getProductsByCategory = async (categoryId) => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/api/get-product-by-category/${categoryId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await res.json();
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${BASE_URL}/api/get-product-by-category/${categoryId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-    if (data.success) {
-      return data.data; // ye array of products return karega
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.warn(data.message);
+            return [];
+        }
+
+        return data.success ? data.data : [];
+        // if (res) {
+        //     const data = await res?.json();
+
+        //     if (data?.success) {
+        //         return data.data; // ye array of products return karega
+        //     }
+        // }
+
+        // return [];
+    } catch (error) {
+        console.log(error, "<<<< getProductsByCategory error");
+        return [];
     }
-    return [];
-  } catch (error) {
-    console.log(error, "<<<< getProductsByCategory error");
-    return [];
-  }
 };
 
 
- const authFetch = async (url, options = {}) => {
-  const token = localStorage.getItem("token");
+const authFetch = async (url, options = {}) => {
+    const token = localStorage.getItem("token");
 
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: `Bearer ${token}`,
-    },
-  });
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            Authorization: `Bearer ${token}`,
+        },
+    });
 };
 
 
