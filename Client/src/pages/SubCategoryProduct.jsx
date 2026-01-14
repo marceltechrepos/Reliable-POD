@@ -128,7 +128,7 @@ const SubCategoryProduct = () => {
                 {p?.category && p?.category?.thumbnail && p?.category?.thumbnail?.url ? (
                   <img
                     src={p?.category?.thumbnail?.url}
-                    alt={p?.category?.category || "category thumbnail"}
+                    alt={p?.category?.name || "category thumbnail"}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -148,7 +148,7 @@ const SubCategoryProduct = () => {
                 {/* TAGS */}
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
-                    {p?.category?.category || "—"}
+                    {p?.category?.name || "—"}
                   </span>
 
                   <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
@@ -212,7 +212,7 @@ const SubCategoryProduct = () => {
                 </div>
 
                 <div className="mt-4 space-y-2 text-sm">
-                  <div><b>Category:</b> {selected.category?.category || "—"}</div>
+                  <div><b>Category:</b> {selected.category?.name || "—"}</div>
                   <div><b>Provider:</b> {selected.fulfilmentProvider?.provider || "—"}</div>
                   <div><b>Catalog ID:</b> {selected.fulfilmentCatalogID || "—"}</div>
                   <div><b>Created:</b> {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : "—"}</div>
