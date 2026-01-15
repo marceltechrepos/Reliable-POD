@@ -51,7 +51,7 @@ export const loginApi = async (payload, setLoading, navigate) => {
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             setLoading(false);
-            navigate("/admin/dashboard")
+            navigate("/user/dashboard")
         }
 
         // ✅ save token
@@ -74,17 +74,6 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
         if (profileImageFile) {
             formData.append("profileImage", profileImageFile);
         }
-
-        // loop through payload keys
-        // for (const key in payload) {
-        //     if (payload[key] !== null && payload[key] !== undefined) {
-        //         if (key === "profileImage") {
-        //             formData.append("profileImage", payload[key]); // file object
-        //         } else {
-        //             formData.append(key, payload[key]);
-        //         }
-        //     }
-        // }
         for (const key in payload) {
             if (payload[key] !== null && payload[key] !== undefined) {
 
@@ -106,20 +95,6 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
             }
         }
 
-
-        // for (const key in payload) {
-        //     if (payload[key] !== null && payload[key] !== undefined) {
-        //         if (key === "profileImage") {
-        //             formData.append("profileImage", payload[key]);
-        //         } else if (booleanFields.includes(key)) {
-        //             // Boolean values ko actual boolean mein convert karein
-        //             formData.append(key, payload[key] === "true" || payload[key] === true);
-        //         } else {
-        //             formData.append(key, payload[key]);
-        //         }
-        //     }
-        // }
-
         const token = localStorage.getItem("token");
 
         const res = await fetch(`${BASE_URL}/api/User/AddUserInfo`, {
@@ -136,9 +111,8 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
             alert(data.message || "Failed to update user info");
             return null;
         }
-        localStorage.setItem("user", JSON.stringify(data.user));
-        alert(data.message || "User info updated successfully");
 
+        alert(data.message || "User info updated successfully");
         return data.user;
 
     } catch (error) {
