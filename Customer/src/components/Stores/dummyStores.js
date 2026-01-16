@@ -1,0 +1,97 @@
+// export const STORES = [
+//   // { id: 1, name: "Trendify", type: "Shopify" },
+//   // { id: 2, name: "GiftCrafts", type: "Etsy" },
+//   { id: 3, name: "Local Orders", type: "Manual Order" },
+//   { id: 4, name: "PrintMaster", type: "WooCommerce" },
+//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
+//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
+//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
+// ];
+
+
+export const STORES = [
+  {
+    id: 1,
+    name: "Trendify Fashion",
+    type: "Shopify",
+    logo: "S",
+    products: 42,
+    orders: 156,
+    revenue: "12,450",
+    lastSync: "2 hours ago",
+    status: "Connected",
+    description: "Premium fashion and apparel store",
+    currency: "USD",
+    plan: "Premium"
+  },
+  {
+    id: 2,
+    name: "GiftCrafts Handmade",
+    type: "Etsy",
+    logo: "E",
+    products: 28,
+    orders: 89,
+    revenue: "4,230",
+    lastSync: "1 day ago",
+    status: "Connected",
+    description: "Handcrafted gifts and home decor",
+    currency: "USD",
+    plan: "Basic"
+  },
+  {
+    id: 3,
+    name: "Local Orders",
+    type: "Manual Order",
+    logo: "MO",
+    products: 12,
+    orders: 45,
+    revenue: "1,890",
+    lastSync: "Just now",
+    status: "Connected",
+    description: "Local pickup and custom orders",
+    currency: "USD",
+    plan: "Free"
+  },
+  {
+    id: 4,
+    name: "PrintMaster Pro",
+    type: "WooCommerce",
+    logo: "WC",
+    products: 67,
+    orders: 234,
+    revenue: "18,560",
+    lastSync: "3 hours ago",
+    status: "Connected",
+    description: "Print-on-demand services",
+    currency: "USD",
+    plan: "Business"
+  },
+  {
+    id: 5,
+    name: "GlobalPrint Hub",
+    type: "Anywhere POD",
+    logo: "POD",
+    products: 123,
+    orders: 456,
+    revenue: "34,780",
+    lastSync: "30 minutes ago",
+    status: "Connected",
+    description: "Worldwide print fulfillment",
+    currency: "USD",
+    plan: "Enterprise"
+  },
+  {
+    id: 6,
+    name: "Urban Style",
+    type: "Shopify",
+    logo: "S",
+    products: 56,
+    orders: 189,
+    revenue: "15,670",
+    lastSync: "5 hours ago",
+    status: "Connected",
+    description: "Urban fashion and accessories",
+    currency: "USD",
+    plan: "Advanced"
+  }
+];

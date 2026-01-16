@@ -8,6 +8,7 @@ import Accordion from "../components/Admin/Accordion";
 import ProviderAccordion from "../components/Admin/ProviderAccordion";
 import CloseIcon from '@mui/icons-material/Close';
 import { userInfoApi, getUserDetail } from "../api/auth.api";
+import {Link} from "react-router-dom"
 import {
     getAllProvider,
     createProvider,
@@ -182,6 +183,7 @@ export default function Settings() {
                     setProfileImageFile(null);
                     // set preview to new uploaded image URL
                     setProfileImagePreview(updatedUser.profileImage?.url || null);
+
                     setIsEditing(false);
                     setPasswordMessage(null);
                 }
@@ -376,44 +378,6 @@ export default function Settings() {
     return (
         <div className="min-h-screen p-6 bg-[#f1f5f9]">
             {/* Page header */}
-            <div className="mx-auto mb-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold" style={{ color: BRAND.dark }}>
-                            Settings
-                        </h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Configure system preferences, manage administrator accounts, providers, categories, and application-wide settings.
-                        </p>
-
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            className="cursor-pointer px-4 py-2 text-white rounded-lg shadow-sm font-medium"
-                            style={{ background: BRAND.primary }}
-                            onClick={() => {
-                                alert("local state logged to console (simulate save all)");
-                            }}
-                        >
-                            Save
-                        </button>
-                        <button
-                            className="cursor-pointer px-4 py-2 rounded-lg border font-medium"
-                            style={{ borderColor: BRAND.light, color: BRAND.dark }}
-                            onClick={() => {
-                                setUserInfo({ ...buildDefaultUser(), ...userInfoSample });
-                                setProviders(providersSample);
-                                setCategories(categoriesSample);
-                                setProfileImageFile(null);
-                                setProfileImagePreview(null);
-                                setIsEditing(false);
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             {/* Tabs + content */}
             <div className="mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -468,9 +432,29 @@ export default function Settings() {
                                             </div>
 
                                             <div className="flex-1">
-                                                <div className="flex items-center justify-between">
+                                                {/* <div className="flex items-center justify-between">
                                                     <div className="text-xs text-gray-400 uppercase">Profile</div>
                                                     <button style={{ borderRadius: "5px" }} className="bg-blue-600 py-2 px-3 cursor-pointer text-white" onClick={() => setIsImageEditing((pre) => !pre)}>{isImageEditing ? "Cancel" : "Change Profile"}</button>
+                                                </div> */}
+
+                                                <div className="flex items-center justify-between">
+                                                    <div className="text-xs text-gray-400 uppercase">Profile</div>
+                                                    <button
+                                                        className="p-2 cursor-pointer text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                        onClick={() => setIsImageEditing((pre) => !pre)}
+                                                        title={isImageEditing ? "Cancel" : "Change Profile"}
+                                                        style={{ borderRadius: "50%" }}
+                                                    >
+                                                        {isImageEditing ? (
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
                                                 </div>
 
                                                 {isImageEditing ? (
@@ -499,7 +483,7 @@ export default function Settings() {
                                                             >
                                                                 Update
                                                             </button>
-                                                            <CloseIcon
+                                                            {/* <CloseIcon
                                                                 className="cursor-pointer"
                                                                 onClick={() => {
                                                                     if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
@@ -510,7 +494,7 @@ export default function Settings() {
                                                                     setProfileImagePreview(null);
                                                                     setProfileImageFile(null);
                                                                 }}
-                                                            />
+                                                            /> */}
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -742,7 +726,16 @@ export default function Settings() {
 
                         {activeTab === "provider" && (
                             <section>
-                                <h2 className="text-xl font-semibold mb-4">Providers</h2>
+                                <div className="flex items-center justify-between">
+
+                                    <h2 className="text-xl font-semibold mb-4">Providers</h2>
+
+                                    <Link to="/settings/add-provider">
+                                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 cursor-pointer">Add Provider</button>
+                                    </Link>
+                                </div>
+
+ 
 
                                 <div className="space-y-4">
                                     {providers.map((p) => (
@@ -759,7 +752,7 @@ export default function Settings() {
                                                                 setEditProviderData((prev) => ({ ...prev, name: e.target.value }))
                                                             }
                                                         />
-                                                        
+
                                                     </>
                                                 ) : (
                                                     <>
