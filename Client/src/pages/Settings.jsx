@@ -8,7 +8,7 @@ import Accordion from "../components/Admin/Accordion";
 import ProviderAccordion from "../components/Admin/ProviderAccordion";
 import CloseIcon from '@mui/icons-material/Close';
 import { userInfoApi, getUserDetail } from "../api/auth.api";
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom"
 import {
     getAllProvider,
     createProvider,
@@ -20,6 +20,7 @@ import {
 import {
     BRAND, FIELDS_CONFIG, buildDefaultUser, userInfoSample, providersSample, categoriesSample
 } from "../utils/data.js"
+import AddProviderModal from "../components/Admin/AddProviderModal.jsx";
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("user");
@@ -49,15 +50,18 @@ export default function Settings() {
     });
     const [passwordMessage, setPasswordMessage] = useState(null);
 
+
     // Providers state & editing
     const [providers, setProviders] = useState(providersSample);
+    const [provider, setProvider] = useState('');
+    const [open, setOpen] = useState(false);
+    const [newProvider, setNewProvider] = useState('');
     const [editingProviderId, setEditingProviderId] = useState(null);
     const [editProviderData, setEditProviderData] = useState({
         name: "",
         description: "",
     });
 
-    console.log(providers, " <<<< providers")
 
     // Categories state & editing
     const [categories, setCategories] = useState();
@@ -138,6 +142,26 @@ export default function Settings() {
         const url = URL.createObjectURL(file);
         setProfileImageFile(file);
         setProfileImagePreview(url);
+    };
+
+    const addProviderHandler = async () => {
+        if (!newProvider.trim()) return;
+
+        const payload = { provider: newProvider };
+        const res = await createProvider(payload);
+
+        if (res?.success) {
+            const newItem = {
+                _id: res.data._id,
+                provider: res.data.provider
+            };
+            setProviders(prev => [...prev, newItem]);
+
+            setProvider(res.data._id);
+            setNewProvider('');
+            setOpen(false);
+            alert("Provider Added");
+        }
     };
 
 
@@ -267,83 +291,6 @@ export default function Settings() {
             console.error(err);
         }
     };
-
-    // ------------- CATEGORIES: handlers ----------------
-    // const handleEditCategoryClick = (cat) => {
-    //     setEditingCategoryId(cat.id);
-    //     setEditCategoryData({
-    //         name: cat.name,
-    //         color: cat.color || "#3b6d92",
-    //         imageFile: null,
-    //         imagePreview: cat.image || null,
-    //     });
-    // };
-
-    // const handleCategoryImageChange = (file) => {
-    //     if (!file) return;
-    //     if (editCategoryData.imagePreview && editCategoryData.imagePreview.startsWith("blob:")) {
-    //         try {
-    //             URL.revokeObjectURL(editCategoryData.imagePreview);
-    //         } catch { }
-    //     }
-    //     const url = URL.createObjectURL(file);
-    //     setEditCategoryData((prev) => ({ ...prev, imageFile: file, imagePreview: url }));
-    // };
-
-    // const handleSaveCategory = async (id) => {
-    //     const formData = new FormData();
-    //     formData.append("name", editCategoryData.name);
-    //     if (editCategoryData.imageFile) {
-    //         formData.append("thumbnail", editCategoryData.imageFile);
-    //     }
-
-    //     const res = await updateCategory(id, formData);
-    //     if (!res.success) return;
-
-    //     setCategories((prev) =>
-    //         prev.map((c) =>
-    //             c.id === id
-    //                 ? {
-    //                     ...c,
-    //                     name: res.data.name,       // response me updated name
-    //                     image: res.data.thumbnail?.url,
-    //                     slug: res.data.slug,
-    //                     description: res.data.description,
-    //                     parent: res.data.parent,
-    //                     level: res.data.level,
-    //                     isActive: res.data.isActive,
-    //                     updatedAt: res.data.updatedAt,
-    //                 }
-    //                 : c
-    //         )
-    //     );
-
-    //     setEditingCategoryId(null);
-    //     setEditCategoryData({
-    //         name: "",
-    //         color: "#3b6d92",
-    //         imageFile: null,
-    //         imagePreview: null,
-    //     });
-    // };
-
-    // const handleRemoveCategory = async (id) => {
-    //     const confirm = window.confirm("Delete this category?");
-    //     if (!confirm) return;
-
-    //     const res = await deleteCategory(id);
-    //     if (!res.success) return;
-
-    //     setCategories((prev) => prev.filter((c) => c.id !== id));
-    // };
-
-
-
-    // const handleRemoveCategory = (id) => {
-    //     setCategories((prev) => prev.filter((c) => c.id !== id));
-    //     if (openCategory === id) setOpenCategory(null);
-    // };
-
 
     // fetch logged-in user details on mount
     useEffect(() => {
@@ -730,16 +677,24 @@ export default function Settings() {
 
                                     <h2 className="text-xl font-semibold mb-4">Providers</h2>
 
-                                    <Link to="/settings/add-provider">
-                                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 cursor-pointer">Add Provider</button>
-                                    </Link>
+                                    {/* <Link to="/settings/add-provider"> */}
+                                    <button onClick={() => setOpen(true)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 cursor-pointer" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen(true); }}>Add Provider</button>
+                                    {/* </Link> */}
                                 </div>
 
- 
+                                <AddProviderModal
+                                    open={open}
+                                    onClose={() => setOpen(false)}
+                                    newProvider={newProvider}
+                                    setNewProvider={setNewProvider}
+                                    onAdd={addProviderHandler}
+                                />
+
+
 
                                 <div className="space-y-4">
                                     {providers.map((p) => (
-                                        <div key={p._id} className="bg-white border-gray-100 rounded-lg shadow p-4 border flex flex-col md:flex-row md:items-center justify-between">
+                                        <div key={p?._id} className="bg-white border-gray-100 rounded-lg shadow p-4 border flex flex-col md:flex-row md:items-center justify-between">
 
                                             {/* Provider info / Editable inputs */}
                                             <div className="flex-1 mb-2 md:mb-0 flex flex-col md:flex-row md:items-center gap-2">
@@ -756,7 +711,7 @@ export default function Settings() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <h3 className="font-medium text-gray-800">{p.provider}</h3>
+                                                        <h3 className="font-medium text-gray-800">{p?.provider}</h3>
                                                         {/* <p className="text-sm text-gray-600">{p.description || "No description"}</p> */}
                                                     </>
                                                 )}
