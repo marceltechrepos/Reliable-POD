@@ -100,7 +100,6 @@ function ProductVariant() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('New Print Area Added:', newPrintArea);
 
     // Show success message
     alert('Print area added successfully!');

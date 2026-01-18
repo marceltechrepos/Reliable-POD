@@ -22,6 +22,7 @@ function Editor() {
   const [draggingCorner, setDraggingCorner] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState('canvas');
+  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
 
   const fileInputRef = useRef(null);
   const printAreaFileInputRef = useRef(null);
@@ -61,44 +62,143 @@ function Editor() {
   }, [editId]);
 
   // Initial load from localStorage
+  // useEffect(() => {
+  //   const savedMockup = localStorage.getItem("mockupToEdit");
+
+  //   console.log(savedMockup, " <<<<  savedMockup")
+  //   if (savedMockup) {
+  //     const parsed = JSON.parse(savedMockup);
+  //     setMockup(parsed);
+  //     setLayersWithHistory(
+  //       [
+  //         {
+  //           id: "layer-bg",
+  //           type: "background",
+  //           src: parsed.url,
+  //           x: 0,
+  //           y: 0,
+  //           width: 800,
+  //           height: 800,
+  //           rotation: 0,
+  //           opacity: 1,
+  //           locked: true,
+  //           visible: true,
+  //         },
+  //         // {
+  //         //   id: "layer-1",
+  //         //   type: "image",
+  //         //   src: parsed.url,
+  //         //   x: 80,
+  //         //   y: 80,
+  //         //   width: 640,
+  //         //   height: 640,
+  //         //   rotation: 0,
+  //         //   opacity: 1,
+  //         //   visible: true,
+  //         // },
+  //       ],
+  //       { recordHistory: false }
+  //     );
+  //     setSelectedLayerId("layer-1");
+  //   }
+  // }, []);
+
+  // Initial load from localStorage
+
+  // Initial load from localStorage
   useEffect(() => {
     const savedMockup = localStorage.getItem("mockupToEdit");
+
+    console.log(savedMockup, " <<<<  savedMockup")
     if (savedMockup) {
       const parsed = JSON.parse(savedMockup);
       setMockup(parsed);
-      setLayersWithHistory(
-        [
-          {
-            id: "layer-bg",
-            type: "background",
-            src: parsed.url,
-            x: 0,
-            y: 0,
-            width: 800,
-            height: 800,
-            rotation: 0,
-            opacity: 1,
-            locked: true,
-            visible: true,
-          },
-          {
-            id: "layer-1",
-            type: "image",
-            src: parsed.url,
-            x: 80,
-            y: 80,
-            width: 640,
-            height: 640,
-            rotation: 0,
-            opacity: 1,
-            visible: true,
-          },
-        ],
-        { recordHistory: false }
-      );
-      setSelectedLayerId("layer-1");
+
+      // Pehle image load karo size ke liye
+      const img = new Image();
+      img.onload = function () {
+        const naturalWidth = this.naturalWidth;
+        const naturalHeight = this.naturalHeight;
+
+        // MAXIMUM DISPLAY SIZE SET KARO
+        const MAX_DISPLAY_SIZE = 1000;
+        let displayWidth = naturalWidth;
+        let displayHeight = naturalHeight;
+
+        // Agar image bohat bari hai, toh scale down karo
+        if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+          const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+          const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+          const minRatio = Math.min(widthRatio, heightRatio);
+
+          displayWidth = Math.floor(naturalWidth * minRatio);
+          displayHeight = Math.floor(naturalHeight * minRatio);
+        }
+
+        setLayersWithHistory(
+          [
+            {
+              id: "layer-bg",
+              type: "background",
+              src: parsed.url,
+              x: 0,
+              y: 0,
+              width: displayWidth, // ✅ Scaled width
+              height: displayHeight, // ✅ Scaled height
+              _naturalWidth: naturalWidth, // Original size store karo
+              _naturalHeight: naturalHeight,
+              rotation: 0,
+              opacity: 1,
+              locked: true,
+              visible: true,
+            },
+          ],
+          { recordHistory: false }
+        );
+        setSelectedLayerId("layer-bg");
+      };
+      img.src = parsed.url;
     }
   }, []);
+  // useEffect(() => {
+  //   const savedMockup = localStorage.getItem("mockupToEdit");
+
+  //   console.log(savedMockup, " <<<<  savedMockup")
+  //   if (savedMockup) {
+  //     const parsed = JSON.parse(savedMockup);
+  //     setMockup(parsed);
+
+  //     // Pehle image load karo size ke liye
+  //     const img = new Image();
+  //     img.onload = function () {
+  //       const bgWidth = this.naturalWidth;
+  //       const bgHeight = this.naturalHeight;
+
+  //       setLayersWithHistory(
+  //         [
+  //           {
+  //             id: "layer-bg",
+  //             type: "background",
+  //             src: parsed.url,
+  //             x: 0,
+  //             y: 0,
+  //             width: bgWidth, // ✅ Natural width use karo
+  //             height: bgHeight, // ✅ Natural height use karo
+  //             _naturalWidth: bgWidth, // ✅ Store natural dimensions
+  //             _naturalHeight: bgHeight,
+  //             rotation: 0,
+  //             opacity: 1,
+  //             locked: true,
+  //             visible: true,
+  //           },
+  //         ],
+  //         { recordHistory: false }
+  //       );
+  //       setSelectedLayerId("layer-bg");
+  //     };
+  //     img.src = parsed.url;
+  //   }
+  // }, []);
 
   // Layer operations
   const addNewTextLayer = () => {
@@ -122,52 +222,312 @@ function Editor() {
     setSelectedLayerId(newLayer.id);
   };
 
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+  //   const newLayer = {
+  //     id: `layer-${Date.now()}`,
+  //     type: "image",
+  //     src: url,
+  //     name: "",
+  //     x: 120,
+  //     y: 120,
+  //     width: 300,
+  //     height: 200,
+  //     rotation: 0,
+  //     opacity: 1,
+  //     visible: true,
+  //     fit: "contain",
+  //     locked: false,
+  //     perspective: 0,
+  //     rotateX: 0,
+  //     rotateY: 0,
+  //     rotateZ: 0,
+  //     skewX: 0,
+  //     skewY: 0,
+  //     transformOrigin: "center center",
+  //     enablePerspective: false,
+  //     // NEW (4 points only):
+  //     corners: [
+  //       { x: 0, y: 0 },     // top-left
+  //       { x: 300, y: 0 },   // top-right
+  //       { x: 300, y: 200 }, // bottom-right
+  //       { x: 0, y: 200 }    // bottom-left
+  //     ]
+  //   };
+  //   setLayersWithHistory((prev) => [...prev, newLayer]);
+  //   setSelectedLayerId(newLayer.id);
+  // };
+
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+
+  //   const img = new Image();
+  //   img.onload = function () {
+  //     const naturalWidth = this.naturalWidth;
+  //     const naturalHeight = this.naturalHeight;
+
+  //     // Canvas size get karo - async handle karo
+  //     getCanvasSize().then(canvasSize => {
+  //       let finalWidth = naturalWidth;
+  //       let finalHeight = naturalHeight;
+
+  //       // Agar image canvas se zyada bari hai, to scale down karo
+  //       const maxWidth = canvasSize.width * 0.9;
+  //       const maxHeight = canvasSize.height * 0.9;
+
+  //       if (naturalWidth > maxWidth || naturalHeight > maxHeight) {
+  //         const widthRatio = maxWidth / naturalWidth;
+  //         const heightRatio = maxHeight / naturalHeight;
+  //         const minRatio = Math.min(widthRatio, heightRatio);
+
+  //         finalWidth = Math.floor(naturalWidth * minRatio);
+  //         finalHeight = Math.floor(naturalHeight * minRatio);
+  //       }
+
+  //       // **Center position calculate karo**
+  //       const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //       const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //       const newLayer = {
+  //         id: `layer-${Date.now()}`,
+  //         type: "image",
+  //         src: url,
+  //         name: "",
+  //         x: x,
+  //         y: y,
+  //         width: finalWidth,
+  //         height: finalHeight,
+  //         _naturalWidth: naturalWidth, // ✅ Store natural size
+  //         _naturalHeight: naturalHeight,
+  //         rotation: 0,
+  //         opacity: 1,
+  //         visible: true,
+  //         fit: "contain",
+  //         locked: false,
+  //         perspective: 0,
+  //         rotateX: 0,
+  //         rotateY: 0,
+  //         rotateZ: 0,
+  //         skewX: 0,
+  //         skewY: 0,
+  //         transformOrigin: "center center",
+  //         enablePerspective: false,
+  //         corners: [
+  //           { x: 0, y: 0 },
+  //           { x: finalWidth, y: 0 },
+  //           { x: finalWidth, y: finalHeight },
+  //           { x: 0, y: finalHeight }
+  //         ]
+  //       };
+
+  //       setLayersWithHistory((prev) => [...prev, newLayer]);
+  //       setSelectedLayerId(newLayer.id);
+  //     });
+  //   };
+  //   img.src = url;
+  // };
+
   const addImageLayerFromFile = (file) => {
     if (!file) return;
     const url = URL.createObjectURL(file);
-    const newLayer = {
-      id: `layer-${Date.now()}`,
-      type: "image",
-      src: url,
-      name: "",
-      x: 120,
-      y: 120,
-      width: 300,
-      height: 200,
-      rotation: 0,
-      opacity: 1,
-      visible: true,
-      fit: "contain",
-      locked: false,
-      perspective: 0,
-      rotateX: 0,
-      rotateY: 0,
-      rotateZ: 0,
-      skewX: 0,
-      skewY: 0,
-      transformOrigin: "center center",
-      enablePerspective: false,
-      // NEW (4 points only):
-      corners: [
-        { x: 0, y: 0 },     // top-left
-        { x: 300, y: 0 },   // top-right
-        { x: 300, y: 200 }, // bottom-right
-        { x: 0, y: 200 }    // bottom-left
-      ]
-      // corners: [
-      //   { x: 0, y: 0 },
-      //   { x: 150, y: 0 },
-      //   { x: 300, y: 0 },
-      //   { x: 300, y: 100 },
-      //   { x: 300, y: 200 },
-      //   { x: 150, y: 200 },
-      //   { x: 0, y: 200 },
-      //   { x: 0, y: 100 },
-      // ]
+
+    const img = new Image();
+    img.onload = function () {
+      const naturalWidth = this.naturalWidth;
+      const naturalHeight = this.naturalHeight;
+
+      // Canvas size get karo - SYNC
+      const canvasSize = getCanvasSize();
+
+      // MAXIMUM DISPLAY SIZE SET KARO
+      const MAX_DISPLAY_SIZE = Math.min(canvasSize.width, canvasSize.height) * 0.8;
+
+      let finalWidth = naturalWidth;
+      let finalHeight = naturalHeight;
+
+      // Agar image canvas se zyada bari hai, to scale down karo
+      if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+        const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+        const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+        const minRatio = Math.min(widthRatio, heightRatio);
+
+        finalWidth = Math.floor(naturalWidth * minRatio);
+        finalHeight = Math.floor(naturalHeight * minRatio);
+      }
+
+      // **Center position calculate karo**
+      const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+      const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+      const newLayer = {
+        id: `layer-${Date.now()}`,
+        type: "image",
+        src: url,
+        name: "",
+        x: x,
+        y: y,
+        width: finalWidth,
+        height: finalHeight,
+        _naturalWidth: naturalWidth,
+        _naturalHeight: naturalHeight,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        fit: "contain",
+        locked: false,
+        perspective: 0,
+        rotateX: 0,
+        rotateY: 0,
+        rotateZ: 0,
+        skewX: 0,
+        skewY: 0,
+        transformOrigin: "center center",
+        enablePerspective: false,
+        corners: [
+          { x: 0, y: 0 },
+          { x: finalWidth, y: 0 },
+          { x: finalWidth, y: finalHeight },
+          { x: 0, y: finalHeight }
+        ]
+      };
+
+      setLayersWithHistory((prev) => [...prev, newLayer]);
+      setSelectedLayerId(newLayer.id);
     };
-    setLayersWithHistory((prev) => [...prev, newLayer]);
-    setSelectedLayerId(newLayer.id);
+    img.src = url;
   };
+
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+
+  //   const img = new Image();
+  //   img.onload = function () {
+  //     const naturalWidth = this.naturalWidth;
+  //     const naturalHeight = this.naturalHeight;
+
+  //     const canvasSize = getCanvasSize();
+
+  //     // **Photoshop jaisa - image ko actual size mein add karo**
+  //     let finalWidth = naturalWidth;
+  //     let finalHeight = naturalHeight;
+
+  //     // Agar image canvas se zyada bari hai, to scale down karo
+  //     const maxWidth = canvasSize.width * 0.9; // 90% of canvas
+  //     const maxHeight = canvasSize.height * 0.9; // 90% of canvas
+
+  //     if (naturalWidth > maxWidth || naturalHeight > maxHeight) {
+  //       const widthRatio = maxWidth / naturalWidth;
+  //       const heightRatio = maxHeight / naturalHeight;
+  //       const minRatio = Math.min(widthRatio, heightRatio);
+
+  //       finalWidth = Math.floor(naturalWidth * minRatio);
+  //       finalHeight = Math.floor(naturalHeight * minRatio);
+  //     }
+
+  //     // **Center position calculate karo**
+  //     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //     const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //     const newLayer = {
+  //       id: `layer-${Date.now()}`,
+  //       type: "image",
+  //       src: url,
+  //       name: "",
+  //       x: x,
+  //       y: y,
+  //       width: finalWidth,
+  //       height: finalHeight,
+  //       rotation: 0,
+  //       opacity: 1,
+  //       visible: true,
+  //       fit: "contain",
+  //       locked: false,
+  //       perspective: 0,
+  //       rotateX: 0,
+  //       rotateY: 0,
+  //       rotateZ: 0,
+  //       skewX: 0,
+  //       skewY: 0,
+  //       transformOrigin: "center center",
+  //       enablePerspective: false,
+  //       corners: [
+  //         { x: 0, y: 0 },
+  //         { x: finalWidth, y: 0 },
+  //         { x: finalWidth, y: finalHeight },
+  //         { x: 0, y: finalHeight }
+  //       ]
+  //     };
+
+  //     setLayersWithHistory((prev) => [...prev, newLayer]);
+  //     setSelectedLayerId(newLayer.id);
+  //   };
+  //   img.src = url;
+  // };
+
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+
+  //   // Naya code - image ka natural size get karna
+  //   const img = new Image();
+  //   img.onload = function () {
+  //     const naturalWidth = this.naturalWidth;
+  //     const naturalHeight = this.naturalHeight;
+
+  //     // Canvas size get karna (800x800)
+  //     const canvasSize = getCanvasSize(); // {width: 800, height: 800}
+
+  //     // Agar image canvas se bari hai, to scale down karo
+  //     let finalWidth = naturalWidth;
+  //     let finalHeight = naturalHeight;
+
+  //     if (naturalWidth > canvasSize.width || naturalHeight > canvasSize.height) {
+  //       const widthRatio = canvasSize.width / naturalWidth;
+  //       const heightRatio = canvasSize.height / naturalHeight;
+  //       const minRatio = Math.min(widthRatio, heightRatio);
+
+  //       finalWidth = Math.floor(naturalWidth * minRatio);
+  //       finalHeight = Math.floor(naturalHeight * minRatio);
+  //     }
+
+  //     const newLayer = {
+  //       id: `layer-${Date.now()}`,
+  //       type: "image",
+  //       src: url,
+  //       name: "",
+  //       x: 120,
+  //       y: 120,
+  //       width: finalWidth, // Fixed size ke bajaye natural size
+  //       height: finalHeight, // Fixed size ke bajaye natural size
+  //       rotation: 0,
+  //       opacity: 1,
+  //       visible: true,
+  //       fit: "contain",
+  //       locked: false,
+  //       perspective: 0,
+  //       rotateX: 0,
+  //       rotateY: 0,
+  //       rotateZ: 0,
+  //       skewX: 0,
+  //       skewY: 0,
+  //       transformOrigin: "center center",
+  //       enablePerspective: false,
+  //       corners: [
+  //         { x: 0, y: 0 },
+  //         { x: finalWidth, y: 0 },
+  //         { x: finalWidth, y: finalHeight },
+  //         { x: 0, y: finalHeight }
+  //       ]
+  //     };
+
+  //     setLayersWithHistory((prev) => [...prev, newLayer]);
+  //     setSelectedLayerId(newLayer.id);
+  //   };
+  //   img.src = url;
+  // };
 
   const handleFileInputChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -180,89 +540,6 @@ function Editor() {
   const addImageLayerButton = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
-
-  // const updateLayer = (id, updates) => {
-  //   setLayersWithHistory((prev) =>
-  //     prev.map((layer) => {
-  //       if (layer.id !== id) return layer;
-  //       const updatedLayer = { ...layer, ...updates };
-
-  //       // ✅ Agar enablePerspective disable ho raha hai, toh CORNERS PRESERVE KAREIN
-  //       // Yeh line IMPORTANT hai
-  //       if (updates.enablePerspective === false) {
-  //         // Sirf enablePerspective update karein, corners ko nahi
-  //         // Corners preserve rahenge for future use
-  //         return { ...layer, enablePerspective: false };
-  //       }
-
-  //       // ✅ Size change pe corners reset (4 points only)
-  //       if ((updates.width !== undefined && updates.width !== layer.width) ||
-  //         (updates.height !== undefined && updates.height !== layer.height)) {
-  //         const newWidth = updates.width !== undefined ? updates.width : layer.width;
-  //         const newHeight = updates.height !== undefined ? updates.height : layer.height;
-  //         updatedLayer.corners = [
-  //           { x: 0, y: 0 },                     // top-left
-  //           { x: newWidth, y: 0 },              // top-right
-  //           { x: newWidth, y: newHeight },      // bottom-right
-  //           { x: 0, y: newHeight }              // bottom-left
-  //         ];
-  //       }
-
-  //       return updatedLayer;
-  //     })
-  //   );
-  // };
-
-  // const updateLayer = (id, updates) => {
-  //   setLayersWithHistory((prev) =>
-  //     prev.map((layer) => {
-  //       if (layer.id !== id) return layer;
-  //       const updatedLayer = { ...layer, ...updates };
-
-  //       if ((updates.width !== undefined && updates.width !== layer.width) ||
-  //         (updates.height !== undefined && updates.height !== layer.height)) {
-  //         const newWidth = updates.width !== undefined ? updates.width : layer.width;
-  //         const newHeight = updates.height !== undefined ? updates.height : layer.height;
-  //         updatedLayer.corners = [
-  //           { x: 0, y: 0 },
-  //           { x: newWidth / 2, y: 0 },
-  //           { x: newWidth, y: 0 },
-  //           { x: newWidth, y: newHeight / 2 },
-  //           { x: newWidth, y: newHeight },
-  //           { x: newWidth / 2, y: newHeight },
-  //           { x: 0, y: newHeight },
-  //           { x: 0, y: newHeight / 2 },
-  //         ];
-  //       }
-  //       return updatedLayer;
-  //     })
-  //   );
-  // };
-
-  // const updateLayer = (id, updates) => {
-  //   setLayersWithHistory((prev) =>
-  //     prev.map((layer) => {
-  //       if (layer.id !== id) return layer;
-  //       const updatedLayer = { ...layer, ...updates };
-
-  //       // ✅ Size change pe corners reset (4 points only)
-  //       if ((updates.width !== undefined && updates.width !== layer.width) ||
-  //         (updates.height !== undefined && updates.height !== layer.height)) {
-  //         const newWidth = updates.width !== undefined ? updates.width : layer.width;
-  //         const newHeight = updates.height !== undefined ? updates.height : layer.height;
-  //         updatedLayer.corners = [
-  //           { x: 0, y: 0 },                     // top-left
-  //           { x: newWidth, y: 0 },              // top-right
-  //           { x: newWidth, y: newHeight },      // bottom-right
-  //           { x: 0, y: newHeight }              // bottom-left
-  //         ];
-  //       }
-
-  //       return updatedLayer;
-  //     })
-  //   );
-  // };
-
 
   const updateLayer = (id, updates) => {
     setLayersWithHistory((prev) =>
@@ -338,9 +615,121 @@ function Editor() {
     alert("Saved to localStorage (mockupEditedLayers). Check console.");
   };
 
+  // const getCanvasSize = () => {
+  //   if (mockup) {
+  //     // Canvas size dynamic rakhne ke liye
+  //     const maxCanvasSize = 1200; // Maximum canvas size (optional)
+
+  //     // Mockup ke dimensions ke hisab se canvas set karo
+  //     // Yeh part wohi rahega jahan se mockup load hota hai
+  //     // Wo already width/height set hoga
+  //     return {
+  //       width: Math.min(mockup.width || 800, maxCanvasSize),
+  //       height: Math.min(mockup.height || 800, maxCanvasSize)
+  //     };
+  //   }
+  //   return { width: 800, height: 800 }; // Default
+  // };
+
   const getCanvasSize = () => {
+    // 1. Pehle background layer dekho
+    const bgLayer = layers.find(l => l.type === "background");
+
+    // 2. Agar background layer hai
+    if (bgLayer && bgLayer.width && bgLayer.height) {
+      // MAXIMUM CANVAS SIZE SET KARO
+      const MAX_CANVAS_SIZE = 800; // Max canvas width/height
+
+      // Calculate scaled dimensions
+      let canvasWidth = bgLayer.width;
+      let canvasHeight = bgLayer.height;
+
+      // Agar image bohat bari hai, toh scale down karo
+      if (bgLayer.width > MAX_CANVAS_SIZE || bgLayer.height > MAX_CANVAS_SIZE) {
+        const widthRatio = MAX_CANVAS_SIZE / bgLayer.width;
+        const heightRatio = MAX_CANVAS_SIZE / bgLayer.height;
+        const minRatio = Math.min(widthRatio, heightRatio);
+
+        canvasWidth = Math.floor(bgLayer.width * minRatio);
+        canvasHeight = Math.floor(bgLayer.height * minRatio);
+      }
+
+      return {
+        width: canvasWidth,
+        height: canvasHeight
+      };
+    }
+
+    // 3. Default
     return { width: 800, height: 800 };
   };
+
+  // Pehle yeh function update karo
+
+  // Yeh function sync rakhna hoga
+  // Yeh function sync rakhna hoga
+  // const getCanvasSize = () => {
+  //   // 1. Pehle background layer dekho
+  //   const bgLayer = layers.find(l => l.type === "background");
+
+  //   // 2. Agar background layer hai aur usme width/height hai
+  //   if (bgLayer && bgLayer.width && bgLayer.height) {
+  //     return {
+  //       width: bgLayer.width,
+  //       height: bgLayer.height
+  //     };
+  //   }
+
+  //   // 3. Agar mockup se dimensions mil rahe hain
+  //   if (mockup && mockup.width && mockup.height) {
+  //     return {
+  //       width: mockup.width,
+  //       height: mockup.height
+  //     };
+  //   }
+
+  //   // 4. Default
+  //   return { width: 800, height: 800 };
+  // };
+  // Yeh function replace karo
+  // const getCanvasSize = () => {
+  //   // 1. Background layer dekho
+  //   const bgLayer = layers.find(l => l.type === "background");
+
+  //   // 2. Agar background layer hai aur usme natural dimensions hain
+  //   if (bgLayer) {
+  //     // Background image ka actual size get karo
+  //     return new Promise((resolve) => {
+  //       if (bgLayer._naturalWidth && bgLayer._naturalHeight) {
+  //         resolve({
+  //           width: bgLayer._naturalWidth,
+  //           height: bgLayer._naturalHeight
+  //         });
+  //       } else {
+  //         const img = new Image();
+  //         img.onload = () => {
+  //           resolve({
+  //             width: img.naturalWidth,
+  //             height: img.naturalHeight
+  //           });
+  //         };
+  //         img.src = bgLayer.src;
+  //       }
+  //     });
+  //   }
+
+  //   // 3. Agar mockup se dimensions mil rahe hain
+  //   if (mockup && mockup.width && mockup.height) {
+  //     return Promise.resolve({
+  //       width: mockup.width,
+  //       height: mockup.height
+  //     });
+  //   }
+
+  //   // 4. Default
+  //   return Promise.resolve({ width: 800, height: 800 });
+  // };
+
 
   const duplicateLayer = () => {
     if (!selectedLayerId) return;
@@ -394,15 +783,71 @@ function Editor() {
     window.addEventListener("mouseup", onUp);
   };
 
+  // const addPrintAreaToCanvas = (printArea) => {
+  //   const newLayer = {
+  //     id: `printarea-${Date.now()}`,
+  //     type: "printarea",
+  //     name: printArea.displayName || "",
+  //     x: 100,
+  //     y: 100,
+  //     width: printArea.width,
+  //     height: printArea.height,
+  //     rotation: 0,
+  //     opacity: 1,
+  //     visible: true,
+  //     hasImage: false,
+  //     imageSrc: null,
+  //     fit: "cover",
+  //     border: true,
+  //     locked: false,
+  //     perspective: 0,
+  //     rotateX: 0,
+  //     rotateY: 0,
+  //     rotateZ: 0,
+  //     skewX: 0,
+  //     skewY: 0,
+  //     transformOrigin: "center center",
+  //     enablePerspective: false,
+  //     corners: [
+  //       { x: 0, y: 0 },                            // top-left
+  //       { x: printArea.width, y: 0 },              // top-right
+  //       { x: printArea.width, y: printArea.height }, // bottom-right
+  //       { x: 0, y: printArea.height }              // bottom-left
+  //     ]
+  //   };
+
+  //   setLayersWithHistory((prev) => [...prev, newLayer]);
+  //   setSelectedLayerId(newLayer.id);
+  // };
+
   const addPrintAreaToCanvas = (printArea) => {
+    const canvasSize = getCanvasSize();
+
+    let finalWidth = printArea.width;
+    let finalHeight = printArea.height;
+
+    // Agar print area canvas se bari hai, toh scale down karo
+    if (printArea.width > canvasSize.width || printArea.height > canvasSize.height) {
+      const widthRatio = canvasSize.width / printArea.width;
+      const heightRatio = canvasSize.height / printArea.height;
+      const minRatio = Math.min(widthRatio, heightRatio) * 0.7;
+
+      finalWidth = Math.floor(printArea.width * minRatio);
+      finalHeight = Math.floor(printArea.height * minRatio);
+    }
+
+    // **Center position calculate karo**
+    const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+    const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
     const newLayer = {
       id: `printarea-${Date.now()}`,
       type: "printarea",
       name: printArea.displayName || "",
-      x: 100,
-      y: 100,
-      width: printArea.width,
-      height: printArea.height,
+      x: x,
+      y: y,
+      width: finalWidth,
+      height: finalHeight,
       rotation: 0,
       opacity: 1,
       visible: true,
@@ -419,27 +864,18 @@ function Editor() {
       skewY: 0,
       transformOrigin: "center center",
       enablePerspective: false,
-      // corners: [
-      //   { x: 0, y: 0 },
-      //   { x: printArea.width / 2, y: 0 },
-      //   { x: printArea.width, y: 0 },
-      //   { x: printArea.width, y: printArea.height / 2 },
-      //   { x: printArea.width, y: printArea.height },
-      //   { x: printArea.width / 2, y: printArea.height },
-      //   { x: 0, y: printArea.height },
-      //   { x: 0, y: printArea.height / 2 },
-      // ]
       corners: [
-        { x: 0, y: 0 },                            // top-left
-        { x: printArea.width, y: 0 },              // top-right
-        { x: printArea.width, y: printArea.height }, // bottom-right
-        { x: 0, y: printArea.height }              // bottom-left
+        { x: 0, y: 0 },
+        { x: finalWidth, y: 0 },
+        { x: finalWidth, y: finalHeight },
+        { x: 0, y: finalHeight }
       ]
     };
 
     setLayersWithHistory((prev) => [...prev, newLayer]);
     setSelectedLayerId(newLayer.id);
   };
+
 
   const handlePrintAreaImageUpload = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -483,110 +919,6 @@ function Editor() {
       printAreaFileInputRef.current.click();
     }
   };
-
-  // const startCornerDrag = (e, layerId, cornerIndex) => {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-  //   const layer = layers.find((l) => l.id === layerId);
-  //   if (!layer) return;
-
-  //   const canvasEl = innerCanvasRef.current;
-  //   if (!canvasEl) return;
-
-  //   const canvasRect = canvasEl.getBoundingClientRect();
-  //   const startX = e.clientX;
-  //   const startY = e.clientY;
-  //   const startCorners = [...layer.corners];
-
-  //   const onMove = (ev) => {
-  //     const deltaX = (ev.clientX - startX) / scale;
-  //     const deltaY = (ev.clientY - startY) / scale;
-
-  //     const newCorners = [...startCorners];
-  //     newCorners[cornerIndex] = {
-  //       x: Math.max(0, Math.min(layer.width, startCorners[cornerIndex].x + deltaX)),
-  //       y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
-  //     };
-
-  //     const width = layer.width;
-  //     const height = layer.height;
-  //     const topLeft = newCorners[0];
-  //     const topRight = newCorners[2];
-  //     const bottomLeft = newCorners[6];
-  //     const bottomRight = newCorners[4];
-
-  //     const skewX = ((topRight.y - topLeft.y) / height) * 45;
-  //     const skewY = ((bottomLeft.x - topLeft.x) / width) * 45;
-  //     const rotateX = ((topRight.y + bottomRight.y - topLeft.y - bottomLeft.y) / (2 * height)) * 30;
-  //     const rotateY = ((bottomLeft.x + bottomRight.x - topLeft.x - topRight.x) / (2 * width)) * 30;
-
-  //     const dx1 = Math.abs(topRight.x - topLeft.x);
-  //     const dx2 = Math.abs(bottomRight.x - bottomLeft.x);
-  //     const dy1 = Math.abs(bottomLeft.y - topLeft.y);
-  //     const dy2 = Math.abs(bottomRight.y - topRight.y);
-  //     const maxDiff = Math.max(dx1, dx2, dy1, dy2);
-  //     const perspective = Math.min(1000, Math.max(100, maxDiff * 3));
-
-  //     updateLayer(layerId, {
-  //       corners: newCorners,
-  //       skewX: Math.round(skewX),
-  //       skewY: Math.round(skewY),
-  //       rotateX: Math.round(rotateX),
-  //       rotateY: Math.round(rotateY),
-  //       perspective: Math.round(perspective)
-  //     });
-  //   };
-
-  //   const onUp = () => {
-  //     window.removeEventListener("mousemove", onMove);
-  //     window.removeEventListener("mouseup", onUp);
-  //     setDraggingCorner(null);
-  //   };
-
-  //   window.addEventListener("mousemove", onMove);
-  //   window.addEventListener("mouseup", onUp);
-  //   setDraggingCorner({ layerId, cornerIndex });
-  // };
-
-
-  // const startCornerDrag = (e, layerId, cornerIndex) => {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-  //   const layer = layers.find((l) => l.id === layerId);
-  //   if (!layer) return;
-
-  //   const canvasEl = innerCanvasRef.current;
-  //   if (!canvasEl) return;
-
-  //   const canvasRect = canvasEl.getBoundingClientRect();
-  //   const startX = e.clientX;
-  //   const startY = e.clientY;
-  //   const startCorners = [...layer.corners];
-
-  //   const onMove = (ev) => {
-  //     const deltaX = (ev.clientX - startX) / scale;
-  //     const deltaY = (ev.clientY - startY) / scale;
-
-  //     const newCorners = [...startCorners];
-  //     newCorners[cornerIndex] = {
-  //       x: Math.max(0, Math.min(layer.width, startCorners[cornerIndex].x + deltaX)),
-  //       y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
-  //     };
-
-  //     // ✅ SIRF CORNERS UPDATE - KOI TRANSFORM VALUES CALCULATE NAHI
-  //     updateLayer(layerId, { corners: newCorners });
-  //   };
-
-  //   const onUp = () => {
-  //     window.removeEventListener("mousemove", onMove);
-  //     window.removeEventListener("mouseup", onUp);
-  //     setDraggingCorner(null);
-  //   };
-
-  //   window.addEventListener("mousemove", onMove);
-  //   window.addEventListener("mouseup", onUp);
-  //   setDraggingCorner({ layerId, cornerIndex });
-  // };
 
   const startCornerDrag = (e, layerId, cornerIndex) => {
     e.stopPropagation();
@@ -674,9 +1006,43 @@ function Editor() {
     setLayersWithHistory((prev) => prev.map((l) => (l.id === id ? { ...l, locked: !l.locked } : l)));
   };
 
-  const handleZoomIn = () => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)));
-  const handleZoomOut = () => setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(2)));
-  const handleZoomReset = () => setScale(1);
+  // const handleZoomIn = () => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)));
+  const handleZoomIn = () => {
+    setScale((s) => {
+      const newScale = Math.min(4, +(s * 1.2).toFixed(2)); // 20% increment
+      return newScale;
+    });
+  };
+  // const handleZoomOut = () => setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(2)));
+  const handleZoomOut = () => {
+    setScale((s) => {
+      const newScale = Math.max(0.1, +(s / 1.2).toFixed(2)); // 20% decrement
+      return newScale;
+    });
+  };
+  // const handleZoomReset = () => setScale(1);
+  const handleZoomReset = () => {
+    setScale(1);
+    setCanvasOffset({ x: 0, y: 0 }); // Reset panning bhi
+  };
+
+  // Zoom to fit function add karo (Photoshop ki tarah)
+  const handleZoomToFit = () => {
+    const canvasContainer = canvasRef.current;
+    if (!canvasContainer || !mockup) return;
+
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    const canvasSize = getCanvasSize();
+
+    const widthRatio = containerWidth / canvasSize.width;
+    const heightRatio = containerHeight / canvasSize.height;
+    const minRatio = Math.min(widthRatio, heightRatio) * 0.95; // 95% tak
+
+    setScale(minRatio);
+    setCanvasOffset({ x: 0, y: 0 }); // Center mein le aao
+  };
+
 
   const handleUndo = () => undo(layers, setLayers);
   const handleRedo = () => redo(layers, setLayers);
@@ -722,6 +1088,7 @@ function Editor() {
     handleZoomIn,
     handleZoomOut,
     handleZoomReset,
+    handleZoomToFit,
     handleUndo,
     handleRedo,
     setLayers: setLayersWithHistory,
@@ -774,7 +1141,8 @@ function Editor() {
             innerCanvasRef={innerCanvasRef}
             draggingCorner={draggingCorner}
             operations={operations}
-            activePanel={activePanel} // ✅ ADD THIS PROP
+            activePanel={activePanel}
+            canvasOffset={canvasOffset} setCanvasOffset={setCanvasOffset}// ✅ ADD THIS PROP
           />
         </div>
 

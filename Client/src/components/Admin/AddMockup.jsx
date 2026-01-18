@@ -29,6 +29,9 @@ export default function AddMockup({ open, onClose, onSelect }) {
 
     const categoryObjectId = "694917d1d0a3a403cf06aaac"; // 🔥 valid ObjectId
 
+
+    console.log(mockups, " <<<<<<<< mockups");
+
     useEffect(() => {
         if (open) {
             resetModalState();
@@ -66,6 +69,7 @@ export default function AddMockup({ open, onClose, onSelect }) {
             setUploadedPreviews(prev => [...prev, tempPreview]);
 
             const response = await uploadMockupImage(file, categoryObjectId);
+            
             if (response?.success) {
                 const uploadedItem = {
                     id: response.data._id,

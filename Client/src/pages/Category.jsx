@@ -19,14 +19,11 @@ function CategoryPage() {
     const [isEdit, setIsEdit] = useState(false);
     const [editCategoryId, setEditCategoryId] = useState(null);
 
-    console.log(categories , "<<<<< categories")
-
     // Fetch all categories
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const data = await getAllCategory();
-                console.log(data, "<<<< category page data")
                 const formattedCategories = data.map((item) => ({
                     id: item._id,
                     label: item.slug,

@@ -74,7 +74,6 @@ const SubCategoryProduct = () => {
     };
   }, [subCategoryId]);
 
-  console.log(products, "<<<<< normalized products");
 
   const handleDeleteProduct = async (productId) => {
     if (!productId) return;
@@ -258,10 +257,6 @@ const SubCategoryProduct = () => {
                           <span className="font-bold text-indigo-600">${v.basePrice ?? "—"}</span>
                         </div>
 
-                        {/* <div className="grid grid-cols-2 gap-2 text-gray-600">
-                          <span>Size: {v.size ?? "—"}</span>
-                          <span>Weight: {v.weight ?? "—"}</span>
-                        </div> */}
 
                         <div className="flex items-center gap-2 mt-3">
                           <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: v.colorHex || "#fff" }} />
