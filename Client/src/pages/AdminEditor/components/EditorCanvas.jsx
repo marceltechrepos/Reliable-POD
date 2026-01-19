@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import WarpedImage from "./WarpedImage";
 import ThreeWarpedImage from "./WarpedImage";
@@ -17,7 +17,108 @@ const EditorCanvas = ({
   draggingCorner,
   operations,
   activePanel, // ADDED BACK
+  canvasOffset, // ✅ ADD THIS LINE
+  setCanvasOffset, // ✅ ADD THIS LINE
 }) => {
+
+  const [resizeData, setResizeData] = useState({
+    startWidth: 0,
+    startHeight: 0,
+    aspectRatio: 1,
+    isShiftPressed: false,
+    isCtrlPressed: false
+  });
+
+  // EditorCanvas component ke top par yeh state variables add karo
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  // const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
+
+  // Alt key detect karne ke liye event listeners
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Alt' || e.key === 'Option') { // Alt key for Mac/Windows
+        setIsPanning(true);
+        document.body.style.cursor = 'grab';
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Alt' || e.key === 'Option') {
+        setIsPanning(false);
+        document.body.style.cursor = 'default';
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Mouse events for panning
+  const handleMouseDown = (e) => {
+    if (isPanning && e.button === 0) { // Left mouse button + Alt key
+      e.preventDefault();
+      setPanStart({
+        x: e.clientX - canvasOffset.x,
+        y: e.clientY - canvasOffset.y
+      });
+      document.body.style.cursor = 'grabbing';
+
+      const handleMouseMove = (moveEvent) => {
+        const deltaX = moveEvent.clientX - panStart.x;
+        const deltaY = moveEvent.clientY - panStart.y;
+
+        setCanvasOffset({
+          x: deltaX,
+          y: deltaY
+        });
+      };
+
+      const handleMouseUp = () => {
+        document.body.style.cursor = 'grab';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+  };
+
+  // Mouse events for tracking Ctrl and Shift
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Shift') {
+        setResizeData(prev => ({ ...prev, isShiftPressed: true }));
+      }
+      if (e.key === 'Control') {
+        setResizeData(prev => ({ ...prev, isCtrlPressed: true }));
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Shift') {
+        setResizeData(prev => ({ ...prev, isShiftPressed: false }));
+      }
+      if (e.key === 'Control') {
+        setResizeData(prev => ({ ...prev, isCtrlPressed: false }));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
   const drawGrid = () => {
     if (!showGrid || !innerCanvasRef.current) return null;
 
@@ -74,31 +175,462 @@ const EditorCanvas = ({
   if (!shouldShowCanvas) return null;
 
   return (
+    // <div
+    //   ref={canvasRef}
+    //   className="relative w-full h-full rounded-xl relative overflow-hidden flex items-center justify-center"
+    // >
+    //   {mockup ? (
+    //     <div
+    //       className="relative bg-black/0"
+    //       style={{
+    //         width: "90%",
+    //         height: "90%",
+    //         display: "flex",
+    //         alignItems: "center",
+    //         justifyContent: "center",
+    //       }}
+    //     >
+    //       <div
+    //         ref={innerCanvasRef}
+    //         className="relative"
+    //         style={{
+    //           width: getCanvasSize().width,
+    //           height: getCanvasSize().height,
+    //           display: "inline-block",
+    //           position: "relative",
+    //           transform: `scale(${scale})`,
+    //           transformOrigin: "center center",
+    //         }}
+    //       >
+    //         {drawGrid()}
+
+    //         {layers.map((layer, index) => {
+    //           if (layer.visible === false) return null;
+    //           const zIndex = index + 1;
+
+    //           if (layer.type === "background") {
+    //             return (
+    //               <img
+    //                 key={layer.id}
+    //                 src={layer.src}
+    //                 alt="background"
+    //                 style={{
+    //                   width: "100%",
+    //                   height: "100%",
+    //                   objectFit: "contain",
+    //                   display: "block",
+    //                   borderRadius: 8,
+    //                   boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+    //                   position: "absolute",
+    //                   left: 0,
+    //                   top: 0,
+    //                 }}
+    //               />
+    //             );
+    //           }
+
+    //           const showRotationHandle = selectedLayerId === layer.id && layer.type !== "background" && !layer.locked;
+    //           const showPerspectiveHandles = selectedLayerId === layer.id &&
+    //             (layer.type === "image" || layer.type === "printarea") &&
+    //             layer.enablePerspective;
+
+    //           return (
+
+
+    //             // <Rnd
+    //             //   key={layer.id}
+    //             //   size={{ width: layer.width, height: layer.height }}
+    //             //   position={{ x: layer.x, y: layer.y }}
+    //             //   // bounds="parent"
+    //             //   onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
+
+    //             //   onResizeStop={(e, direction, ref, delta, position) =>
+    //             //     operations.updateLayer(layer.id, {
+    //             //       width: parseInt(ref.style.width, 10),
+    //             //       height: parseInt(ref.style.height, 10),
+    //             //       ...position,
+    //             //     })
+    //             //   }
+    //             //   onClick={() => setSelectedLayerId(layer.id)}
+    //             //   enableResizing={layer.type !== "background" && !layer.locked &&
+    //             //     !(layer.enablePerspective && (layer.type === "image" || layer.type === "printarea"))}
+    //             //   disableDragging={!!layer.locked}
+    //             //   scale={1}
+    //             //   style={{
+    //             //     zIndex,
+    //             //     border:
+    //             //       selectedLayerId === layer.id
+    //             //         ? "2px solid #3b82f6"
+    //             //         : layer.type === "printarea" && layer.border
+    //             //           ? "2px dashed #22c55e"
+    //             //           : "1px dashed rgba(255,255,255,0.05)",
+    //             //     display: "flex",
+    //             //     alignItems: "center",
+    //             //     justifyContent: "center",
+    //             //     cursor: layer.locked ? "not-allowed" : "move",
+    //             //     pointerEvents: "auto",
+    //             //     position: "absolute",
+    //             //   }}
+    //             // >
+
+    //             <Rnd
+    //               key={layer.id}
+    //               size={{ width: layer.width, height: layer.height }}
+    //               position={{ x: layer.x, y: layer.y }}
+    //               // bounds="parent"
+    //               onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
+
+    //               // Naya onResizeStart handler
+    //               onResizeStart={(e, direction, ref, delta) => {
+    //                 setResizeData({
+    //                   startWidth: layer.width,
+    //                   startHeight: layer.height,
+    //                   aspectRatio: layer.width / layer.height,
+    //                   isShiftPressed: e.shiftKey,
+    //                   isCtrlPressed: e.ctrlKey
+    //                 });
+    //               }}
+
+    //               // Naya onResize handler with aspect ratio locking
+    //               onResize={(e, direction, ref, delta, position) => {
+    //                 let newWidth = parseInt(ref.style.width, 10);
+    //                 let newHeight = parseInt(ref.style.height, 10);
+    //                 let newX = position.x;
+    //                 let newY = position.y;
+
+    //                 // Shift key pressed - maintain aspect ratio
+    //                 if (resizeData.isShiftPressed) {
+    //                   const aspect = resizeData.aspectRatio;
+
+    //                   // Determine which direction we're resizing
+    //                   if (direction.includes('right') || direction.includes('left')) {
+    //                     // Horizontal resize - adjust height based on width
+    //                     newHeight = newWidth / aspect;
+    //                   } else if (direction.includes('top') || direction.includes('bottom')) {
+    //                     // Vertical resize - adjust width based on height
+    //                     newWidth = newHeight * aspect;
+    //                   }
+
+    //                   // For corner resizing, maintain aspect ratio
+    //                   if (direction.includes('bottom') && direction.includes('right')) {
+    //                     newHeight = newWidth / aspect;
+    //                   } else if (direction.includes('bottom') && direction.includes('left')) {
+    //                     newHeight = newWidth / aspect;
+    //                   } else if (direction.includes('top') && direction.includes('right')) {
+    //                     newHeight = newWidth / aspect;
+    //                   } else if (direction.includes('top') && direction.includes('left')) {
+    //                     newHeight = newWidth / aspect;
+    //                   }
+    //                 }
+
+    //                 // Ctrl key pressed - resize from center
+    //                 if (resizeData.isCtrlPressed) {
+    //                   const widthDelta = newWidth - resizeData.startWidth;
+    //                   const heightDelta = newHeight - resizeData.startHeight;
+
+    //                   // Adjust position to keep center fixed
+    //                   newX = layer.x - widthDelta / 2;
+    //                   newY = layer.y - heightDelta / 2;
+    //                 }
+
+    //                 operations.updateLayer(layer.id, {
+    //                   width: newWidth,
+    //                   height: newHeight,
+    //                   x: newX,
+    //                   y: newY,
+    //                 });
+    //               }}
+
+    //               onResizeStop={(e, direction, ref, delta, position) =>
+    //                 operations.updateLayer(layer.id, {
+    //                   width: parseInt(ref.style.width, 10),
+    //                   height: parseInt(ref.style.height, 10),
+    //                   ...position,
+    //                 })
+    //               }
+
+    //               // Naya prop add karo for better control
+    //               lockAspectRatio={resizeData?.isShiftPressed} // This will lock aspect when Shift is pressed
+
+    //               onClick={() => setSelectedLayerId(layer.id)}
+    //               enableResizing={layer.type !== "background" && !layer.locked &&
+    //                 !(layer.enablePerspective && (layer.type === "image" || layer.type === "printarea"))}
+    //               disableDragging={!!layer.locked}
+    //               scale={1}
+    //               style={{
+    //                 zIndex,
+    //                 border:
+    //                   selectedLayerId === layer.id
+    //                     ? "2px solid #3b82f6"
+    //                     : layer.type === "printarea" && layer.border
+    //                       ? "2px dashed #22c55e"
+    //                       : "1px dashed rgba(255,255,255,0.05)",
+    //                 display: "flex",
+    //                 alignItems: "center",
+    //                 justifyContent: "center",
+    //                 cursor: layer.locked ? "not-allowed" : "move",
+    //                 pointerEvents: "auto",
+    //                 position: "absolute",
+    //               }}
+    //             >
+    //               <div
+    //                 style={{
+    //                   width: "100%",
+    //                   height: "100%",
+    //                   transform: `rotate(${layer.rotation || 0}deg) scale(${scale})`,
+    //                   transformOrigin: "center center",
+    //                   display: "flex",
+    //                   alignItems: "center",
+    //                   justifyContent: "center",
+    //                   opacity: layer.opacity !== undefined ? layer.opacity : 1,
+    //                   background: layer.type === "text" ? "transparent" : "none",
+    //                 }}
+    //               >
+    //                 {layer.type === "text" && (
+    //                   <div
+    //                     style={{
+    //                       fontSize: layer.fontSize,
+    //                       color: layer.color,
+    //                       fontWeight: "700",
+    //                       width: "100%",
+    //                       height: "100%",
+    //                       display: "flex",
+    //                       alignItems: "center",
+    //                       justifyContent: "center",
+    //                       userSelect: "none",
+    //                       whiteSpace: "pre-wrap",
+    //                     }}
+    //                   >
+    //                     {layer.text}
+    //                   </div>
+    //                 )}
+
+    //                 {layer.type === "image" && (
+    //                   layer.enablePerspective && layer.corners ? (
+    //                     <div style={{
+    //                       width: "100%",
+    //                       height: "100%",
+    //                       position: "relative",
+    //                       transform: `scaleY(1)`,
+    //                       // transform: `rotate(${layer.rotation || 0}deg)`,
+    //                       transformOrigin: "center center"
+    //                     }}>
+    //                       <ThreeWarpedImage
+    //                         key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+    //                         src={layer.src}
+    //                         corners={layer.corners}
+    //                         width={layer.width}
+    //                         height={layer.height}
+    //                         fit={layer.fit || "contain"}
+    //                       />
+    //                     </div>
+    //                   ) : (
+    //                     // Normal image (no perspective)
+    //                     <div style={{
+    //                       width: "100%",
+    //                       height: "100%",
+    //                       perspective: `${layer.perspective || 0}px`,
+    //                       transformStyle: "preserve-3d",
+    //                     }}>
+    //                       <img
+    //                         src={layer.src}
+    //                         alt="layer"
+    //                         style={{
+    //                           width: "100%",
+    //                           height: "100%",
+    //                           objectFit: layer.fit || "contain",
+    //                           pointerEvents: "none",
+    //                           transform: `
+    //         rotateX(${layer.rotateX || 0}deg)
+    //         rotateY(${layer.rotateY || 0}deg)
+    //         rotateZ(${layer.rotateZ || 0}deg)
+    //         skewX(${layer.skewX || 0}deg)
+    //         skewY(${layer.skewY || 0}deg)
+    //       `,
+    //                           transformOrigin: layer.transformOrigin || "center center",
+    //                         }}
+    //                       />
+    //                     </div>
+    //                   )
+    //                 )}
+
+
+    //                 {/* // Printarea section (~line 250) UPDATE karo: */}
+    //                 {layer.type === "printarea" && (
+    //                   layer.enablePerspective && layer.corners && layer.hasImage ? (
+    //                     <div style={{
+    //                       width: "100%",
+    //                       height: "100%",
+    //                       position: "relative",
+    //                       transform: `scaleY(1)`,
+    //                       // transform: `rotate(${layer.rotation || 0}deg)`,
+    //                       transformOrigin: "center center"
+    //                     }}>
+    //                       <ThreeWarpedImage
+    //                         key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+    //                         src={layer.imageSrc}
+    //                         corners={layer.corners}
+    //                         width={layer.width}
+    //                         height={layer.height}
+    //                         fit={layer.fit || "cover"}
+    //                       />
+    //                     </div>
+    //                   )
+    //                     :
+    //                     (
+    //                       // Normal rendering (no perspective or no image)
+    //                       <div
+    //                         style={{
+    //                           width: "100%",
+    //                           height: "100%",
+    //                           perspective: `${layer.perspective || 0}px`,
+    //                           transformStyle: "preserve-3d",
+    //                         }}
+    //                       >
+    //                         {layer.hasImage ? (
+    //                           <img
+    //                             src={layer.imageSrc}
+    //                             alt="Print area"
+    //                             style={{
+    //                               width: "100%",
+    //                               height: "100%",
+    //                               objectFit: layer.fit || "cover",
+    //                               pointerEvents: "none",
+    //                               transform: `
+    //           rotateX(${layer.rotateX || 0}deg)
+    //           rotateY(${layer.rotateY || 0}deg)
+    //           rotateZ(${layer.rotateZ || 0}deg)
+    //           skewX(${layer.skewX || 0}deg)
+    //           skewY(${layer.skewY || 0}deg)
+    //         `,
+    //                               transformOrigin: layer.transformOrigin || "center center",
+    //                             }}
+    //                           />
+    //                         ) : (
+    //                           <div
+    //                             style={{
+    //                               width: "100%",
+    //                               height: "100%",
+    //                               background: "rgba(34,197,94,0.08)",
+    //                               display: "flex",
+    //                               alignItems: "center",
+    //                               justifyContent: "center",
+    //                               fontSize: 14,
+    //                               color: "#22c55e",
+    //                               fontWeight: 600,
+    //                               userSelect: "none",
+    //                               textAlign: "center",
+    //                               overflow: "hidden",
+    //                               transform: `
+    //           rotateX(${layer.rotateX || 0}deg)
+    //           rotateY(${layer.rotateY || 0}deg)
+    //           rotateZ(${layer.rotateZ || 0}deg)
+    //           skewX(${layer.skewX || 0}deg)
+    //           skewY(${layer.skewY || 0}deg)
+    //         `,
+    //                               transformOrigin: layer.transformOrigin || "center center",
+    //                             }}
+    //                           >
+    //                             {layer.name || "Print Area"}
+    //                             <br />
+    //                             {layer.width} × {layer.height}
+    //                             <br />
+    //                             <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
+    //                               Upload image from properties panel
+    //                             </span>
+    //                           </div>
+    //                         )}
+    //                       </div>
+    //                     )
+    //                 )}
+
+    //                 {/* Perspective Handles - 4 points */}
+    //                 {showPerspectiveHandles && layer.corners && (
+    //                   <>
+    //                     {layer.corners.slice(0, 4).map((corner, index) => ( // ✅ Only 4 points
+    //                       <div
+    //                         key={`corner-${index}`}
+    //                         onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
+    //                         style={{
+    //                           position: "absolute",
+    //                           left: corner.x - 6,  // ✅ Bigger handle
+    //                           top: corner.y - 6,
+    //                           width: 12,
+    //                           height: 12,
+    //                           backgroundColor: "#f59e0b",
+    //                           borderRadius: "50%",
+    //                           border: "2px solid white",
+    //                           cursor: "move",
+    //                           zIndex: 9999,
+    //                           boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+    //                         }}
+    //                         title={`Drag to adjust perspective (Point ${index + 1})`}
+    //                       />
+    //                     ))}
+    //                   </>
+    //                 )}
+
+    //                 {/* Rotation Handle */}
+    //                 {showRotationHandle && (
+    //                   <div
+    //                     onMouseDown={(e) => operations.startRotation(e, layer.id)}
+    //                     className="absolute top-0 right-0 w-4 h-4 rounded-full bg-blue-500 cursor-crosshair"
+    //                     style={{ zIndex: 9999 }}
+    //                   />
+    //                 )}
+    //               </div>
+    //             </Rnd>
+    //           );
+    //         })}
+    //       </div>
+    //     </div>
+    //   ) : (
+    //     <span className="text-gray-400 text-lg">No mockup selected</span>
+    //   )}
+    // </div>
     <div
       ref={canvasRef}
-      className="relative w-full h-full rounded-xl relative overflow-hidden flex items-center justify-center"
+      className="relative w-full h-full rounded-xl overflow-auto flex items-center justify-center"
+      onMouseDown={handleMouseDown}
+      style={{
+        cursor: isPanning ? 'grab' : 'default',
+        overflow: 'auto',// Photoshop ki tarah scroll nahi, panning hoga
+        backgroundColor: '#374151',
+      }}
     >
       {mockup ? (
         <div
-          className="relative bg-black/0"
+          className="relative"
+          // style={{
+          //   minWidth: getCanvasSize().width,
+          //   minHeight: getCanvasSize().height,
+          //   display: "flex",
+          //   alignItems: "center",
+          //   justifyContent: "center",
+          // }}
           style={{
-            width: "90%",
-            height: "90%",
+            // REMOVE minWidth/minHeight - Yeh overflow create kar raha tha
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            maxWidth: "100%", // ✅ Max width set karo
+            maxHeight: "100%", // ✅ Max height set karo
+            padding: '10px',
           }}
+
         >
           <div
             ref={innerCanvasRef}
-            className="relative"
+            className="relative bg-gray-800"
             style={{
               width: getCanvasSize().width,
               height: getCanvasSize().height,
               display: "inline-block",
               position: "relative",
-              transform: `scale(${scale})`,
-              transformOrigin: "center center",
+              transform: `scale(${scale}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+              transformOrigin: "0 0",
+              border: "1px solid rgba(255,255,255,0.1)", // Canvas border for visibility
+              background: "rgba(0,0,0,0.3)", // Canvas background
             }}
           >
             {drawGrid()}
@@ -107,24 +639,54 @@ const EditorCanvas = ({
               if (layer.visible === false) return null;
               const zIndex = index + 1;
 
+              // if (layer.type === "background") {
+              //   return (
+              //     <img
+              //       key={layer.id}
+              //       src={layer.src}
+              //       alt="background"
+              //       style={{
+              //         width: "100%",
+              //         height: "100%",
+              //         objectFit: "contain",
+              //         display: "block",
+              //         borderRadius: 8,
+              //         boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+              //         position: "absolute",
+              //         left: 0,
+              //         top: 0,
+              //       }}
+              //     />
+              //   );
+              // }
+
+              // Background layer rendering section (~line 200) ko update karo:
               if (layer.type === "background") {
                 return (
-                  <img
+                  <div
                     key={layer.id}
-                    src={layer.src}
-                    alt="background"
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                      display: "block",
-                      borderRadius: 8,
-                      boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
                       position: "absolute",
                       left: 0,
                       top: 0,
+                      width: "100%",
+                      height: "100%",
+                      zIndex: 0, // Background sabse niche
                     }}
-                  />
+                  >
+                    <img
+                      src={layer.src}
+                      alt="background"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain", // ✅ 'contain' se puri image show hogi
+                        display: "block",
+                        borderRadius: 8,
+                        boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+                      }}
+                    />
+                  </div>
                 );
               }
 
@@ -134,12 +696,112 @@ const EditorCanvas = ({
                 layer.enablePerspective;
 
               return (
+
+
+                // <Rnd
+                //   key={layer.id}
+                //   size={{ width: layer.width, height: layer.height }}
+                //   position={{ x: layer.x, y: layer.y }}
+                //   // bounds="parent"
+                //   onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
+
+                //   onResizeStop={(e, direction, ref, delta, position) =>
+                //     operations.updateLayer(layer.id, {
+                //       width: parseInt(ref.style.width, 10),
+                //       height: parseInt(ref.style.height, 10),
+                //       ...position,
+                //     })
+                //   }
+                //   onClick={() => setSelectedLayerId(layer.id)}
+                //   enableResizing={layer.type !== "background" && !layer.locked &&
+                //     !(layer.enablePerspective && (layer.type === "image" || layer.type === "printarea"))}
+                //   disableDragging={!!layer.locked}
+                //   scale={1}
+                //   style={{
+                //     zIndex,
+                //     border:
+                //       selectedLayerId === layer.id
+                //         ? "2px solid #3b82f6"
+                //         : layer.type === "printarea" && layer.border
+                //           ? "2px dashed #22c55e"
+                //           : "1px dashed rgba(255,255,255,0.05)",
+                //     display: "flex",
+                //     alignItems: "center",
+                //     justifyContent: "center",
+                //     cursor: layer.locked ? "not-allowed" : "move",
+                //     pointerEvents: "auto",
+                //     position: "absolute",
+                //   }}
+                // >
+
                 <Rnd
                   key={layer.id}
                   size={{ width: layer.width, height: layer.height }}
                   position={{ x: layer.x, y: layer.y }}
                   // bounds="parent"
                   onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
+
+                  // Naya onResizeStart handler
+                  onResizeStart={(e, direction, ref, delta) => {
+                    setResizeData({
+                      startWidth: layer.width,
+                      startHeight: layer.height,
+                      aspectRatio: layer.width / layer.height,
+                      isShiftPressed: e.shiftKey,
+                      isCtrlPressed: e.ctrlKey
+                    });
+                  }}
+
+                  // Naya onResize handler with aspect ratio locking
+                  onResize={(e, direction, ref, delta, position) => {
+                    let newWidth = parseInt(ref.style.width, 10);
+                    let newHeight = parseInt(ref.style.height, 10);
+                    let newX = position.x;
+                    let newY = position.y;
+
+                    // Shift key pressed - maintain aspect ratio
+                    if (resizeData.isShiftPressed) {
+                      const aspect = resizeData.aspectRatio;
+
+                      // Determine which direction we're resizing
+                      if (direction.includes('right') || direction.includes('left')) {
+                        // Horizontal resize - adjust height based on width
+                        newHeight = newWidth / aspect;
+                      } else if (direction.includes('top') || direction.includes('bottom')) {
+                        // Vertical resize - adjust width based on height
+                        newWidth = newHeight * aspect;
+                      }
+
+                      // For corner resizing, maintain aspect ratio
+                      if (direction.includes('bottom') && direction.includes('right')) {
+                        newHeight = newWidth / aspect;
+                      } else if (direction.includes('bottom') && direction.includes('left')) {
+                        newHeight = newWidth / aspect;
+                      } else if (direction.includes('top') && direction.includes('right')) {
+                        newHeight = newWidth / aspect;
+                      } else if (direction.includes('top') && direction.includes('left')) {
+                        newHeight = newWidth / aspect;
+                      }
+                    }
+
+                    // Ctrl key pressed - resize from center
+                    if (resizeData.isCtrlPressed) {
+                      const widthDelta = newWidth - resizeData.startWidth;
+                      const heightDelta = newHeight - resizeData.startHeight;
+
+                      // Adjust position to keep center fixed
+                      newX = layer.x - widthDelta / 2;
+                      newY = layer.y - heightDelta / 2;
+                    }
+
+                    operations.updateLayer(layer.id, {
+                      width: newWidth,
+                      height: newHeight,
+                      x: newX,
+                      y: newY,
+                    });
+                  }}
+
                   onResizeStop={(e, direction, ref, delta, position) =>
                     operations.updateLayer(layer.id, {
                       width: parseInt(ref.style.width, 10),
@@ -147,6 +809,10 @@ const EditorCanvas = ({
                       ...position,
                     })
                   }
+
+                  // Naya prop add karo for better control
+                  lockAspectRatio={resizeData.isShiftPressed} // This will lock aspect when Shift is pressed
+
                   onClick={() => setSelectedLayerId(layer.id)}
                   enableResizing={layer.type !== "background" && !layer.locked &&
                     !(layer.enablePerspective && (layer.type === "image" || layer.type === "printarea"))}
@@ -172,7 +838,7 @@ const EditorCanvas = ({
                     style={{
                       width: "100%",
                       height: "100%",
-                      transform: `rotate(${layer.rotation || 0}deg) scale(${scale})`,
+                      transform: `rotate(${layer.rotation || 0}deg)`, // scale(${scale})
                       transformOrigin: "center center",
                       display: "flex",
                       alignItems: "center",
@@ -199,96 +865,6 @@ const EditorCanvas = ({
                         {layer.text}
                       </div>
                     )}
-
-                    {/* {layer.type === "image" && (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          perspective: `${layer.perspective || 0}px`,
-                          transformStyle: "preserve-3d",
-                        }}
-                      >
-                        <img
-                          src={layer.src}
-                          alt="layer"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: layer.fit || "contain",
-                            pointerEvents: "none",
-                            transform: `
-                              rotateX(${layer.rotateX || 0}deg)
-                              rotateY(${layer.rotateY || 0}deg)
-                              rotateZ(${layer.rotateZ || 0}deg)
-                              skewX(${layer.skewX || 0}deg)
-                              skewY(${layer.skewY || 0}deg)
-                            `,
-                            transformOrigin: layer.transformOrigin || "center center",
-                          }}
-                        />
-                      </div>
-                    )} */}
-
-                    {/* {layer.type === "image" && (
-                      layer.enablePerspective && layer.corners ? (
-                        // Canvas-based warping (4-point perspective)
-                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                          <WarpedImage
-                            key={`${layer.id}-${layer.src}`}
-                            src={layer.src}
-                            corners={layer.corners}
-                            width={layer.width}
-                            height={layer.height}
-                            fit={layer.fit || "contain"}
-                          />
-                        </div>
-                      ) */}
-                    {/* {layer.type === "image" && (
-                      layer.enablePerspective && layer.corners ? (
-                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                          <ThreeWarpedImage // ✅ Change from WarpedImage to ThreeWarpedImage
-                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
-                            src={layer.src}
-                            corners={layer.corners}
-                            width={layer.width}
-                            height={layer.height}
-                            fit={layer.fit || "contain"}
-                          />
-                        </div>
-                      )
-                        :
-                        (
-                          // Normal image (no perspective)
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              perspective: `${layer.perspective || 0}px`,
-                              transformStyle: "preserve-3d",
-                            }}
-                          >
-                            <img
-                              src={layer.src}
-                              alt="layer"
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: layer.fit || "contain",
-                                pointerEvents: "none",
-                                transform: `
-            rotateX(${layer.rotateX || 0}deg)
-            rotateY(${layer.rotateY || 0}deg)
-            rotateZ(${layer.rotateZ || 0}deg)
-            skewX(${layer.skewX || 0}deg)
-            skewY(${layer.skewY || 0}deg)
-          `,
-                                transformOrigin: layer.transformOrigin || "center center",
-                              }}
-                            />
-                          </div>
-                        )
-                    )} */}
 
                     {layer.type === "image" && (
                       layer.enablePerspective && layer.corners ? (
@@ -339,20 +915,7 @@ const EditorCanvas = ({
                       )
                     )}
 
-                    {/* {layer.type === "printarea" && (
-                      layer.enablePerspective && layer.corners && layer.hasImage ? (
-                        // Canvas-based warping (4-point perspective)
-                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                          <WarpedImage
-                            key={`${layer.id}-${layer.imageSrc}`}
-                            src={layer.imageSrc}
-                            corners={layer.corners}
-                            width={layer.width}
-                            height={layer.height}
-                            fit={layer.fit || "cover"}
-                          />
-                        </div>
-                      ) */}
+
                     {/* // Printarea section (~line 250) UPDATE karo: */}
                     {layer.type === "printarea" && (
                       layer.enablePerspective && layer.corners && layer.hasImage ? (
@@ -441,96 +1004,6 @@ const EditorCanvas = ({
                           </div>
                         )
                     )}
-
-                    {/* {layer.type === "printarea" && (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          perspective: `${layer.perspective || 0}px`,
-                          transformStyle: "preserve-3d",
-                        }}
-                      >
-                        {layer.hasImage ? (
-                          <img
-                            src={layer.imageSrc}
-                            alt="Print area"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: layer.fit || "cover",
-                              pointerEvents: "none",
-                              transform: `
-                                rotateX(${layer.rotateX || 0}deg)
-                                rotateY(${layer.rotateY || 0}deg)
-                                rotateZ(${layer.rotateZ || 0}deg)
-                                skewX(${layer.skewX || 0}deg)
-                                skewY(${layer.skewY || 0}deg)
-                              `,
-                              transformOrigin: layer.transformOrigin || "center center",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              background: "rgba(34,197,94,0.08)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 14,
-                              color: "#22c55e",
-                              fontWeight: 600,
-                              userSelect: "none",
-                              textAlign: "center",
-                              overflow: "hidden",
-                              transform: `
-                                RotateX(${layer.rotateX || 0}deg)
-                                RotateY(${layer.rotateY || 0}deg)
-                                RotateZ(${layer.rotateZ || 0}deg)
-                                SkewX(${layer.skewX || 0}deg)
-                                SkewY(${layer.skewY || 0}deg)
-                              `,
-                              transformOrigin: layer.transformOrigin || "center center",
-                            }}
-                          >
-                            {layer.name || "Print Area"}
-                            <br />
-                            {layer.width} × {layer.height}
-                            <br />
-                            <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
-                              Upload image from properties panel
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )} */}
-
-                    {/* Perspective Handles - 8 points */}
-                    {/* {showPerspectiveHandles && layer.corners && (
-                      <>
-                        {layer.corners.map((corner, index) => (
-                          <div
-                            key={`corner-${index}`}
-                            onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
-                            style={{
-                              position: "absolute",
-                              left: corner.x - 4,
-                              top: corner.y - 4,
-                              width: 8,
-                              height: 8,
-                              backgroundColor: "#f59e0b",
-                              borderRadius: "50%",
-                              border: "2px solid white",
-                              cursor: "move",
-                              zIndex: 9999,
-                            }}
-                            title={`Drag to adjust perspective (Point ${index + 1})`}
-                          />
-                        ))}
-                      </>
-                    )} */}
 
                     {/* Perspective Handles - 4 points */}
                     {showPerspectiveHandles && layer.corners && (

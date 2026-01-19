@@ -165,6 +165,28 @@ function OverviewTab() {
     { name: "Hoodies", value: 8 },
   ], []);
 
+  const total = productsByCategory.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const { name, value } = payload[0];
+      const percent = ((value / total) * 100).toFixed(0);
+
+      return (
+        <div className="bg-white px-3 py-2 rounded shadow text-xs text-slate-800">
+          <p className="font-semibold">{name}</p>
+          <p>{percent}%</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -226,6 +248,52 @@ function OverviewTab() {
           </div>
 
           <div className="bg-white rounded-xl shadow p-4">
+            <h3 className="text-sm font-semibold text-slate-800">
+              Products by Category
+            </h3>
+
+            {/* height barhai */}
+            <div className="h-56 mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    className="cursor-pointer"
+                    data={productsByCategory}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={45}
+                    outerRadius={80}
+                    paddingAngle={4}
+                    label={false}
+                  >
+                    {productsByCategory.map((entry, idx) => (
+                      <Cell
+                        key={`cell-${idx}`}
+                        fill={COLORS[idx % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+
+                  {/* 🔥 Hover Tooltip */}
+                  <Tooltip content={<CustomTooltip />} />
+
+                  {/* Legend WITHOUT percentage */}
+                  <Legend
+                    verticalAlign="bottom"
+                    wrapperStyle={{
+                      fontSize: "12px",
+                      marginTop: "10px",
+                    }}
+                  />
+                </PieChart>
+
+
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+
+          {/* <div className="bg-white rounded-xl shadow p-4">
             <h3 className="text-sm font-semibold text-slate-800">Products by Category</h3>
             <div className="h-28 flex items-center justify-center mt-2">
               <ResponsiveContainer width="100%" height="100%">
@@ -247,9 +315,9 @@ function OverviewTab() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </div> */}
 
-          <div className="bg-white rounded-xl shadow p-4">
+          {/* <div className="bg-white rounded-xl shadow p-4">
             <h3 className="text-sm font-semibold text-slate-800">Quick System</h3>
             <div className="space-y-3 mt-3">
               <div className="flex justify-between items-center text-sm">
@@ -274,7 +342,7 @@ function OverviewTab() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
         </div>
       </div>
@@ -1266,9 +1334,6 @@ function EditOrderModal({ isOpen, onClose, order, onSave }) {
 
 
 
-/* ==========================
-   CATEGORIES TAB (simplified)
-   ========================== */
 
 /* ==========================
    CATEGORIES TAB (with add/view/edit)

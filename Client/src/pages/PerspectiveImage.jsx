@@ -69,33 +69,7 @@ function ImagePlane({ imageUrl }) {
           value: corners.map(c => new THREE.Vector2(c.x / 2, c.y / 1.5)) // Normalize to [-1,1]
         }
       },
-      // vertexShader: `
-      //   varying vec2 vUv;
-      //   uniform vec2 uCorners[4];
-      //   uniform vec2 uTargetCorners[4];
-        
-      //   // Bilinear interpolation function
-      //   vec2 bilinearInterpolation(vec2 uv, vec2[4] corners) {
-      //     vec2 p0 = mix(corners[0], corners[1], uv.x);
-      //     vec2 p1 = mix(corners[3], corners[2], uv.x);
-      //     return mix(p0, p1, uv.y);
-      //   }
-        
-      //   void main() {
-      //     vUv = uv;
-          
-      //     // Get the normalized position in [-1,1] range
-      //     vec2 normalizedPos = position.xy * vec2(0.5, 0.6667); // Convert from [-2,2]x[-1.5,1.5] to [-1,1]
-          
-      //     // Apply perspective transformation using bilinear interpolation
-      //     vec2 transformedPos = bilinearInterpolation(normalizedPos * 0.5 + 0.5, uTargetCorners);
-          
-      //     // Convert back to world coordinates
-      //     transformedPos = transformedPos * vec2(2.0, 1.5);
-          
-      //     gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPos.x, transformedPos.y, 0.0, 1.0);
-      //   }
-      // `
+      
       vertexShader: `
   varying vec2 vUv;
   uniform vec2 uTargetCorners[4];
