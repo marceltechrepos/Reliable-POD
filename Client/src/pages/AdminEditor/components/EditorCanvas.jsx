@@ -35,29 +35,29 @@ const EditorCanvas = ({
   // const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
 
   // Alt key detect karne ke liye event listeners
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Alt' || e.key === 'Option') { // Alt key for Mac/Windows
-        setIsPanning(true);
-        document.body.style.cursor = 'grab';
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (e) => {
+  //     if (e.key === 'Alt' || e.key === 'Option') { // Alt key for Mac/Windows
+  //       setIsPanning(true);
+  //       document.body.style.cursor = 'grab';
+  //     }
+  //   };
 
-    const handleKeyUp = (e) => {
-      if (e.key === 'Alt' || e.key === 'Option') {
-        setIsPanning(false);
-        document.body.style.cursor = 'default';
-      }
-    };
+  //   const handleKeyUp = (e) => {
+  //     if (e.key === 'Alt' || e.key === 'Option') {
+  //       setIsPanning(false);
+  //       document.body.style.cursor = 'default';
+  //     }
+  //   };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   window.addEventListener('keyup', handleKeyUp);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //     window.removeEventListener('keyup', handleKeyUp);
+  //   };
+  // }, []);
 
   // Mouse events for panning
   const handleMouseDown = (e) => {
