@@ -67,6 +67,14 @@ const EditorPropertiesPanel = ({
               <input type="number" className="w-1/2 p-2 rounded bg-gray-700 text-white" value={Math.round(selectedLayer.height)}
                 onChange={(e) => operations.updateLayer(selectedLayer.id, { height: parseInt(e.target.value) || 1 })} />
             </div>
+
+            {/* ✅ ACTUAL/NATURAL SIZE DISPLAY (New) */}
+            {selectedLayer.type === "image" && (
+              <div className="mt-2 text-xs text-gray-500">
+                <span className="block">Actual: {selectedLayer.naturalWidth || selectedLayer.width} × {selectedLayer.naturalHeight || selectedLayer.height}</span>
+                <span className="block">Display: {Math.round(selectedLayer.width)} × {Math.round(selectedLayer.height)}</span>
+              </div>
+            )}
           </div>
 
           {/* Rotation */}
