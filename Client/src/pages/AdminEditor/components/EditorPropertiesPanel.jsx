@@ -64,6 +64,7 @@ const EditorPropertiesPanel = ({
             <div className="flex gap-2 mt-1">
               <input type="number" className="w-1/2 p-2 rounded bg-gray-700 text-white" value={Math.round(selectedLayer.width)}
                 onChange={(e) => operations.updateLayer(selectedLayer.id, { width: parseInt(e.target.value) || 1 })} />
+              {console.log(selectedLayer, "<<<<< selectede layer")}
               <input type="number" className="w-1/2 p-2 rounded bg-gray-700 text-white" value={Math.round(selectedLayer.height)}
                 onChange={(e) => operations.updateLayer(selectedLayer.id, { height: parseInt(e.target.value) || 1 })} />
             </div>

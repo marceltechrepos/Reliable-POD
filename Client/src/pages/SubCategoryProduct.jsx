@@ -19,6 +19,9 @@ const SubCategoryProduct = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+
+  console.log(products, " <<<< product")
+
   useEffect(() => {
     if (!subCategoryId) return;
 
@@ -126,7 +129,7 @@ const SubCategoryProduct = () => {
               <div className="h-40 bg-gray-200">
                 {p?.category && p?.category?.thumbnail && p?.category?.thumbnail?.url ? (
                   <img
-                    src={p?.category?.thumbnail?.url}
+                    src={p?.mockupImage || p?.category?.thumbnail.url}
                     alt={p?.category?.name || "category thumbnail"}
                     className="w-full h-full object-cover"
                   />
@@ -198,13 +201,13 @@ const SubCategoryProduct = () => {
             <button onClick={() => setSelected(null)} className="absolute top-4 right-4 text-gray-500 hover:text-black cursor-pointer">
               ✕
             </button>
-
+            {console.log(selected, " <<<<< selected")}
             <div className="flex flex-col lg:flex-row gap-6">
               {/* LEFT */}
               <div className="lg:w-1/2">
                 <div className="rounded-xl w-full h-64 overflow-hidden bg-gray-100">
                   {selected.category?.thumbnail?.url ? (
-                    <img src={selected.category.thumbnail.url} alt={selected.category?.category || "category"} className="w-full h-full object-cover" />
+                    <img src={selected?.mockupImage || selected.category.thumbnail.url} alt={selected.category?.category || "category"} className="w-full h-full object-cover" />
                   ) : (
                     <PlaceholderImage className="h-64" />
                   )}

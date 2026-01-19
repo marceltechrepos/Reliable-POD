@@ -18,7 +18,7 @@ import ThumbnailModal from '../components/Admin/ThumbnailModal';
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getAllProvider, createProvider } from '../api/provider.api';
-import { createProduct } from '../api/product.api';
+import { createProduct, getProductById } from '../api/product.api';
 import { getAllCategory, createCategory, getCategoryDropdown } from '../api/category.api';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
@@ -31,6 +31,8 @@ const loadMockupsFromStorage = () => {
   const savedMockups = localStorage.getItem('selectedMockups');
   return savedMockups ? JSON.parse(savedMockups) : [];
 };
+
+
 
 // Local storage mein save karne ka function
 const saveMockupsToStorage = (mockups) => {
@@ -53,6 +55,7 @@ function ProductBase() {
   const [internalName, setInternalName] = useState('');
   const [fulfilmentCatalogID, setFulfilmentCatalogID] = useState('');
   const [description, setDescription] = useState('');
+  const [paramsProductId, setParamsProductId] = useState('');
 
   const [isThumbnailModalOpen, setIsThumbnailModalOpen] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
@@ -60,6 +63,7 @@ function ProductBase() {
 
   const { id: productId } = useParams();
   const navigate = useNavigate();
+
 
   const isEditMode = Boolean(productId);
 
@@ -70,6 +74,20 @@ function ProductBase() {
   const [categories, setCategories] = useState([
     { label: 'T-Shirt', value: 't-shirt', thumbnail: '/images/categories/tshirt.png' }
   ]);
+
+  const fetchProductByProductId = async (id) => {
+    try {
+      const data = await getProductById(id);
+      setParamsProductId(data)
+      console.log(data, "<<<< product data")
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchProductByProductId(productId)
+  }, [productId]);
 
 
   const [open, setOpen] = useState(false);

@@ -6,11 +6,12 @@ import UserRouter from "./Routes/User.Route.js";
 import mockupImageRouter from "./Routes/mockupImage.route.js";
 import productRouter from "./Routes/product.route.js";
 import CategoryRouter from "./Routes/Category.Route.js";
+import layerRoute from "./Routes/Printarea.Route.js";
 
 const app = express();
 
 app.use(
-  cors({ origin: "*", methods: ["GET", "POST", "DELETE","PUT"] })
+  cors({ origin: "*", methods: ["GET", "POST", "DELETE", "PUT"] })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,7 +20,7 @@ app.use(express.static("public"));
 ConnectDB();
 app.get("/", (req, res) => res.send("Hello World!"));
 
-const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter];
+const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter, layerRoute];
 routes.forEach((route) => app.use("/api", route));
 
 app.listen(process.env.PORT, () => {
