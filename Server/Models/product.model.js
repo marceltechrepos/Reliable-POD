@@ -31,6 +31,18 @@ const productSchema = new Schema(
       },
     ],
 
+    thumbnail: {
+      url: {
+        type: String,
+        // required: true
+      },
+      public_id: {
+        type: String,
+        // required: true
+      }
+    },
+
+
     // Variants: [
     //   {
     //     sku: String,

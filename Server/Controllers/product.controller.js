@@ -116,6 +116,7 @@ export const createProduct = async (req, res) => {
     // Create product with empty Printareas and Variants arrays
     const newProduct = new productModel({
       ...productData,
+      thumbnail: null,
       Printareas: [], // Empty initially
       Variants: [], // Empty initially
     });
@@ -992,5 +993,100 @@ export const deleteProduct = async (req, res) => {
     res
       .status(500)
       .json({ message: error.message, status: 500, success: false });
+  }
+};
+
+
+
+// ================= UPDATE THUMBNAIL =================
+export const updateProductThumbnail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Thumbnail image is required"
+      });
+    }
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    // 🔥 delete old thumbnail from cloudinary
+    if (product.thumbnail?.public_id) {
+      await cloudinary.uploader.destroy(product.thumbnail.public_id);
+    }
+
+    // upload new thumbnail
+    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+      folder: "products/thumbnails"
+    });
+
+    fs.unlinkSync(req.file.path);
+
+    product.thumbnail = {
+      url: uploadResult.secure_url,
+      public_id: uploadResult.public_id
+    };
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Thumbnail updated successfully",
+      thumbnail: product.thumbnail
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// ================= REMOVE THUMBNAIL =================
+export const removeProductThumbnail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    if (!product.thumbnail?.public_id) {
+      return res.status(400).json({
+        success: false,
+        message: "No thumbnail to remove"
+      });
+    }
+
+    // delete from cloudinary
+    await cloudinary.uploader.destroy(product.thumbnail.public_id);
+
+    // remove from db
+    product.thumbnail = undefined;
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Thumbnail removed successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
