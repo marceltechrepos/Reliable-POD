@@ -261,16 +261,16 @@ const SubCategoryProduct = () => {
                         </div>
 
 
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: v.colorHex || "#fff" }} />
-                          <span>{v.color || "—"}</span>
+                        <div className="flex justify-baseline items-center gap-2 mt-3">
+                          <div>
 
-                          <span className={`ml-auto text-xs px-2 py-1 rounded ${v.available === "available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                            {v.available || "unknown"}
-                          </span>
+                            <span className={`ml-auto text-xs px-2 py-1 rounded ${v.available === "available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                              {v.available || "unknown"}
+                            </span>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500">Campaign: {v.addToCampaigns ? "Included" : "Not included"}
+                          </div>
                         </div>
-
-                        <div className="mt-2 text-xs text-gray-500">Campaign: {v.addToCampaigns ? "Included" : "Not included"}</div>
                       </div>
                     ))
                   )}

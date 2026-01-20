@@ -20,9 +20,11 @@ const EditorHeader = ({
   const { editId: productId } = useParams();
 
 
-    const mockupImage = JSON.parse(localStorage.getItem("mockupToEdit"));
+  const mockupImage = JSON.parse(localStorage.getItem("mockupToEdit"));
   const mockupCreate = async () => {
     try {
+      localStorage.removeItem("selectedMockups");
+      sessionStorage.removeItem("reloaded")
       const response = await createMockup(productId, { mockupImage: mockupImage.url });
       operations.onSave();
       alert("Mockup created successfully");
@@ -61,20 +63,23 @@ const EditorHeader = ({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={operations.handleFileInputChange} className="hidden" />
 
           <button
-            className="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium shadow-md transition"
+            className={`bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium shadow-md transition ${operations?.isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            // onClick={operations.onSave}
             onClick={mockupCreate}
+            disabled={operations?.isSaving}
           >
-            Save
+            {operations?.isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           <button
+            // onClick={operations.onSave}
             onClick={mockupCreate}
             className="lg:hidden p-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
             title="Save"
           >
-            💾
+            {operations?.isSaving ? "⏳" : "💾"}
           </button>
 
           <div className="flex items-center bg-gray-700 rounded-lg p-1">
