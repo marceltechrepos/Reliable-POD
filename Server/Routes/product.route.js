@@ -18,6 +18,7 @@ import {
   getVariant,
   updateVariant,
   removeVariant,
+  createMockup,
 } from "../Controllers/product.controller.js";
 import {
   isLogin, isAdmin,
@@ -42,6 +43,13 @@ productRouter.post(
   isLogin,
   isAdmin,
   createProduct
+);
+
+productRouter.post(
+  "/create-mockup",
+  isLogin,
+  isAdmin,
+  createMockup
 );
 
 productRouter.put(

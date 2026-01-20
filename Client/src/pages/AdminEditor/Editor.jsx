@@ -1,6 +1,6 @@
 // ==================================================== ORGANIZED CODE ==================
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getProductById } from "../../api/product.api";
 import { toPng, toJpeg } from "html-to-image";
 import { useEditorHistory } from "./hooks/useEditorHistory";
@@ -9,8 +9,10 @@ import EditorHeader from "./components/EditorHeader";
 import EditorCanvas from "./components/EditorCanvas";
 import EditorLayersPanel from "./components/EditorLayersPanel";
 import EditorPropertiesPanel from "./components/EditorPropertiesPanel";
+import { createLayer } from "../../api/layers.api";
 
 function Editor() {
+  const navigate = useNavigate();
   const [mockup, setMockup] = useState(null);
   const [layers, setLayers] = useState([]);
   const [showPrintareaSelect, setShowPrintareaSelect] = useState(false);
@@ -29,6 +31,17 @@ function Editor() {
   const canvasRef = useRef(null);
   const innerCanvasRef = useRef(null);
   const { editId } = useParams();
+
+  const SCREEN_DPI = 96; // Standard screen DPI
+  const PRINT_DPI = 300; // Standard print DPI (Photoshop default)
+
+  const pixelsToInches = (pixels, dpi = PRINT_DPI) => {
+    return pixels / dpi;
+  };
+
+  const inchesToPixels = (inches, dpi = PRINT_DPI) => {
+    return Math.round(inches * dpi);
+  };
 
   // History hook
   const { recordHistory, undo, redo } = useEditorHistory();
@@ -338,28 +351,47 @@ function Editor() {
       const naturalWidth = this.naturalWidth;
       const naturalHeight = this.naturalHeight;
 
-      // Canvas size get karo - SYNC
       const canvasSize = getCanvasSize();
 
-      // MAXIMUM DISPLAY SIZE SET KARO
-      const MAX_DISPLAY_SIZE = Math.min(canvasSize.width, canvasSize.height) * 0.8;
+      // ✅ Assume image ka DPI 72 (web images) ya 300 (print images)
+      // Aap file ke metadata se DPI get kar sakte hain, lekin simple solution:
+      const ASSUMED_IMAGE_DPI = 300; // Photoshop default
 
-      let finalWidth = naturalWidth;
-      let finalHeight = naturalHeight;
+      // Image size in inches
+      const imageWidthInInches = naturalWidth / ASSUMED_IMAGE_DPI;
+      const imageHeightInInches = naturalHeight / ASSUMED_IMAGE_DPI;
 
-      // Agar image canvas se zyada bari hai, to scale down karo
-      if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
-        const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
-        const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+      // Canvas size in inches (screen DPI)
+      const canvasWidthInInches = canvasSize.width / SCREEN_DPI;
+      const canvasHeightInInches = canvasSize.height / SCREEN_DPI;
+
+      // Max size: canvas ka 60-70%
+      const maxWidthInInches = canvasWidthInInches * 0.7;
+      const maxHeightInInches = canvasHeightInInches * 0.7;
+
+      let finalWidthInInches = imageWidthInInches;
+      let finalHeightInInches = imageHeightInInches;
+
+      // Scale down if needed
+      if (imageWidthInInches > maxWidthInInches ||
+        imageHeightInInches > maxHeightInInches) {
+
+        const widthRatio = maxWidthInInches / imageWidthInInches;
+        const heightRatio = maxHeightInInches / imageHeightInInches;
         const minRatio = Math.min(widthRatio, heightRatio);
 
-        finalWidth = Math.floor(naturalWidth * minRatio);
-        finalHeight = Math.floor(naturalHeight * minRatio);
+        finalWidthInInches = imageWidthInInches * minRatio;
+        finalHeightInInches = imageHeightInInches * minRatio;
       }
 
-      // **Center position calculate karo**
+      // ✅ Convert back to pixels (screen DPI)
+      const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
+      const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+
+      // Center position
       const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
       const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
 
       const newLayer = {
         id: `layer-${Date.now()}`,
@@ -398,6 +430,76 @@ function Editor() {
     };
     img.src = url;
   };
+
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+
+  //   const img = new Image();
+  //   img.onload = function () {
+  //     const naturalWidth = this.naturalWidth;
+  //     const naturalHeight = this.naturalHeight;
+
+  //     // Canvas size get karo - SYNC
+  //     const canvasSize = getCanvasSize();
+
+  //     // MAXIMUM DISPLAY SIZE SET KARO
+  //     const MAX_DISPLAY_SIZE = Math.min(canvasSize.width, canvasSize.height) * 0.8;
+
+  //     let finalWidth = naturalWidth;
+  //     let finalHeight = naturalHeight;
+
+  //     // Agar image canvas se zyada bari hai, to scale down karo
+  //     if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+  //       const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+  //       const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+  //       const minRatio = Math.min(widthRatio, heightRatio);
+
+  //       finalWidth = Math.floor(naturalWidth * minRatio);
+  //       finalHeight = Math.floor(naturalHeight * minRatio);
+  //     }
+
+  //     // **Center position calculate karo**
+  //     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //     const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //     const newLayer = {
+  //       id: `layer-${Date.now()}`,
+  //       type: "image",
+  //       src: url,
+  //       name: "",
+  //       x: x,
+  //       y: y,
+  //       width: finalWidth,
+  //       height: finalHeight,
+  //       _naturalWidth: naturalWidth,
+  //       _naturalHeight: naturalHeight,
+  //       rotation: 0,
+  //       opacity: 1,
+  //       visible: true,
+  //       fit: "contain",
+  //       locked: false,
+  //       perspective: 0,
+  //       rotateX: 0,
+  //       rotateY: 0,
+  //       rotateZ: 0,
+  //       skewX: 0,
+  //       skewY: 0,
+  //       transformOrigin: "center center",
+  //       enablePerspective: false,
+  //       corners: [
+  //         { x: 0, y: 0 },
+  //         { x: finalWidth, y: 0 },
+  //         { x: finalWidth, y: finalHeight },
+  //         { x: 0, y: finalHeight }
+  //       ]
+  //     };
+
+  //     setLayersWithHistory((prev) => [...prev, newLayer]);
+  //     setSelectedLayerId(newLayer.id);
+  //   };
+  //   img.src = url;
+  // };
 
   // const addImageLayerFromFile = (file) => {
   //   if (!file) return;
@@ -605,15 +707,59 @@ function Editor() {
 
   const selectedLayer = layers.find((layer) => layer.id === selectedLayerId);
 
-  const onSave = () => {
-    const serializable = layers.map((l) => {
-      const copy = { ...l };
-      return copy;
-    });
-    localStorage.setItem("mockupEditedLayers", JSON.stringify(serializable));
-    console.log("Saved layers:", serializable);
-    alert("Saved to localStorage (mockupEditedLayers). Check console.");
-  };
+  // const onSave = () => {
+  //   const serializable = layers.map((l) => {
+  //     const copy = { ...l };
+  //     return copy;
+  //   });
+  //   localStorage.setItem("mockupEditedLayers", JSON.stringify(serializable));
+  //   console.log("Saved layers:", serializable);
+  //   alert("Saved to localStorage (mockupEditedLayers). Check console.");
+  // };
+
+
+  console.log(editId, " <<<<, edit id")
+
+  const onSave = async () => {
+    try {
+      if (!editId) {
+        alert("Product ID not found!");
+        return;
+      }
+
+      // Copy layers array
+      const serializable = layers.map((l) => ({ ...l }));
+
+      // Optional: localStorage me bhi save karna
+      localStorage.setItem("mockupEditedLayers", JSON.stringify(serializable));
+      console.log("Saved layers locally:", serializable);
+
+
+      // API call to save layers in DB
+      const response = await fetch("http://localhost:8000/api/layers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: editId, layers: serializable })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("All layers saved to DB successfully!");
+        console.log("Saved layers response:", data.data);
+      } else {
+        alert("Failed to save layers: " + data.message);
+        console.error(data);
+      }
+
+    } catch (error) {
+      console.error("Error saving layers:", error);
+      alert("An error occurred while saving layers.");
+    }
+    finally {
+      navigate(-1);
+    }
+  }
 
   // const getCanvasSize = () => {
   //   if (mockup) {
@@ -820,23 +966,98 @@ function Editor() {
   //   setSelectedLayerId(newLayer.id);
   // };
 
+  // const addPrintAreaToCanvas = (printArea) => {
+  //   const canvasSize = getCanvasSize();
+
+
+  //   let finalWidth = printArea.width;
+  //   let finalHeight = printArea.height;
+
+  //   // Agar print area canvas se bari hai, toh scale down karo
+  //   if (printArea.width > canvasSize.width || printArea.height > canvasSize.height) {
+  //     const widthRatio = canvasSize.width / printArea.width;
+  //     const heightRatio = canvasSize.height / printArea.height;
+  //     const minRatio = Math.min(widthRatio, heightRatio) * 0.7;
+
+  //     finalWidth = Math.floor(printArea.width * minRatio);
+  //     finalHeight = Math.floor(printArea.height * minRatio);
+  //   }
+
+  //   // **Center position calculate karo**
+  //   const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //   const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //   const newLayer = {
+  //     id: `printarea-${Date.now()}`,
+  //     type: "printarea",
+  //     name: printArea.displayName || "",
+  //     x: x,
+  //     y: y,
+  //     width: finalWidth,
+  //     height: finalHeight,
+  //     rotation: 0,
+  //     opacity: 1,
+  //     visible: true,
+  //     hasImage: false,
+  //     imageSrc: null,
+  //     fit: "cover",
+  //     border: true,
+  //     locked: false,
+  //     perspective: 0,
+  //     rotateX: 0,
+  //     rotateY: 0,
+  //     rotateZ: 0,
+  //     skewX: 0,
+  //     skewY: 0,
+  //     transformOrigin: "center center",
+  //     enablePerspective: false,
+  //     corners: [
+  //       { x: 0, y: 0 },
+  //       { x: finalWidth, y: 0 },
+  //       { x: finalWidth, y: finalHeight },
+  //       { x: 0, y: finalHeight }
+  //     ]
+  //   };
+
+  //   setLayersWithHistory((prev) => [...prev, newLayer]);
+  //   setSelectedLayerId(newLayer.id);
+  // };
   const addPrintAreaToCanvas = (printArea) => {
     const canvasSize = getCanvasSize();
 
-    let finalWidth = printArea.width;
-    let finalHeight = printArea.height;
 
-    // Agar print area canvas se bari hai, toh scale down karo
-    if (printArea.width > canvasSize.width || printArea.height > canvasSize.height) {
-      const widthRatio = canvasSize.width / printArea.width;
-      const heightRatio = canvasSize.height / printArea.height;
-      const minRatio = Math.min(widthRatio, heightRatio) * 0.7;
+    // ✅ Pixels ko inches mein convert karo
+    const printAreaWidthInInches = printArea.width / PRINT_DPI;
+    const printAreaHeightInInches = printArea.height / PRINT_DPI;
 
-      finalWidth = Math.floor(printArea.width * minRatio);
-      finalHeight = Math.floor(printArea.height * minRatio);
+    // ✅ Canvas size bhi inches mein convert karo
+    const canvasWidthInInches = canvasSize.width / SCREEN_DPI;
+    const canvasHeightInInches = canvasSize.height / SCREEN_DPI;
+
+    // ✅ Photoshop ki tarah: Printarea ko canvas ke 70-80% tak scale karo
+    const maxWidthInInches = canvasWidthInInches * 0.8;
+    const maxHeightInInches = canvasHeightInInches * 0.8;
+
+    let finalWidthInInches = printAreaWidthInInches;
+    let finalHeightInInches = printAreaHeightInInches;
+
+    // Agar print area canvas se bara hai, scale down karo
+    if (printAreaWidthInInches > maxWidthInInches ||
+      printAreaHeightInInches > maxHeightInInches) {
+
+      const widthRatio = maxWidthInInches / printAreaWidthInInches;
+      const heightRatio = maxHeightInInches / printAreaHeightInInches;
+      const minRatio = Math.min(widthRatio, heightRatio);
+
+      finalWidthInInches = printAreaWidthInInches * minRatio;
+      finalHeightInInches = printAreaHeightInInches * minRatio;
     }
 
-    // **Center position calculate karo**
+    // ✅ Inches ko wapas pixels mein convert (SCREEN DPI use karo)
+    const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
+    const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+
+    // Center position calculate karo
     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
     const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
 
@@ -848,6 +1069,8 @@ function Editor() {
       y: y,
       width: finalWidth,
       height: finalHeight,
+      _naturalHeight: printArea.height,
+      _naturalWidth: printArea.width,
       rotation: 0,
       opacity: 1,
       visible: true,

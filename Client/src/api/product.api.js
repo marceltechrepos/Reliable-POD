@@ -21,6 +21,24 @@ const createProduct = async (payload) => {
     }
 };
 
+const createMockup = async (productId, payload) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${BASE_URL}/api/create-mockup?productId=${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload)
+        });
+        return await response.json();
+    }
+    catch (error) {
+        console.log(error, '<<<< create mockup error');
+    }
+}
+
 
 const getProductById = async (productId) => {
     try {
@@ -111,5 +129,6 @@ export {
     createProduct,
     getProductById,
     deleteProductById,
-    authFetch
+    createMockup,
+    authFetch,
 };

@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await productModel.find().populate("category");
+    const products = await productModel.find().populate("category").populate("fulfilmentProvider");
     res.status(200).json({ success: true, data: products, status: 200 });
   } catch (error) {
     res.status(404).json({ message: error.message });
@@ -147,6 +147,23 @@ export const createProduct = async (req, res) => {
     });
   }
 };
+
+export const createMockup = async (req, res) => {
+  try {
+    const { productId } = req.query;
+    const { mockupImage } = req.body;
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found", status: 404, success: false });
+    }
+    product.mockupImage = mockupImage;
+    await product.save();
+    return res.status(200).json({ message: "Mockup created successfully", status: 200, success: true });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: error.message || "Internal server error", status: 500, success: false })
+  }
+}
 
 export const updateProduct = async (req, res) => {
   try {
@@ -586,7 +603,7 @@ export const addVariant = async (req, res) => {
 
     // Validate required fields
     const variantValidations = [
-      { field: "sku", required: true, errorMessage: "SKU is required" }, 
+      { field: "sku", required: true, errorMessage: "SKU is required" },
       {
         field: "basePrice",
         required: true,
