@@ -39,7 +39,20 @@ const productSchema = new Schema(
         y: Number,
         width: Number,
         height: Number,
-        rotation: { type: Number, default: 0 },
+      },
+    ],
+
+    thumbnail: {
+      url: {
+        type: String,
+        // required: true
+      },
+      public_id: {
+        type: String,
+        // required: true
+      }
+    },
+
 
         // perspective / warp
         enablePerspective: { type: Boolean, default: false },

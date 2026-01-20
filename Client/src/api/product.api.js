@@ -21,6 +21,24 @@ const createProduct = async (payload) => {
     }
 };
 
+const createMockup = async (productId, payload) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${BASE_URL}/api/create-mockup?productId=${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload)
+        });
+        return await response.json();
+    }
+    catch (error) {
+        console.log(error, '<<<< create mockup error');
+    }
+}
+
 
 const getProductById = async (productId) => {
     try {
@@ -92,6 +110,62 @@ export const getProductsByCategory = async (categoryId) => {
     }
 };
 
+// const updateProduct = async (productId, payload) => {
+//     try {
+//         const token = localStorage.getItem("token");
+//         const response = await fetch(`${BASE_URL}/api/update-product/${productId}`, { 
+//             method: 'PUT',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 Authorization: `Bearer ${token}`,
+//             },
+//             body: JSON.stringify(payload)
+//         });
+
+//         const data = await response.json();
+//         return data;
+//     } catch (error) {
+//         console.log(error, '<<<< update product error');
+//         return { success: false, error: error.message };
+//     }
+// };
+
+
+const updateProduct = async (productId, payload) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        // Check if payload is FormData (file upload) or JSON
+        let headers = {};
+        let body;
+
+        if (payload instanceof FormData) {
+            // FormData for file upload
+            headers.Authorization = `Bearer ${token}`;
+            // Don't set Content-Type for FormData - browser will set it with boundary
+            body = payload;
+        } else {
+            // JSON payload
+            headers = {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            };
+            body = JSON.stringify(payload);
+        }
+
+        const response = await fetch(`${BASE_URL}/api/update-product/${productId}`, {
+            method: 'PUT',
+            headers: headers,
+            body: body
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.log(error, '<<<< update product error');
+        return { success: false, error: error.message };
+    }
+};
 
 const authFetch = async (url, options = {}) => {
     const token = localStorage.getItem("token");
@@ -111,5 +185,7 @@ export {
     createProduct,
     getProductById,
     deleteProductById,
-    authFetch
+    createMockup,
+    authFetch,
+    updateProduct
 };

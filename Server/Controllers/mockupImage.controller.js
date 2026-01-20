@@ -278,7 +278,7 @@ export const deleteMockupImage = async (req, res) => {
         success: false,
       });
     }
-    res.status(200).json({ success: true, data: mockupImage, status: 200 });
+    res.status(200).json({ message: "MOCKUP IMAGE DELETED SUCCESSFULLY", success: true, data: mockupImage, status: 200 });
   } catch (error) {
     res
       .status(500)
