@@ -18,19 +18,22 @@ import ThumbnailModal from '../components/Admin/ThumbnailModal';
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getAllProvider, createProvider } from '../api/provider.api';
-import { createProduct } from '../api/product.api';
+import { createProduct, getProductById, updateProduct } from '../api/product.api';
 import { getAllCategory, createCategory, getCategoryDropdown } from '../api/category.api';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
+import { deleteMockupImage } from '../api/mockupApi';
 
 // Local storage se data load karne ka function
 const loadMockupsFromStorage = () => {
   const savedMockups = localStorage.getItem('selectedMockups');
   return savedMockups ? JSON.parse(savedMockups) : [];
 };
+
+
 
 // Local storage mein save karne ka function
 const saveMockupsToStorage = (mockups) => {
@@ -53,6 +56,7 @@ function ProductBase() {
   const [internalName, setInternalName] = useState('');
   const [fulfilmentCatalogID, setFulfilmentCatalogID] = useState('');
   const [description, setDescription] = useState('');
+  const [editProductById, setEditProductById] = useState();
 
   const [isThumbnailModalOpen, setIsThumbnailModalOpen] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
@@ -60,6 +64,7 @@ function ProductBase() {
 
   const { id: productId } = useParams();
   const navigate = useNavigate();
+
 
   const isEditMode = Boolean(productId);
 
@@ -70,6 +75,201 @@ function ProductBase() {
   const [categories, setCategories] = useState([
     { label: 'T-Shirt', value: 't-shirt', thumbnail: '/images/categories/tshirt.png' }
   ]);
+
+  const fetchProductByProductId = async (id) => {
+    try {
+      const data = await getProductById(id);
+
+      console.log(data, "<<<<< main data")
+      setEditProductById(data);
+
+      // POPULATE FORM FIELDS
+      setProductTitle(data?.productTitle || '');
+      setInternalName(data?.internalName || '');
+      setProvider(data?.fulfilmentProvider?._id || '');
+      setFulfilmentCatalogID(data?.fulfilmentCatalogID || '');
+      setDescription(data?.description || '');
+      setPreview(data?.thumbnail.url || "")
+
+      if (data?.category) {
+
+        setSubCategory(data.category._id);
+
+      }
+
+      // Set thumbnail preview if exists
+      if (data?.thumbnail) {
+        setPreview(data.thumbnail.url);
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Thumbnail Update Handler - For Modal
+  const updateThumbnailHandler = async () => {
+    if (!thumbnail) {
+      alert("Please select an image first");
+      return;
+    }
+
+    try {
+      // Create FormData with thumbnail file
+      const formData = new FormData();
+      formData.append("thumbnail", thumbnail);
+
+      const data = await updateProduct(productId, formData);
+
+      if (data?.success) {
+        alert("Thumbnail updated successfully!");
+        setIsThumbnailModalOpen(false);
+        fetchProductByProductId(productId); // Refresh data
+        setThumbnail(null); // Reset thumbnail state
+      } else {
+        alert(data?.message || "Failed to update thumbnail");
+      }
+    } catch (error) {
+      console.error("Error updating thumbnail:", error);
+      alert("Failed to update thumbnail");
+    }
+  };
+
+  // Remove Thumbnail Handler - Fixed
+  const removeThumbnailHandler = async () => {
+    if (!productId) return;
+
+    if (window.confirm("Are you sure you want to remove this thumbnail?")) {
+      try {
+        // Send empty FormData to indicate thumbnail removal
+        const formData = new FormData();
+        formData.append("thumbnail", ""); // Empty string for removal
+
+        const data = await updateProduct(productId, formData);
+
+        if (data?.success) {
+          setThumbnail(null);
+          setPreview(null);
+          alert("Thumbnail removed successfully!");
+          fetchProductByProductId(productId);
+        } else {
+          alert(data?.message || "Failed to remove thumbnail");
+        }
+      } catch (error) {
+        console.error("Remove thumbnail error:", error);
+        alert("Failed to remove thumbnail");
+      }
+    }
+  };
+
+  // Update Product Handler - Fixed
+  const updateProductHandler = async () => {
+    if (!subCategory) {
+      alert("Please select a sub category");
+      return;
+    }
+
+    const payload = {
+      productTitle,
+      internalName,
+      fulfilmentProvider: provider,
+      category: subCategory,
+      fulfilmentCatalogID,
+      description,
+    };
+
+    try {
+      const data = await updateProduct(productId, payload);
+      if (data?.success) {
+        alert("Product updated successfully!");
+        fetchProductByProductId(productId);
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to update product");
+    }
+  };
+
+
+  useEffect(() => {
+    fetchProductByProductId(productId)
+  }, [productId]);
+
+  // Add this function to refresh all data
+  const refreshAllData = async () => {
+    console.log("Refreshing all data...");
+
+    // Refresh mockups from localStorage
+    const savedMockups = loadMockupsFromStorage();
+    setSelectedMockups(savedMockups);
+
+    // Refresh product data
+    if (productId) {
+      await fetchProductByProductId(productId);
+    }
+  };
+
+  // Update the editMockup function to use navigate
+  const editMockup = (mockup) => {
+    localStorage.setItem('mockupToEdit', JSON.stringify(mockup));
+    // Use navigate instead of window.location.href
+    navigate(`/admin/editor${editId ? `/${editId}` : ''}`);
+  };
+
+  // Replace the existing useEffect that only depends on productId with this:
+  useEffect(() => {
+    // This will run when component mounts
+    refreshAllData();
+
+    // Listen for custom event from editor
+    const handleMockupSaved = (event) => {
+      console.log("Mockup saved event received", event.detail);
+      if (event.detail && event.detail.productId === productId) {
+        refreshAllData();
+      }
+    };
+
+    window.addEventListener('mockupSaved', handleMockupSaved);
+
+    return () => {
+      window.removeEventListener('mockupSaved', handleMockupSaved);
+    };
+  }, [productId]);
+
+  // Add this useEffect to run when component becomes visible (user returns to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && productId) {
+        console.log("Page became visible, refreshing data...");
+        refreshAllData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [productId]);
+
+  // Add this useEffect to run on every render (when user navigates to this page)
+  useEffect(() => {
+    // This will run whenever the component renders
+    const handleFocus = () => {
+      console.log("Page focused, refreshing data...");
+      refreshAllData();
+    };
+
+    // Listen for focus event
+    window.addEventListener('focus', handleFocus);
+
+    // Also run once immediately
+    handleFocus();
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []); // Empty dependency array means it runs on every render
 
 
   const [open, setOpen] = useState(false);
@@ -193,21 +393,44 @@ function ProductBase() {
     saveMockupsToStorage(updatedMockups);
   };
 
-  const removeMockup = (id) => {
-    const updatedMockups = selectedMockups.filter(mockup => mockup.id !== id);
-    setSelectedMockups(updatedMockups);
-    saveMockupsToStorage(updatedMockups);
+  const removeMockup = async (id) => {
+    try {
+      const res = await deleteMockupImage(id)
+      if (!res.success) {
+        alert(res.message)
+        return
+      }
+      const updatedMockups = selectedMockups.filter(mockup => mockup.id !== id);
+      setSelectedMockups(updatedMockups);
+      saveMockupsToStorage(updatedMockups);
+
+      alert("Mockup removed successfully!")
+    } catch (error) {
+      console.error("Error removing mockup:", error);
+      alert("Failed to remove mockup");
+    }
+
   };
 
   const clearAllMockups = () => {
     setSelectedMockups([]);
     localStorage.removeItem('selectedMockups');
   };
+  
+  useEffect(() => {
+    const reloaded = sessionStorage.getItem("reloaded")
 
-  const editMockup = (mockup) => {
-    localStorage.setItem('mockupToEdit', JSON.stringify(mockup));
-    window.location.href = `/admin/editor${editId ? `/${editId}` : ''}`;
-  };
+    if (!reloaded) {
+      sessionStorage.setItem("reloaded", "true")
+      window.location.reload()
+    }
+  }, [])
+
+
+  // const editMockup = (mockup) => {
+  //   localStorage.setItem('mockupToEdit', JSON.stringify(mockup));
+  //   window.location.href = `/admin/editor${editId ? `/${editId}` : ''}`;
+  // };
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -347,13 +570,13 @@ function ProductBase() {
                 onChange={(e) => setDescription(e.target.value)}
               />
 
-              {/* Action buttons: responsive spacing */}
+              {/* // Replace current button with: */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between mt-3">
                 <button
-                  onClick={saveProductHandler}
+                  onClick={isEditMode ? updateProductHandler : saveProductHandler}
                   className="bg-ocean text-white px-4 py-2 rounded-md cursor-pointer w-full sm:w-auto"
                 >
-                  Save
+                  {isEditMode ? 'Update Product' : 'Save Product'}
                 </button>
 
                 {isEditMode && (
@@ -361,34 +584,49 @@ function ProductBase() {
                     onClick={() => setIsThumbnailModalOpen(true)}
                     className="bg-orange-500 text-white px-4 py-2 rounded-md cursor-pointer w-full sm:w-auto"
                   >
-                    Add Thumbnail
+                    {preview ? 'Edit Thumbnail' : 'Add Thumbnail'}
                   </button>
                 )}
               </div>
-
               {/* If preview exists, show a compact thumbnail preview under form on small screens */}
+              {/* // Thumbnail Preview Section - Remove button fix */}
               {preview && (
-                <div className="mt-4 sm:mt-6">
-                  <Typography variant="subtitle2">Current Thumbnail</Typography>
-                  <div className="mt-2 inline-flex items-center gap-3">
-                    <img src={preview} alt="thumbnail" className="w-20 h-20 object-cover rounded-md border" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm">{thumbnail?.name || 'Uploaded image'}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setIsThumbnailModalOpen(true)}
-                          className="px-3 py-1 text-sm bg-slate-100 rounded"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => { setThumbnail(null); setPreview(null); }}
-                          className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
+                <div className="mt-4 sm:mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+                  {/* ... existing code ... */}
+
+                  {/* Action Buttons - Fix Remove button */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setIsThumbnailModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-sm font-medium shadow-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit Thumbnail
+                    </button>
+
+                    {/* Change this button to call removeThumbnailHandler */}
+                    <button
+                      onClick={removeThumbnailHandler}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all duration-200 text-sm font-medium shadow-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Remove Thumbnail
+                    </button>
+
+                    <button
+                      onClick={() => window.open(preview, '_blank')}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 text-sm font-medium shadow-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Full
+                    </button>
                   </div>
                 </div>
               )}
@@ -410,6 +648,230 @@ function ProductBase() {
 
                 {/* selected mockups list - responsive cards */}
                 <div className="mt-4 grid grid-cols-1 gap-4">
+                  {/* 1. Main mockupImage from editProductById */}
+                  {editProductById?.mockupImage && (
+                    <Box>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
+                        <img
+                          src={editProductById.mockupImage}
+                          alt="Main Mockup"
+                          className="w-full sm:w-24 h-44 sm:h-24 object-cover rounded-xl"
+                          style={{ borderRadius: 10 }}
+                        />
+                        <div className='flex-1 w-full'>
+                          <Typography sx={{ marginBottom: 0, lineHeight: "1.1", fontWeight: 500 }}>
+                            {editProductById.productTitle} (Main)
+                          </Typography>
+                          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}>
+                            Main Mockup Image
+                          </Typography>
+                          {/* Action buttons */}
+                          <div className='flex items-center gap-2 mt-3'>
+                            {/* Edit Button */}
+                            <Button
+                              variant="contained"
+                              sx={{
+                                display: "inline-flex",
+                                minWidth: "auto",
+                                bgcolor: '#3b6d92',
+                                padding: "8px",
+                                fontSize: "12px",
+                                textTransform: "none",
+                              }}
+                              onClick={() => {
+                                const mockupData = {
+                                  id: editProductById._id,
+                                  url: editProductById.mockupImage,
+                                  title: editProductById.productTitle
+                                };
+                                localStorage.setItem('mockupToEdit', JSON.stringify(mockupData));
+                                window.location.href = `/admin/editor${editId ? `/${editId}` : ''}`;
+                              }}
+                            >
+
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-pencil-square" viewBox="0 0 16 16">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                              </svg>
+                            </Button>
+
+                            {/* Delete Button */}
+                            <Button
+                              variant="contained"
+                              sx={{
+                                display: "inline-flex",
+                                minWidth: "auto",
+                                bgcolor: 'error.main',
+                                padding: "8px",
+                                fontSize: "12px",
+                                textTransform: "none",
+                                '&:hover': { bgcolor: 'error.dark' }
+                              }}
+                              onClick={async () => {
+                                if (window.confirm("Delete main mockup image?")) {
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append("mockupImage", "");
+                                    const data = await updateProduct(productId, formData);
+
+                                    if (data?.success) {
+                                      alert("Mockup removed!");
+                                      fetchProductByProductId(productId);
+                                    }
+                                  } catch (error) {
+                                    alert("Failed to remove mockup");
+                                  }
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                              </svg>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Box>
+                  )}
+
+                  {/* 2. Additional selectedMockups (from localStorage) */}
+                  {selectedMockups.length > 0 ? (
+                    selectedMockups.map((mockup) => (
+                      <Box key={mockup.id}>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
+                          <img
+                            src={mockup.url}
+                            alt={mockup.title}
+                            className="w-full sm:w-24 h-44 sm:h-24 object-cover rounded-xl"
+                            style={{ borderRadius: 10 }}
+                          />
+                          <div className='flex-1 w-full'>
+                            <Typography sx={{ marginBottom: 0, lineHeight: "1.1", fontWeight: 500 }}>
+                              {mockup.title}
+                            </Typography>
+                            {mockup.dimensions && (
+                              <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                                {mockup.dimensions}
+                              </Typography>
+                            )}
+                            {mockup.category && (
+                              <Typography variant="caption" sx={{ display: 'block', color: 'primary.main', mt: 0.5 }}>
+                                Category: {mockup.category}
+                              </Typography>
+                            )}
+                            <div className='flex items-center gap-2 mt-3'>
+                              <Button
+                                variant="contained"
+                                sx={{
+                                  display: "inline-flex",
+                                  minWidth: "auto",
+                                  bgcolor: '#3b6d92',
+                                  padding: "8px",
+                                  fontSize: "12px",
+                                  textTransform: "none",
+                                }}
+                                onClick={() => editMockup(mockup)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-pencil-square" viewBox="0 0 16 16">
+                                  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                  <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                </svg>
+
+                              </Button>
+                              <Button
+                                variant="contained"
+                                sx={{
+                                  display: "inline-flex",
+                                  minWidth: "auto",
+                                  bgcolor: 'error.main',
+                                  padding: "8px",
+                                  fontSize: "12px",
+                                  textTransform: "none",
+                                }}
+                                onClick={() => removeMockup(mockup.id)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Box>
+                    ))
+                  ) : (
+                    // Agar koi additional mockup nahi hai
+                    !editProductById?.mockupImage && (
+                      <Box sx={{
+                        mt: 3,
+                        textAlign: 'center',
+                        py: 4,
+                        border: '1px dashed #ddd',
+                        borderRadius: 2,
+                        bgcolor: '#fafafa'
+                      }}>
+                        <Typography color="text.secondary">
+                          No mockups available. Click "Upload Mockup" to add.
+                        </Typography>
+                      </Box>
+                    )
+                  )}
+                </div>
+
+                {/* Clear All Button - only show if there are multiple mockups */}
+                {(selectedMockups.length > 0 || editProductById?.mockupImage) && (
+                  <Box sx={{ mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={async () => {
+                        if (window.confirm("Clear all mockups?")) {
+                          try {
+                            // Clear main mockup
+                            if (editProductById?.mockupImage) {
+                              const formData = new FormData();
+                              formData.append("mockupImage", "");
+                              await updateProduct(productId, formData);
+                            }
+
+                            // Clear selected mockups
+                            setSelectedMockups([]);
+                            localStorage.removeItem('selectedMockups');
+
+                            alert("All mockups cleared!");
+                            fetchProductByProductId(productId);
+                          } catch (error) {
+                            alert("Failed to clear mockups");
+                          }
+                        }
+                      }}
+                    >
+                      Clear All Mockups
+                    </Button>
+                  </Box>
+                )}
+              </div>
+            )}
+
+            {/* RIGHT MOCKUP */}
+            {/* {isEditMode && (
+              <div>
+                <div className="flex items-center justify-between bg-white p-4 sm:p-6 rounded-xl border-l-4 border-ocean">
+                  <h2 className="text-2xl font-bold">Mockup</h2>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: '#3b6d92', '&:hover': { bgcolor: '#355a78' } }}
+                    onClick={() => setOpenMockupModal(true)}
+                  >
+                    Upload Mockup
+                  </Button>
+                </div> */}
+
+            {/* selected mockups list - responsive cards */}
+            {/* <div className="mt-4 grid grid-cols-1 gap-4">
                   {selectedMockups.length > 0 ? (
                     selectedMockups.map((mockup) => (
                       <Box key={mockup.id} sx={{}}>
@@ -422,7 +884,7 @@ function ProductBase() {
                           />
                           <div className='flex-1 w-full'>
                             <Typography sx={{ marginBottom: 0, lineHeight: "1.1", fontWeight: 500 }}>
-                              {mockup.title}
+                              {mockup.title}.
                             </Typography>
                             <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
                               {mockup.dimensions}
@@ -487,18 +949,18 @@ function ProductBase() {
                       </Typography>
                     </Box>
                   )}
-                </div>
+                </div> */}
 
-                {/* Optional: Clear All Button */}
-                {selectedMockups.length > 0 && (
+            {/* Optional: Clear All Button */}
+            {/* {selectedMockups.length > 0 && (
                   <Box sx={{ mt: 3 }}>
                     <Button variant="outlined" color="error" size="small" onClick={clearAllMockups}>
                       Clear All Mockups
                     </Button>
                   </Box>
-                )}
-              </div>
-            )}
+                )} */}
+            {/* </div> */}
+            {/* )} */}
           </div>
 
           {/* TABS - stay full width below */}
@@ -513,11 +975,16 @@ function ProductBase() {
       {/* MODALS */}
       <ThumbnailModal
         open={isThumbnailModalOpen}
+        isEditMode={isEditMode}
         onClose={() => setIsThumbnailModalOpen(false)}
         thumbnail={thumbnail}
         setThumbnail={setThumbnail}
         preview={preview}
         setPreview={setPreview}
+        productId={productId}
+        existingThumbnailUrl={editProductById?.thumbnail?.url}
+        onUpdateThumbnail={updateThumbnailHandler} // Pass the handler
+        onRemoveThumbnail={removeThumbnailHandler} // Pass the handler
       />
 
       <AddMockup
