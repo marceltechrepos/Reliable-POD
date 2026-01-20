@@ -16,35 +16,48 @@ const productSchema = new Schema(
       url: String,
       public_id: String,
     },
-    mockupImage: String,
+    mockupImage: {
+      url: String,
+      width: Number,
+      height: Number,
+    },
+
     category: {
       type: Types.ObjectId,
       ref: "Category",
       required: true,
     },
+
+
     Printareas: [
       {
-        fulfiledKey: String,
+        fulfilledKey: String,
         displayName: String,
+
+        // placement
+        x: Number,
+        y: Number,
         width: Number,
         height: Number,
+        rotation: { type: Number, default: 0 },
+
+        // perspective / warp
+        enablePerspective: { type: Boolean, default: false },
+        corners: [
+          {
+            x: Number,
+            y: Number,
+          },
+        ],
+
+        // rendering
+        fit: { type: String, default: "cover" },
+
+        // admin-only flags
+        locked: { type: Boolean, default: true },
       },
     ],
 
-    // Variants: [
-    //   {
-    //     sku: String,
-    //     size: Number,
-    //     weight: Number,
-    //     color: String,
-    //     colorHex: String,
-    //     basePrice: Number,
-    //     comparePrice: Number,
-    //     createdAt: String,
-    //     updatedAt: String,
-
-    //   },
-    // ],
     Variants: [
       {
         sku: String,
