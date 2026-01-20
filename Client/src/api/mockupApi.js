@@ -54,3 +54,28 @@ export const uploadMockupImage = async (file, categoryId) => {
         return null;
     }
 };
+
+
+export const deleteMockupImage = async (id) => {
+    try {
+        const res = await authFetch(`${BASE_URL}/api/delete-mockup-image/${id}`, {
+            method: "DELETE",
+        })
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("SERVER ERROR", text)
+            return {
+                success: false,
+                message: `Server error: ${res.status}`
+            };
+        }
+        return await res.json();
+    } catch (error) {
+        console.error("Network error:", error);
+        return {
+            success: false,
+            message: "Network error occurred"
+        };
+    }
+}
