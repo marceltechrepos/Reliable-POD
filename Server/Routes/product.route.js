@@ -23,7 +23,7 @@ import {
 import {
   isLogin, isAdmin,
 } from "../Middlewares/Authentication/Auth.middleware.js";
-import { upload } from "../middlewares/Multer/multer.js";
+import { upload } from "../Middlewares/Multer/multer.js";
 
 const productRouter = Router();
 

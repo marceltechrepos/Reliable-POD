@@ -610,12 +610,19 @@ const EditorCanvas = ({
           // }}
           style={{
             // REMOVE minWidth/minHeight - Yeh overflow create kar raha tha
+            // display: "flex",
+            // alignItems: "center",
+            // justifyContent: "center",
+            // maxWidth: "100%", // ✅ Max width set karo
+            // maxHeight: "100%", // ✅ Max height set karo
+            // padding: '10px',
+            maxWidth: "90vw",
+            maxHeight: "90vh",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            maxWidth: "100%", // ✅ Max width set karo
-            maxHeight: "100%", // ✅ Max height set karo
             padding: '10px',
+            
           }}
 
         >
@@ -668,9 +675,12 @@ const EditorCanvas = ({
                     style={{
                       position: "absolute",
                       left: 0,
-                      top: 0,
+                      top: 130,
                       width: "100%",
                       height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       zIndex: 0, // Background sabse niche
                     }}
                   >
@@ -678,9 +688,9 @@ const EditorCanvas = ({
                       src={layer.src}
                       alt="background"
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain", // ✅ 'contain' se puri image show hogi
+                        maxWidth: "100%",    // ✅ Max width 100% of canvas
+                        maxHeight: "100%",   // ✅ Max height 100% of canvas
+                        objectFit: "contain", // ✅ IMPORTANT: Pura image fit karega
                         display: "block",
                         borderRadius: 8,
                         boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
