@@ -70,6 +70,14 @@ const EditorHeader = ({
           >
             {operations?.isSaving ? "Saving..." : "Save Changes"}
           </button>
+
+          {/* <button 
+  onClick={operations.zoomToFitAllImages}
+  className="px-3 py-2 rounded bg-teal-600 hover:bg-teal-700"
+  title="Fit All Images to Screen"
+>
+  Fit All
+</button> */}
         </div>
 
         <div className="flex items-center gap-2">

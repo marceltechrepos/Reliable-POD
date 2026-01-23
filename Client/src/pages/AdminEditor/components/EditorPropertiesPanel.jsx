@@ -70,10 +70,28 @@ const EditorPropertiesPanel = ({
             </div>
 
             {/* ✅ ACTUAL/NATURAL SIZE DISPLAY (New) */}
-            {selectedLayer.type === "image" && (
+            {/* {(selectedLayer.type === "printarea" || selectedLayer.type === "image") && (
               <div className="mt-2 text-xs text-gray-500">
                 <span className="block">Actual: {selectedLayer.naturalWidth || selectedLayer.width} × {selectedLayer.naturalHeight || selectedLayer.height}</span>
                 <span className="block">Display: {Math.round(selectedLayer.width)} × {Math.round(selectedLayer.height)}</span>
+              </div>
+            )}
+          </div> */}
+
+            {/* ✅ EXACT/NATURAL SIZE DISPLAY - Update yeh karo */}
+            {(selectedLayer.type === "printarea" || selectedLayer.type === "image") && (
+              <div className="mt-2 text-xs text-gray-500">
+                <span className="block">
+                  <strong>Original Size:</strong> {selectedLayer._naturalWidth || selectedLayer.width} × {selectedLayer._naturalHeight || selectedLayer.height}
+                </span>
+                <span className="block">
+                  <strong>Display Size:</strong> {Math.round(selectedLayer.width)} × {Math.round(selectedLayer.height)}
+                </span>
+                {selectedLayer.type === "printarea" && (
+                  <span className="block text-green-400 mt-1">
+                    <strong>Print Area:</strong> {selectedLayer._naturalWidth || selectedLayer.width}px × {selectedLayer._naturalHeight || selectedLayer.height}px
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -117,7 +135,7 @@ const EditorPropertiesPanel = ({
           )}
 
           {/* Image Layer Properties */}
-          {selectedLayer.type === "image" && (
+          {/* {selectedLayer.type === "image" && (
             <>
               <div>
                 <p className="text-gray-400 font-medium">Replace Image</p>
@@ -139,7 +157,53 @@ const EditorPropertiesPanel = ({
                   <option value="cover">Cover</option>
                   <option value="fill">Fill</option>
                 </select>
+              </div> */}
+
+          {selectedLayer.type === "image" && (
+            <>
+              <div>
+                <p className="text-gray-400 font-medium">Replace Image</p>
+                <input type="file" accept="image/*" onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (!file) return;
+                  if (selectedLayer.src && selectedLayer.src.startsWith("blob:")) {
+                    try { URL.revokeObjectURL(selectedLayer.src); } catch (err) { }
+                  }
+                  const url = URL.createObjectURL(file);
+
+                  // ✅ New image ka size maintain karo
+                  const img = new Image();
+                  img.onload = function () {
+                    operations.updateLayer(selectedLayer.id, {
+                      src: url,
+                      _naturalWidth: this.naturalWidth,
+                      _naturalHeight: this.naturalHeight
+                    });
+                  };
+                  img.src = url;
+                }} className="w-full mt-1 p-2 bg-gray-700 rounded" />
               </div>
+
+              {/* ✅ IMAGE SIZE DISPLAY - Add this */}
+              <div className="text-xs text-gray-500 mt-2">
+                <span className="block">
+                  <strong>Original Size:</strong> {selectedLayer._naturalWidth || selectedLayer.width} × {selectedLayer._naturalHeight || selectedLayer.height}
+                </span>
+                <span className="block">
+                  <strong>Display Size:</strong> {Math.round(selectedLayer.width)} × {Math.round(selectedLayer.height)}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-gray-400 font-medium">Fit Mode</p>
+                <select value={selectedLayer.fit || "contain"} onChange={(e) => operations.updateLayer(selectedLayer.id, { fit: e.target.value })}
+                  className="w-full p-2 rounded bg-gray-700 text-white">
+                  <option value="contain">Contain</option>
+                  <option value="cover">Cover</option>
+                  <option value="fill">Fill</option>
+                </select>
+              </div>
+
 
               {/* ✅ PERSPECTIVE CONTROLS FOR IMAGE */}
               <div className="pt-2 border-t border-gray-700">
@@ -184,10 +248,59 @@ const EditorPropertiesPanel = ({
           )}
 
           {/* Print Area Properties */}
+          {/* {selectedLayer.type === "printarea" && (
+            <>
+              <div className="pt-2 border-t border-gray-700">
+                <p className="text-gray-400 font-medium mb-2">Print Area Image</p>
+                <input ref={printAreaFileInputRef} type="file" accept="image/*" onChange={operations.handlePrintAreaImageUpload} className="hidden" />
+                {!selectedLayer.hasImage ? (
+                  <div className="space-y-3">
+                    <button onClick={operations.triggerPrintAreaImageUpload} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                      Upload Image
+                    </button>
+                    <p className="text-xs text-gray-400 text-center">Upload image for {selectedLayer.width}×{selectedLayer.height} area</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative bg-gray-900 rounded-lg p-3">
+                      <img src={selectedLayer.imageSrc} alt="Print area preview" className="w-full h-40 object-contain rounded" />
+                      <div className="flex justify-between mt-3">
+                        <button onClick={operations.triggerPrintAreaImageUpload} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded transition">
+                          Replace Image
+                        </button>
+                        <button onClick={operations.removePrintAreaImage} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded transition">
+                          Remove Image
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 font-medium">Image Fit</p>
+                      <select value={selectedLayer.fit || "cover"} onChange={(e) => operations.updateLayer(selectedLayer.id, { fit: e.target.value })}
+                        className="w-full p-2 rounded bg-gray-700 text-white">
+                        <option value="cover">Cover (Fill entire area)</option>
+                        <option value="contain">Contain (Fit inside)</option>
+                        <option value="fill">Fill (Stretch)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div> */}
+
           {selectedLayer.type === "printarea" && (
             <>
               <div className="pt-2 border-t border-gray-700">
                 <p className="text-gray-400 font-medium mb-2">Print Area Image</p>
+
+                {/* ✅ ADD THIS SIZE DISPLAY SECTION HERE */}
+                <div className="text-xs text-gray-500 mb-3 p-2 bg-gray-900 rounded">
+                  <span className="block">
+                    <strong>Print Area Size:</strong> {selectedLayer._naturalWidth || selectedLayer.width}px × {selectedLayer._naturalHeight || selectedLayer.height}px
+                  </span>
+                  <span className="block">
+                    <strong>Display Size:</strong> {Math.round(selectedLayer.width)}px × {Math.round(selectedLayer.height)}px
+                  </span>
+                </div>
+
                 <input ref={printAreaFileInputRef} type="file" accept="image/*" onChange={operations.handlePrintAreaImageUpload} className="hidden" />
                 {!selectedLayer.hasImage ? (
                   <div className="space-y-3">
