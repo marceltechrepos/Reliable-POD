@@ -601,29 +601,31 @@ const EditorCanvas = ({
       {mockup ? (
         <div
           className="relative"
-          // style={{
-          //   minWidth: getCanvasSize().width,
-          //   minHeight: getCanvasSize().height,
-          //   display: "flex",
-          //   alignItems: "center",
-          //   justifyContent: "center",
-          // }}
           style={{
-            // REMOVE minWidth/minHeight - Yeh overflow create kar raha tha
-            // display: "flex",
-            // alignItems: "center",
-            // justifyContent: "center",
-            // maxWidth: "100%", // ✅ Max width set karo
-            // maxHeight: "100%", // ✅ Max height set karo
-            // padding: '10px',
+            minWidth: getCanvasSize().width,
+            minHeight: getCanvasSize().height,
+            display: "flex",
             maxWidth: "90vw",
             maxHeight: "90vh",
-            display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: '10px',
-            
           }}
+        // style={{
+        // REMOVE minWidth/minHeight - Yeh overflow create kar raha tha
+        // display: "flex",
+        // alignItems: "center",
+        // justifyContent: "center",
+        // maxWidth: "100%", // ✅ Max width set karo
+        // maxHeight: "100%", // ✅ Max height set karo
+        // padding: '10px',
+        //   maxWidth: "90vw",
+        //   maxHeight: "90vh",
+        //   display: "flex",
+        //   alignItems: "center",
+        //   justifyContent: "center",
+        //   padding: '10px',
+
+        // }}
 
         >
           <div
@@ -675,22 +677,23 @@ const EditorCanvas = ({
                     style={{
                       position: "absolute",
                       left: 0,
-                      top: 130,
-                      width: "100%",
-                      height: "100%",
+                      top: 0,
+                      width: getCanvasSize().width,
+                      height: getCanvasSize().height,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      zIndex: 0, // Background sabse niche
+                      zIndex: 0,
+                      overflow: "hidden",
                     }}
                   >
                     <img
                       src={layer.src}
                       alt="background"
                       style={{
-                        maxWidth: "100%",    // ✅ Max width 100% of canvas
-                        maxHeight: "100%",   // ✅ Max height 100% of canvas
-                        objectFit: "contain", // ✅ IMPORTANT: Pura image fit karega
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain", // Ensures full image is visible
                         display: "block",
                         borderRadius: 8,
                         boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
@@ -699,6 +702,39 @@ const EditorCanvas = ({
                   </div>
                 );
               }
+              // if (layer.type === "background") {
+              //   return (
+              //     <div
+              //       key={layer.id}
+              //       style={{
+              //         position: "absolute",
+              //         left:0,
+              //         top:0,
+              //         // left: 0,
+              //         // top: 130,
+              //         width: "100%",
+              //         height: "100%",
+              //         display: "flex",
+              //         alignItems: "center",
+              //         justifyContent: "center",
+              //         zIndex: 0, // Background sabse niche
+              //       }}
+              //     >
+              //       <img
+              //         src={layer.src}
+              //         alt="background"
+              //         style={{
+              //           maxWidth: "100%",    // ✅ Max width 100% of canvas
+              //           maxHeight: "100%",   // ✅ Max height 100% of canvas
+              //           objectFit: "contain", // ✅ IMPORTANT: Pura image fit karega
+              //           display: "block",
+              //           borderRadius: 8,
+              //           boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+              //         }}
+              //       />
+              //     </div>
+              //   );
+              // }
 
               const showRotationHandle = selectedLayerId === layer.id && layer.type !== "background" && !layer.locked;
               const showPerspectiveHandles = selectedLayerId === layer.id &&
