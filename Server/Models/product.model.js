@@ -4,18 +4,21 @@ const productSchema = new Schema(
   {
     productTitle: String,
     internalName: String,
+
     fulfilmentProvider: {
       type: Types.ObjectId,
-      ref: "Provider", // ye model ka naam hoga
+      ref: "Provider",
       required: true,
     },
-    // fulfilmentProvider: String,
+
     fulfilmentCatalogID: String,
     description: String,
+
     thumbnail: {
       url: String,
       public_id: String,
     },
+
     mockupImage: {
       url: String,
       width: Number,
@@ -28,8 +31,7 @@ const productSchema = new Schema(
       required: true,
     },
 
-
-    Printareas: [
+    printAreas: [
       {
         fulfilledKey: String,
         displayName: String,
@@ -39,23 +41,13 @@ const productSchema = new Schema(
         y: Number,
         width: Number,
         height: Number,
-      },
-    ],
-
-    thumbnail: {
-      url: {
-        type: String,
-        // required: true
-      },
-      public_id: {
-        type: String,
-        // required: true
-      }
-    },
-
 
         // perspective / warp
-        enablePerspective: { type: Boolean, default: false },
+        enablePerspective: {
+          type: Boolean,
+          default: false,
+        },
+
         corners: [
           {
             x: Number,
@@ -64,29 +56,42 @@ const productSchema = new Schema(
         ],
 
         // rendering
-        fit: { type: String, default: "cover" },
+        fit: {
+          type: String,
+          enum: ["cover", "contain", "stretch"],
+          default: "cover",
+        },
 
         // admin-only flags
-        locked: { type: Boolean, default: true },
+        locked: {
+          type: Boolean,
+          default: true,
+        },
       },
     ],
 
-    Variants: [
+    variants: [
       {
         sku: String,
         size: Number,
         weight: Number,
         color: String,
         colorHex: String,
+
         basePrice: Number,
         comparePrice: Number,
 
-        // 🔥 ADD THESE
         available: {
           type: String,
-          enum: ['available', 'out of stock', 'coming soon', 'discontinued'],
-          default: 'available',
+          enum: [
+            "available",
+            "out of stock",
+            "coming soon",
+            "discontinued",
+          ],
+          default: "available",
         },
+
         addToCampaigns: {
           type: Boolean,
           default: false,
@@ -96,7 +101,6 @@ const productSchema = new Schema(
         updatedAt: String,
       },
     ],
-
   },
   { timestamps: true }
 );
