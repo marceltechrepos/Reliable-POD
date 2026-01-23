@@ -43,8 +43,8 @@ function App() {
         <Route path="/per" element={<PerspectiveWarp />} />
         <Route path="/admin/editor/:editId?" element={<Editor />} />
         {/* AUTH ROUTES */}
-        <Route path="/" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* <Route path="/" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} /> */}
 
       </Routes>
     </Router>

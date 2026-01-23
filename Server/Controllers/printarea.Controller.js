@@ -275,248 +275,124 @@ const deleteImageFromCloudinary = async (publicId) => {
     console.error("Error deleting image from Cloudinary:", error);
   }
 };
-
-export const saveLayers = async (req, res) => {
-  try {
-    console.log("=== SAVE LAYERS REQUEST ===");
-    const { productId, layers, layerIds } = req.body;
-    const files = req.files || [];
-
-    console.log("Product ID:", productId);
-    console.log("Files received:", files.length);
-    console.log("Layer IDs from body:", layerIds);
-
-    if (!productId) {
-      return res.status(400).json({
-        success: false,
-        message: "productId is required"
-      });
-    }
-
-    // Parse layers
-    let layersArray = [];
-    try {
-      layersArray = JSON.parse(layers);
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      return res.status(400).json({
-        success: false,
-        message: "Invalid layers JSON format"
-      });
-    }
-
-    if (!Array.isArray(layersArray) || layersArray.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "layers array is required"
-      });
-    }
-
-    // Parse layerIds (frontend se array aayega)
-    let layerIdsArray = [];
-    try {
-      if (layerIds) {
-        layerIdsArray = JSON.parse(layerIds);
-        if (!Array.isArray(layerIdsArray)) {
-          layerIdsArray = [layerIdsArray];
-        }
-      }
-    } catch (e) {
-      console.log("Error parsing layerIds:", e);
-      layerIdsArray = [];
-    }
-
-    console.log("Layer IDs array:", layerIdsArray);
-    console.log("Layers count:", layersArray.length);
-
-    const savedLayers = [];
-
-    // First, delete all existing layers for this product (clean slate)
-    await Layer.deleteMany({ productId });
-    console.log("Deleted existing layers for product:", productId);
-
-    // Create mapping of layerId to file
-    const fileMap = {};
-    for (let i = 0; i < files.length && i < layerIdsArray.length; i++) {
-      const layerId = layerIdsArray[i];
-      fileMap[layerId] = files[i];
-      console.log(`Mapped file ${files[i].originalname} to layer ${layerId}`);
-    }
-
-    // Process each layer
-    for (const layer of layersArray) {
-      try {
-        // Attach productId
-        layer.productId = productId;
-
-        // 🔥 IMPORTANT: Remove _id from frontend data to avoid duplicate key error
-        delete layer._id;
-        delete layer.__v;
-
-        // Handle printarea image
-        if (layer.type === "printarea" && layer.hasImage) {
-          const file = fileMap[layer.id];
-
-          if (file) {
-            try {
-              console.log(`Uploading image for layer ${layer.id}...`);
-              const uploadResult = await cloudinary.uploader.upload(file.path, {
-                folder: "printareas",
-                resource_type: "image",
-                public_id: `printarea_${layer.id}_${Date.now()}`
-              });
-
-              layer.imageSrc = uploadResult.secure_url;
-              layer.imagePublicId = uploadResult.public_id;
-              layer.hasImage = true;
-
-              console.log(`✓ Image uploaded: ${uploadResult.secure_url}`);
-
-              // Clean up local file
-              if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-              }
-
-            } catch (uploadError) {
-              console.error("Cloudinary upload error:", uploadError);
-              layer.imageSrc = null;
-              layer.hasImage = false;
-            }
-          } else if (layer.imageSrc === "UPLOADING") {
-            layer.imageSrc = null;
-            layer.hasImage = false;
-            console.log(`✗ No image for layer ${layer.id}`);
-          } else if (layer.imageSrc && layer.imageSrc.startsWith("http")) {
-            // Already has a URL (from previous save)
-            console.log(`✓ Layer ${layer.id} already has image URL`);
-            layer.hasImage = true;
-          } else {
-            layer.imageSrc = null;
-            layer.hasImage = false;
-          }
-        }
-
-        // Save layer (Mongoose will generate new _id)
-        const created = await Layer.create(layer);
-        savedLayers.push(created);
-        console.log(`✓ Saved layer ${layer.id}`);
-
-      } catch (layerError) {
-        console.error(`Error saving layer ${layer?.id}:`, layerError);
-        // Continue with other layers
-      }
-    }
-
-    // Clean up any remaining files
-    files.forEach(file => {
-      if (fs.existsSync(file.path)) {
-        try {
-          fs.unlinkSync(file.path);
-        } catch (cleanupError) {
-          console.error("Error cleaning up file:", cleanupError);
-        }
-      }
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Layers saved successfully",
-      data: savedLayers
-    });
-
-  } catch (error) {
-    console.error("Error saving layers:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message
-    });
-  }
-};
-
-// ================================================================================
-
-// ✅ SAVE LAYERS WITH IMAGE UPLOAD
-// Controllers/printarea.Controller.js
+// ==================================================================
 // export const saveLayers = async (req, res) => {
 //   try {
-//     const { productId, layers } = req.body;
-//     const files = req.files; // ✅ Multer array se files aayengi
-
-//     console.log("Product ID from body:", productId);
-//     console.log("Layers from body (string):", layers);
-//     console.log("File received:", files ? `Yes - ${files.originalname}` : "No")
+//     console.log("=== SAVE LAYERS REQUEST ===");
+//     const { productId, layers, layerIds } = req.body;
+//     const files = req.files || [];
 
 //     if (!productId) {
-//       return res.status(400).json({ 
-//         success: false, 
-//         message: "productId is required" 
-//       });
+//       return res.status(400).json({ success: false, message: "productId is required" });
 //     }
 
+//     // Parse layers JSON
 //     let layersArray = [];
 //     try {
 //       layersArray = JSON.parse(layers);
-//     } catch (parseError) {
-//       return res.status(400).json({ 
-//         success: false, 
-//         message: "Invalid layers JSON format" 
-//       });
+//     } catch (err) {
+//       return res.status(400).json({ success: false, message: "Invalid layers JSON format" });
 //     }
 
-//     if (!Array.isArray(layersArray) || layersArray.length === 0) {
-//       return res.status(400).json({ 
-//         success: false, 
-//         message: "layers array is required" 
-//       });
+//     // Parse layerIds
+//     let layerIdsArray = [];
+//     try {
+//       if (layerIds) {
+//         layerIdsArray = JSON.parse(layerIds);
+//         if (!Array.isArray(layerIdsArray)) layerIdsArray = [layerIdsArray];
+//       }
+//     } catch {
+//       layerIdsArray = [];
+//     }
+
+//     // Remove old layers
+//     await Layer.deleteMany({ productId });
+
+//     // Map files to layers
+//     const fileMap = {};
+//     for (let i = 0; i < files.length && i < layerIdsArray.length; i++) {
+//       fileMap[layerIdsArray[i]] = files[i];
 //     }
 
 //     const savedLayers = [];
-//     let fileIndex = 0;
 
 //     for (const layer of layersArray) {
-//       // Attach productId
-//       if (!layer.productId) layer.productId = productId;
+//       try {
+//         layer.productId = productId;
+//         delete layer._id;
+//         delete layer.__v;
 
-//       // Handle printarea image
-//       if (layer.type === "printarea" && layer.hasImage) {
-//         // Agar file available hai aur yeh woh layer hai jo image upload kar rahi hai
-//         if (files[fileIndex]) {
-//           try {
-//             // Upload to Cloudinary
-//             const uploadResult = await cloudinary.uploader.upload(files[fileIndex].path, {
-//               folder: "printareas",
-//               resource_type: "auto",
-//             });
+//         // Check if needs upload
+//         const file = fileMap[layer.id];
+//         const needsUpload =
+//           (layer.type === "printarea" && layer.imageSrc === "UPLOADING") ||
+//           ((layer.type === "image" || layer.type === "background") && layer.src === "UPLOADING") ||
+//           (file !== undefined); // ensure background/image file triggers upload
 
-//             // Update layer with Cloudinary URL
-//             layer.imageSrc = uploadResult.secure_url;
-//             layer.imagePublicId = uploadResult.public_id;
-//             layer.hasImage = true;
+//         // Check if already uploaded
+//         const existingCloud =
+//           (layer.type === "printarea" && layer.imageSrc?.startsWith("http")) ||
+//           ((layer.type === "image" || layer.type === "background") && layer.src?.startsWith("http"));
 
-//             // Clean up local file
-//             if (fs.existsSync(files[fileIndex].path)) {
-//               fs.unlinkSync(files[fileIndex].path);
+//         // Determine folder
+//         let folder = "mockups";
+//         if (layer.type === "printarea") folder = "printareas";
+//         if (layer.type === "image") folder = "image_layers";
+//         if (layer.type === "background") folder = "backgrounds";
+
+//         // UPLOAD LOGIC
+//         if (needsUpload) {
+//           if (file) {
+//             try {
+//               const result = await cloudinary.uploader.upload(file.path, {
+//                 folder,
+//                 resource_type: "image"
+//               });
+
+//               if (layer.type === "printarea") {
+//                 layer.imageSrc = result.secure_url;
+//                 layer.imagePublicId = result.public_id;
+//                 layer.hasImage = true;
+//               } else {
+//                 layer.src = result.secure_url;
+//                 layer.imagePublicId = result.public_id;
+//                 layer.hasImage = true; // important for background
+//               }
+
+//               fs.existsSync(file.path) && fs.unlinkSync(file.path);
+
+//             } catch {
+//               if (layer.type === "printarea") {
+//                 layer.imageSrc = null;
+//                 layer.hasImage = false;
+//               } else {
+//                 layer.src = null;
+//                 layer.hasImage = false;
+//               }
 //             }
-
-//             fileIndex++;
-
-//           } catch (uploadError) {
-//             console.error("Cloudinary upload error:", uploadError);
-//             layer.imageSrc = null;
-//             layer.hasImage = false;
+//           } else if (layer.type === "background") {
+//             // If file missing, preserve existing src
+//             layer.src = layer.src === "UPLOADING" ? null : layer.src;
+//             layer.hasImage = !!layer.src;
+//           } else {
+//             layer.type === "printarea" ? (layer.imageSrc = null) : (layer.src = null);
 //           }
-//         } else if (layer.imageSrc === "UPLOADING") {
-//           // Agar image upload nahi hui, to hasImage false karo
-//           layer.imageSrc = null;
-//           layer.hasImage = false;
+//         } else if (existingCloud) {
+//           if (layer.type === "printarea") layer.hasImage = true;
+//           else layer.hasImage = true;
+//         } else {
+//           layer.type === "printarea" ? (layer.imageSrc = null) : (layer.src = null);
 //         }
-//       }
 
-//       // Save layer
-//       const created = await Layer.create(layer);
-//       savedLayers.push(created);
+//         const created = await Layer.create(layer);
+//         savedLayers.push(created);
+
+//       } catch (err) {
+//         console.error("Layer save error:", err);
+//       }
 //     }
+
+//     files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
 
 //     return res.status(200).json({
 //       success: true,
@@ -524,277 +400,433 @@ export const saveLayers = async (req, res) => {
 //       data: savedLayers
 //     });
 
-//   } catch (error) {
-//     console.error("Error saving layers:", error);
+//   } catch (err) {
+//     console.error("Error saving layers:", err);
 //     return res.status(500).json({
 //       success: false,
 //       message: "Internal server error",
-//       error: error.message
+//       error: err.message
 //     });
 //   }
 // };
 
-// =====================================================================
-
-// ✅ UPDATE LAYERS WITH IMAGE HANDLING
 // export const updateLayers = async (req, res) => {
 //   try {
+//     console.log("=== UPDATE LAYERS REQUEST ===");
 //     const { productId } = req.params;
-//     const { layers } = req.body;
+//     const { layers, layerIds } = req.body;
+//     const files = req.files || [];
 
 //     if (!productId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "productId is required"
-//       });
+//       return res.status(400).json({ success: false, message: "productId is required" });
 //     }
 
-//     if (!Array.isArray(layers)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "layers array is required"
-//       });
+//     let layersArray = [];
+//     try {
+//       layersArray = JSON.parse(layers);
+//     } catch {
+//       return res.status(400).json({ success: false, message: "Invalid layers JSON" });
 //     }
 
-//     // Handle file upload if exists
-//     let uploadedImageUrl = null;
-//     let uploadedImagePublicId = null;
-
-//     if (req.file) {
-//       const uploadResult = await uploadImageToCloudinary(req.file.path);
-//       uploadedImageUrl = uploadResult.url;
-//       uploadedImagePublicId = uploadResult.public_id;
-//     }
-
-//     const results = {
-//       created: 0,
-//       updated: 0,
-//       deleted: 0,
-//       failed: 0,
-//       layers: []
-//     };
-
-//     // Get existing layers
-//     const existingLayers = await Layer.find({ productId });
-//     const existingLayerIds = existingLayers.map(layer => layer.id);
-//     const incomingLayerIds = layers.map(layer => layer.id).filter(id => id);
-
-//     // Delete layers not in incoming array
-//     const idsToDelete = existingLayerIds.filter(id => !incomingLayerIds.includes(id));
-
-//     if (idsToDelete.length > 0) {
-//       // Delete associated images from Cloudinary
-//       const layersToDelete = existingLayers.filter(layer =>
-//         idsToDelete.includes(layer.id)
-//       );
-
-//       for (const layer of layersToDelete) {
-//         if (layer.imagePublicId) {
-//           await deleteImageFromCloudinary(layer.imagePublicId);
-//         }
+//     let layerIdsArray = [];
+//     try {
+//       if (layerIds) {
+//         layerIdsArray = JSON.parse(layerIds);
+//         if (!Array.isArray(layerIdsArray)) layerIdsArray = [layerIdsArray];
 //       }
-
-//       await Layer.deleteMany({ productId, id: { $in: idsToDelete } });
-//       results.deleted = idsToDelete.length;
+//     } catch {
+//       layerIdsArray = [];
 //     }
 
-//     // Process each incoming layer
-//     for (const layer of layers) {
+//     // Map files
+//     const fileMap = {};
+//     for (let i = 0; i < files.length && i < layerIdsArray.length; i++) {
+//       fileMap[layerIdsArray[i]] = files[i];
+//     }
+
+//     await Layer.deleteMany({ productId });
+
+//     const savedLayers = [];
+
+//     for (const layer of layersArray) {
 //       try {
 //         layer.productId = productId;
-//         layer.updatedAt = new Date();
+//         delete layer._id;
+//         delete layer.__v;
 
-//         // Handle printarea image
-//         if (layer.type === "printarea" && layer.hasImage) {
-//           const existingLayer = existingLayers.find(l => l.id === layer.id);
+//         const file = fileMap[layer.id];
+//         const needsUpload =
+//           (layer.type === "printarea" && layer.imageSrc === "UPLOADING") ||
+//           ((layer.type === "image" || layer.type === "background") && layer.src === "UPLOADING") ||
+//           (file !== undefined);
 
-//           // If new image uploaded
-//           if (uploadedImageUrl) {
-//             // Delete old image if exists
-//             if (existingLayer && existingLayer.imagePublicId) {
-//               await deleteImageFromCloudinary(existingLayer.imagePublicId);
+//         const existingCloud =
+//           (layer.type === "printarea" && layer.imageSrc?.startsWith("http")) ||
+//           ((layer.type === "image" || layer.type === "background") && layer.src?.startsWith("http"));
+
+//         let folder = "mockups";
+//         if (layer.type === "printarea") folder = "printareas";
+//         if (layer.type === "image") folder = "image_layers";
+//         if (layer.type === "background") folder = "backgrounds";
+
+//         if (needsUpload) {
+//           if (file) {
+//             const upload = await cloudinary.uploader.upload(file.path, { folder });
+//             if (layer.type === "printarea") {
+//               layer.imageSrc = upload.secure_url;
+//               layer.hasImage = true;
+//             } else {
+//               layer.src = upload.secure_url;
+//               layer.hasImage = true;
 //             }
-
-//             layer.imageSrc = uploadedImageUrl;
-//             layer.imagePublicId = uploadedImagePublicId;
+//             fs.existsSync(file.path) && fs.unlinkSync(file.path);
+//           } else if (layer.type === "background") {
+//             layer.src = layer.src === "UPLOADING" ? null : layer.src;
+//             layer.hasImage = !!layer.src;
+//           } else {
+//             layer.type === "printarea" ? (layer.imageSrc = null) : (layer.src = null);
 //           }
-//           // If using existing image
-//           else if (existingLayer && existingLayer.imageSrc && !layer.imageSrc) {
-//             layer.imageSrc = existingLayer.imageSrc;
-//             layer.imagePublicId = existingLayer.imagePublicId;
-//           }
-//         }
-
-//         // Upsert operation
-//         const existing = await Layer.findOne({ productId, id: layer.id });
-
-//         if (existing) {
-//           const updated = await Layer.findOneAndUpdate(
-//             { productId, id: layer.id },
-//             { $set: layer },
-//             { new: true, runValidators: true }
-//           );
-//           results.layers.push(updated);
-//           results.updated++;
+//         } else if (existingCloud) {
+//           if (layer.type === "printarea") layer.hasImage = true;
+//           else layer.hasImage = true;
 //         } else {
-//           if (!layer.createdAt) layer.createdAt = new Date();
-//           const created = await Layer.create(layer);
-//           results.layers.push(created);
-//           results.created++;
+//           layer.type === "printarea" ? (layer.imageSrc = null) : (layer.src = null);
 //         }
-//       } catch (error) {
-//         console.error(`Error processing layer ${layer.id}:`, error);
-//         results.failed++;
+
+//         const created = await Layer.create(layer);
+//         savedLayers.push(created);
+
+//       } catch (err) {
+//         console.error("Layer error:", err);
 //       }
 //     }
+
+//     files.forEach(f => fs.existsSync(f.path) && fs.unlinkSync(f.path));
 
 //     return res.status(200).json({
 //       success: true,
 //       message: "Layers updated successfully",
-//       data: results.layers,
-//       summary: results
+//       data: savedLayers
 //     });
 
-//   } catch (error) {
-//     console.error("Error updating layers:", error);
+//   } catch (err) {
+//     console.error("Update error:", err);
 //     return res.status(500).json({
 //       success: false,
-//       message: "Internal server error",
-//       error: error.message
+//       message: "Server error",
+//       error: err.message
 //     });
 //   }
 // };
 
+// =======================================================================
 
-// ===========================================================================
-
-
-
-
-
-export const updateLayers = async (req, res) => {
+// ---------- saveLayers ----------
+export const saveLayers = async (req, res) => {
   try {
-    console.log("=== UPDATE LAYERS REQUEST ===");
-    const { productId } = req.params;
-    const { layers, layerIds } = req.body;
+    console.log("=== SAVE LAYERS REQUEST ===");
+    const { productId } = req.body;
+    // layers and layerIds can be stringified JSON (from multipart) OR already parsed objects (application/json)
+    const rawLayers = req.body.layers;
+    const rawLayerIds = req.body.layerIds;
     const files = req.files || [];
 
-    console.log("Product ID:", productId);
-    console.log("Files received:", files.length);
-
     if (!productId) {
-      return res.status(400).json({
-        success: false,
-        message: "productId is required"
-      });
+      return res.status(400).json({ success: false, message: "productId is required" });
     }
 
-    // Parse layers
+    // Parse layers (accept string or array)
     let layersArray = [];
-    try {
-      layersArray = JSON.parse(layers);
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      return res.status(400).json({
-        success: false,
-        message: "Invalid layers JSON format"
-      });
-    }
-
-    if (!Array.isArray(layersArray)) {
-      return res.status(400).json({
-        success: false,
-        message: "layers must be an array"
-      });
-    }
-
-    // Parse layerIds
-    let layerIdsArray = [];
-    try {
-      if (layerIds) {
-        layerIdsArray = JSON.parse(layerIds);
-        if (!Array.isArray(layerIdsArray)) {
-          layerIdsArray = [layerIdsArray];
-        }
+    if (rawLayers === undefined || rawLayers === null) {
+      layersArray = [];
+    } else if (typeof rawLayers === "string") {
+      try {
+        layersArray = JSON.parse(rawLayers);
+        if (!Array.isArray(layersArray)) throw new Error("not array");
+      } catch (e) {
+        console.error("Invalid layers JSON (saveLayers):", e);
+        return res.status(400).json({ success: false, message: "Invalid layers JSON" });
       }
-    } catch (e) {
-      console.log("Error parsing layerIds:", e);
+    } else if (Array.isArray(rawLayers)) {
+      layersArray = rawLayers;
+    } else {
+      console.error("Unsupported layers payload (saveLayers):", typeof rawLayers);
+      return res.status(400).json({ success: false, message: "Invalid layers payload" });
+    }
+
+    // Parse layerIds (accept string or array)
+    let layerIdsArray = [];
+    if (rawLayerIds === undefined || rawLayerIds === null) {
+      layerIdsArray = [];
+    } else if (typeof rawLayerIds === "string") {
+      try {
+        layerIdsArray = JSON.parse(rawLayerIds);
+        if (!Array.isArray(layerIdsArray)) layerIdsArray = [layerIdsArray];
+      } catch (e) {
+        layerIdsArray = [];
+      }
+    } else if (Array.isArray(rawLayerIds)) {
+      layerIdsArray = rawLayerIds;
+    } else {
       layerIdsArray = [];
     }
 
-    // Create file mapping
+    // Remove old layers (existing behavior)
+    await Layer.deleteMany({ productId });
+
+    // Map files -> layerId by order. Frontend MUST append files in same order as layerIdsArray.
     const fileMap = {};
     for (let i = 0; i < files.length && i < layerIdsArray.length; i++) {
-      const layerId = layerIdsArray[i];
-      fileMap[layerId] = files[i];
-      console.log(`Mapped file to layer ${layerId}`);
+      fileMap[layerIdsArray[i]] = files[i];
     }
 
     const savedLayers = [];
 
-    // Delete all existing layers and create new ones (simpler approach)
-    await Layer.deleteMany({ productId });
-
-    for (const layer of layersArray) {
+    for (const rawLayer of layersArray) {
       try {
+        // clone to be safe
+        const layer = { ...rawLayer };
         layer.productId = productId;
+        delete layer._id;
+        delete layer.__v;
 
-        // Handle printarea image
-        if (layer.type === "printarea" && layer.hasImage) {
-          const file = fileMap[layer.id];
+        // File lookup
+        const file = fileMap[layer.id];
 
+        // Determine if upload is required:
+        // - placeholder "UPLOADING" OR a real file was attached for this layer
+        const placeholderPrintarea = layer.type === "printarea" && layer.imageSrc === "UPLOADING";
+        const placeholderImageOrBg = (layer.type === "image" || layer.type === "background") && layer.src === "UPLOADING";
+        const needsUpload = placeholderPrintarea || placeholderImageOrBg || (file !== undefined);
+
+        // Check if already has cloud URL
+        const existingCloud =
+          (layer.type === "printarea" && typeof layer.imageSrc === "string" && layer.imageSrc.startsWith("http")) ||
+          ((layer.type === "image" || layer.type === "background") && typeof layer.src === "string" && layer.src.startsWith("http"));
+
+        // choose folder
+        let folder = "mockups";
+        if (layer.type === "printarea") folder = "printareas";
+        if (layer.type === "image") folder = "image_layers";
+        if (layer.type === "background") folder = "backgrounds";
+
+        // Upload handling
+        if (needsUpload) {
           if (file) {
             try {
-              const uploadResult = await cloudinary.uploader.upload(file.path, {
-                folder: "printareas",
-                resource_type: "image"
+              const result = await cloudinary.uploader.upload(file.path, {
+                folder,
+                resource_type: "image",
               });
 
-              layer.imageSrc = uploadResult.secure_url;
-              layer.imagePublicId = uploadResult.public_id;
-              layer.hasImage = true;
-
-              // Clean up
-              if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
+              if (layer.type === "printarea") {
+                layer.imageSrc = result.secure_url;
+                layer.imagePublicId = result.public_id;
+                layer.hasImage = true;
+              } else {
+                // image or background
+                layer.src = result.secure_url;
+                layer.imagePublicId = result.public_id;
+                layer.hasImage = true;
               }
 
-            } catch (uploadError) {
-              console.error("Cloudinary upload error:", uploadError);
-              layer.imageSrc = null;
-              layer.hasImage = false;
+              // cleanup
+              if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            } catch (uploadErr) {
+              console.error("Cloudinary upload error (saveLayers):", uploadErr);
+              if (layer.type === "printarea") {
+                layer.imageSrc = null;
+                layer.hasImage = false;
+              } else {
+                layer.src = null;
+                layer.hasImage = false;
+              }
             }
-          } else if (layer.imageSrc === "UPLOADING") {
-            layer.imageSrc = null;
-            layer.hasImage = false;
+          } else {
+            // no file found for this placeholder
+            if (layer.type === "background") {
+              // preserve existing src if any, otherwise clear
+              if (layer.src === "UPLOADING") {
+                layer.src = null;
+                layer.hasImage = false;
+              } else {
+                layer.hasImage = !!layer.src;
+              }
+            } else if (layer.type === "printarea") {
+              layer.imageSrc = layer.imageSrc === "UPLOADING" ? null : layer.imageSrc;
+              layer.hasImage = !!layer.imageSrc;
+            } else {
+              layer.src = layer.src === "UPLOADING" ? null : layer.src;
+              layer.hasImage = !!layer.src;
+            }
+          }
+        } else if (existingCloud) {
+          // keep existing cloud URL and set hasImage
+          if (layer.type === "printarea") layer.hasImage = true;
+          else layer.hasImage = true;
+        } else {
+          // No image at all
+          if (layer.type === "printarea") {
+            layer.imageSrc = layer.imageSrc && layer.imageSrc.startsWith("http") ? layer.imageSrc : null;
+            layer.hasImage = !!layer.imageSrc;
+          } else {
+            layer.src = layer.src && layer.src.startsWith("http") ? layer.src : null;
+            layer.hasImage = !!layer.src;
           }
         }
 
-        // Save new layer
         const created = await Layer.create(layer);
         savedLayers.push(created);
-
-      } catch (layerError) {
-        console.error(`Error processing layer:`, layerError);
+      } catch (layerErr) {
+        console.error("Layer processing error (saveLayers):", layerErr);
+        // continue with other layers
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Layers updated successfully",
-      data: savedLayers
-    });
+    // final cleanup of any leftover temp files
+    files.forEach(f => { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); });
 
-  } catch (error) {
-    console.error("Error updating layers:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message
-    });
+    return res.status(200).json({ success: true, message: "Layers saved successfully", data: savedLayers });
+  } catch (err) {
+    console.error("saveLayers error:", err);
+    return res.status(500).json({ success: false, message: "Internal server error", error: err.message });
   }
 };
 
+
+// ---------- updateLayers ----------
+export const updateLayers = async (req, res) => {
+  try {
+    console.log("=== UPDATE LAYERS REQUEST ===");
+    const { productId } = req.params;
+    const rawLayers = req.body.layers;
+    const rawLayerIds = req.body.layerIds;
+    const files = req.files || [];
+
+    if (!productId) return res.status(400).json({ success: false, message: "productId is required" });
+
+    // Parse layers (string or array)
+    let layersArray = [];
+    if (rawLayers === undefined || rawLayers === null) {
+      layersArray = [];
+    } else if (typeof rawLayers === "string") {
+      try {
+        layersArray = JSON.parse(rawLayers);
+        if (!Array.isArray(layersArray)) throw new Error("not array");
+      } catch (e) {
+        console.error("Invalid layers JSON (updateLayers):", e);
+        return res.status(400).json({ success: false, message: "Invalid layers JSON" });
+      }
+    } else if (Array.isArray(rawLayers)) {
+      layersArray = rawLayers;
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid layers payload" });
+    }
+
+    // Parse layerIds (string or array)
+    let layerIdsArray = [];
+    if (rawLayerIds === undefined || rawLayerIds === null) {
+      layerIdsArray = [];
+    } else if (typeof rawLayerIds === "string") {
+      try {
+        layerIdsArray = JSON.parse(rawLayerIds);
+        if (!Array.isArray(layerIdsArray)) layerIdsArray = [layerIdsArray];
+      } catch {
+        layerIdsArray = [];
+      }
+    } else if (Array.isArray(rawLayerIds)) {
+      layerIdsArray = rawLayerIds;
+    } else {
+      layerIdsArray = [];
+    }
+
+    // Map files -> ids
+    const fileMap = {};
+    for (let i = 0; i < files.length && i < layerIdsArray.length; i++) {
+      fileMap[layerIdsArray[i]] = files[i];
+    }
+
+    // If you want to preserve existing layers and update in-place
+    // we will delete old layers and recreate (same as before)
+    await Layer.deleteMany({ productId });
+
+    const savedLayers = [];
+
+    for (const rawLayer of layersArray) {
+      try {
+        const layer = { ...rawLayer };
+        layer.productId = productId;
+        delete layer._id;
+        delete layer.__v;
+
+        const file = fileMap[layer.id];
+
+        const placeholderPrintarea = layer.type === "printarea" && layer.imageSrc === "UPLOADING";
+        const placeholderImageOrBg = (layer.type === "image" || layer.type === "background") && layer.src === "UPLOADING";
+        const needsUpload = placeholderPrintarea || placeholderImageOrBg || (file !== undefined);
+
+        const existingCloud =
+          (layer.type === "printarea" && typeof layer.imageSrc === "string" && layer.imageSrc.startsWith("http")) ||
+          ((layer.type === "image" || layer.type === "background") && typeof layer.src === "string" && layer.src.startsWith("http"));
+
+        let folder = "mockups";
+        if (layer.type === "printarea") folder = "printareas";
+        if (layer.type === "image") folder = "image_layers";
+        if (layer.type === "background") folder = "backgrounds";
+
+        if (needsUpload) {
+          if (file) {
+            try {
+              const upload = await cloudinary.uploader.upload(file.path, { folder });
+              if (layer.type === "printarea") {
+                layer.imageSrc = upload.secure_url;
+                layer.hasImage = true;
+              } else {
+                layer.src = upload.secure_url;
+                layer.hasImage = true;
+              }
+              if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            } catch (uErr) {
+              console.error("Cloudinary upload error (updateLayers):", uErr);
+              if (layer.type === "printarea") { layer.imageSrc = null; layer.hasImage = false; }
+              else { layer.src = null; layer.hasImage = false; }
+            }
+          } else {
+            // no file provided for placeholder
+            if (layer.type === "background") {
+              layer.src = layer.src === "UPLOADING" ? null : layer.src;
+              layer.hasImage = !!layer.src;
+            } else if (layer.type === "printarea") {
+              layer.imageSrc = layer.imageSrc === "UPLOADING" ? null : layer.imageSrc;
+              layer.hasImage = !!layer.imageSrc;
+            } else {
+              layer.src = layer.src === "UPLOADING" ? null : layer.src;
+              layer.hasImage = !!layer.src;
+            }
+          }
+        } else if (existingCloud) {
+          layer.hasImage = true;
+        } else {
+          if (layer.type === "printarea") { layer.imageSrc = layer.imageSrc?.startsWith("http") ? layer.imageSrc : null; layer.hasImage = !!layer.imageSrc; }
+          else { layer.src = layer.src?.startsWith("http") ? layer.src : null; layer.hasImage = !!layer.src; }
+        }
+
+        const created = await Layer.create(layer);
+        savedLayers.push(created);
+      } catch (lErr) {
+        console.error("Layer error (updateLayers):", lErr);
+      }
+    }
+
+    // cleanup
+    files.forEach(f => { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); });
+
+    return res.status(200).json({ success: true, message: "Layers updated successfully", data: savedLayers });
+  } catch (err) {
+    console.error("updateLayers error:", err);
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
 
 
 // ✅ GET LAYERS BY PRODUCT ID
