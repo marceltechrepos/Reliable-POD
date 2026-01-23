@@ -9,9 +9,16 @@ import EditorHeader from "./components/EditorHeader";
 import EditorCanvas from "./components/EditorCanvas";
 import EditorLayersPanel from "./components/EditorLayersPanel";
 import EditorPropertiesPanel from "./components/EditorPropertiesPanel";
-import { createLayer, getLayersByProductId } from "../../api/layers.api";
+// import { createLayer, getLayersByProductId } from "../../api/layers.api";
+import {
+  createLayer,
+  getLayersByProductId,
+  updateLayers,
+  createLayers
+} from "../../api/layers.api";
 
 function Editor() {
+  const BaseUrl = import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
   const [mockup, setMockup] = useState(null);
   const [layers, setLayers] = useState([]);
@@ -77,34 +84,77 @@ function Editor() {
   }, [editId]);
 
   // Initial load from localStorage
+  // useEffect(() => {
+  //   const savedMockup = localStorage.getItem("mockupToEdit");
+
+  //   console.log(savedMockup, " <<<<  savedMockup")
+  //   if (savedMockup) {
+  //     const parsed = JSON.parse(savedMockup);
+  //     setMockup(parsed);
+
+  //     // Pehle image load karo size ke liye
+  //     const img = new Image();
+  //     img.onload = function () {
+  //       const naturalWidth = this.naturalWidth;
+  //       const naturalHeight = this.naturalHeight;
+
+  //       // MAXIMUM DISPLAY SIZE SET KARO
+  //       const MAX_DISPLAY_SIZE = 1000;
+  //       let displayWidth = naturalWidth;
+  //       let displayHeight = naturalHeight;
+
+  //       // Agar image bohat bari hai, toh scale down karo
+  //       if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+  //         const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+  //         const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+  //         const minRatio = Math.min(widthRatio, heightRatio);
+
+  //         displayWidth = Math.floor(naturalWidth * minRatio);
+  //         displayHeight = Math.floor(naturalHeight * minRatio);
+  //       }
+
+  //       setLayersWithHistory(
+  //         [
+  //           {
+  //             id: "layer-bg",
+  //             type: "background",
+  //             src: parsed.url,
+  //             x: 0,
+  //             y: 0,
+  //             width: displayWidth, // ✅ Scaled width
+  //             height: displayHeight, // ✅ Scaled height
+  //             _naturalWidth: naturalWidth, // Original size store karo
+  //             _naturalHeight: naturalHeight,
+  //             rotation: 0,
+  //             opacity: 1,
+  //             locked: true,
+  //             visible: true,
+  //           },
+  //         ],
+  //         { recordHistory: false }
+  //       );
+  //       setSelectedLayerId("layer-bg");
+  //     };
+  //     img.src = parsed.url;
+  //   }
+  // }, []);
+
+  // Initial load from localStorage
   useEffect(() => {
     const savedMockup = localStorage.getItem("mockupToEdit");
 
-    console.log(savedMockup, " <<<<  savedMockup")
     if (savedMockup) {
       const parsed = JSON.parse(savedMockup);
       setMockup(parsed);
 
-      // Pehle image load karo size ke liye
       const img = new Image();
       img.onload = function () {
         const naturalWidth = this.naturalWidth;
         const naturalHeight = this.naturalHeight;
 
-        // MAXIMUM DISPLAY SIZE SET KARO
-        const MAX_DISPLAY_SIZE = 1000;
-        let displayWidth = naturalWidth;
-        let displayHeight = naturalHeight;
-
-        // Agar image bohat bari hai, toh scale down karo
-        if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
-          const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
-          const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
-          const minRatio = Math.min(widthRatio, heightRatio);
-
-          displayWidth = Math.floor(naturalWidth * minRatio);
-          displayHeight = Math.floor(naturalHeight * minRatio);
-        }
+        // ✅ NO SCALING - ORIGINAL SIZE USE KARO
+        const displayWidth = naturalWidth;
+        const displayHeight = naturalHeight;
 
         setLayersWithHistory(
           [
@@ -114,13 +164,13 @@ function Editor() {
               src: parsed.url,
               x: 0,
               y: 0,
-              width: displayWidth, // ✅ Scaled width
-              height: displayHeight, // ✅ Scaled height
-              _naturalWidth: naturalWidth, // Original size store karo
+              width: displayWidth, // ✅ Original width
+              height: displayHeight, // ✅ Original height
+              _naturalWidth: naturalWidth,
               _naturalHeight: naturalHeight,
               rotation: 0,
               opacity: 1,
-              locked: true,
+              // locked: true,
               visible: true,
             },
           ],
@@ -198,8 +248,8 @@ function Editor() {
       }
 
       // ✅ Convert back to pixels (screen DPI)
-      const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
-      const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+      const finalWidth = naturalWidth;
+      const finalHeight = naturalHeight;
 
       // Center position
       const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
@@ -609,109 +659,6 @@ function Editor() {
 
     loadEditorData();
   }, [editId]);
-  // useEffect(() => {
-  //   const loadEditorData = async () => {
-  //     // Pehle check karo agar saved layers available hain
-  //     fetchSavedLayers();
-
-  //     // Agar saved layers nahi mili, to localStorage se mockup load karo
-  //     const savedMockup = localStorage.getItem("mockupToEdit");
-  //     if (savedMockup && layers.length === 0) {
-  //       const parsed = JSON.parse(savedMockup);
-  //       setMockup(parsed);
-
-  //       // Background image load karo
-  //       const img = new Image();
-  //       img.onload = function () {
-  //         const naturalWidth = this.naturalWidth;
-  //         const naturalHeight = this.naturalHeight;
-
-  //         const MAX_DISPLAY_SIZE = 1000;
-  //         let displayWidth = naturalWidth;
-  //         let displayHeight = naturalHeight;
-
-  //         if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
-  //           const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
-  //           const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
-  //           const minRatio = Math.min(widthRatio, heightRatio);
-
-  //           displayWidth = Math.floor(naturalWidth * minRatio);
-  //           displayHeight = Math.floor(naturalHeight * minRatio);
-  //         }
-
-  //         // Agar koi layer nahi hai to hi background add karo
-  //         if (layers.length === 0) {
-  //           setLayersWithHistory(
-  //             [
-  //               {
-  //                 id: "layer-bg",
-  //                 type: "background",
-  //                 src: parsed.url,
-  //                 x: 0,
-  //                 y: 0,
-  //                 width: displayWidth,
-  //                 height: displayHeight,
-  //                 _naturalWidth: naturalWidth,
-  //                 _naturalHeight: naturalHeight,
-  //                 rotation: 0,
-  //                 opacity: 1,
-  //                 locked: true,
-  //                 visible: true,
-  //               },
-  //             ],
-  //             { recordHistory: false }
-  //           );
-  //         }
-  //       };
-  //       img.src = parsed.url;
-  //     }
-  //   };
-
-  //   loadEditorData();
-  // }, [editId]);
-
-
-
-  // const onSave = async () => {
-  //   try {
-  //     if (!editId) {
-  //       alert("Product ID not found!");
-  //       return;
-  //     }
-
-  //     // Copy layers array
-  //     const serializable = layers.map((l) => ({ ...l }));
-
-  //     // Optional: localStorage me bhi save karna
-  //     localStorage.setItem("mockupEditedLayers", JSON.stringify(serializable));
-  //     console.log("Saved layers locally:", serializable);
-
-
-  //     // API call to save layers in DB
-  //     const response = await fetch("http://localhost:8000/api/layers", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ productId: editId, layers: serializable })
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (data.success) {
-  //       alert("All layers saved to DB successfully!");
-  //       console.log("Saved layers response:", data.data);
-  //     } else {
-  //       alert("Failed to save layers: " + data.message);
-  //       console.error(data);
-  //     }
-
-  //   } catch (error) {
-  //     console.error("Error saving layers:", error);
-  //     alert("An error occurred while saving layers.");
-  //   }
-  //   finally {
-  //     navigate(-1);
-  //   }
-  // }
 
   const onSave = async () => {
     try {
@@ -721,9 +668,19 @@ function Editor() {
       }
 
       // Set saving state
-      setIsSaving(true); // DIRECT STATE USE KARO
+      setIsSaving(true);
 
-      // 1. Prepare layers data
+      // 1. Find printarea layer with blob image
+      const printareaLayers = layers.filter(layer =>
+        layer.type === "printarea" &&
+        layer.hasImage &&
+        layer.imageSrc &&
+        layer.imageSrc.startsWith("blob:")
+      );
+
+      console.log("Printarea layers with blob images:", printareaLayers);
+
+      // 2. Prepare layers data (excluding blob URLs)
       const serializable = layers.map((l) => {
         const layerCopy = { ...l };
 
@@ -731,12 +688,14 @@ function Editor() {
         layerCopy.productId = editId;
 
         // Remove React-specific or temporary fields
-        delete layerCopy.__v; // Remove mongoose version key
+        delete layerCopy.__v;
 
         // Handle _id - if it's a temporary ID (starts with 'layer-' or 'printarea-'), remove it
-        if (layerCopy._id &&
+        if (
+          layerCopy._id &&
           (layerCopy._id.toString().startsWith('layer-') ||
-            layerCopy._id.toString().startsWith('printarea-'))) {
+            layerCopy._id.toString().startsWith('printarea-'))
+        ) {
           delete layerCopy._id;
         }
 
@@ -747,18 +706,20 @@ function Editor() {
 
         // Convert corners to proper format if they exist
         if (layerCopy.corners && Array.isArray(layerCopy.corners)) {
-          layerCopy.corners = layerCopy.corners.map(corner => ({
+          layerCopy.corners = layerCopy.corners.map((corner) => ({
             x: Number(corner.x) || 0,
-            y: Number(corner.y) || 0
+            y: Number(corner.y) || 0,
           }));
         }
 
         // Ensure all numeric fields are numbers
-        const numericFields = ['x', 'y', 'width', 'height', 'rotation', 'opacity',
+        const numericFields = [
+          'x', 'y', 'width', 'height', 'rotation', 'opacity',
           'perspective', 'rotateX', 'rotateY', 'rotateZ',
-          'skewX', 'skewY', '_naturalWidth', '_naturalHeight'];
+          'skewX', 'skewY', '_naturalWidth', '_naturalHeight',
+        ];
 
-        numericFields.forEach(field => {
+        numericFields.forEach((field) => {
           if (layerCopy[field] !== undefined) {
             layerCopy[field] = Number(layerCopy[field]) || 0;
           }
@@ -766,7 +727,7 @@ function Editor() {
 
         // Ensure boolean fields are booleans
         const booleanFields = ['locked', 'visible', 'hasImage', 'border', 'enablePerspective'];
-        booleanFields.forEach(field => {
+        booleanFields.forEach((field) => {
           if (layerCopy[field] !== undefined) {
             layerCopy[field] = Boolean(layerCopy[field]);
           }
@@ -777,95 +738,131 @@ function Editor() {
           layerCopy.id = layerCopy._id.toString();
         }
 
+        // For printarea layers, mark blob URLs for processing
+        if (layerCopy.type === "printarea" &&
+          layerCopy.imageSrc &&
+          layerCopy.imageSrc.startsWith("blob:")) {
+          // Mark that this needs image upload
+          layerCopy._needsImageUpload = true;
+          // Don't send blob URL to backend
+          layerCopy.imageSrc = "UPLOADING";
+        }
+
         return layerCopy;
       });
 
-      console.log("Prepared layers for save:", serializable);
-
-      // 2. First try to update using PUT (update existing)
-      let updateResponse;
-      try {
-        updateResponse = await fetch(`http://localhost:8000/api/layers/${editId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ layers: serializable })
-        });
-      } catch (fetchError) {
-        console.log("PUT request failed, endpoint may not exist:", fetchError);
-        updateResponse = null;
-      }
+      console.log("Prepared layers data:", serializable);
 
       let saveSuccessful = false;
       let savedData = null;
 
-      // 3. Handle response
-      if (updateResponse && updateResponse.ok) {
-        const data = await updateResponse.json();
+      // 3. If there are printarea images to upload, use FormData approach
+      if (printareaLayers.length > 0) {
+        console.log("Using FormData to upload printarea images...");
 
-        if (data.success) {
+        // Try PUT first (update)
+        try {
+          const result = await uploadLayersWithImages(editId, serializable, printareaLayers, "PUT");
           saveSuccessful = true;
-          savedData = data.data || data.layers;
-          console.log("Layers updated successfully:", savedData);
+          savedData = result.data;
 
-          // Update local layers with server response (to get proper _id)
+          // Update local state
           if (savedData && savedData.length > 0) {
-            const updatedLayers = savedData.map(layer => {
-              // Ensure layer has both id and _id
+            const updatedLayers = savedData.map((layer) => {
               const formattedLayer = { ...layer };
               if (!formattedLayer.id && formattedLayer._id) {
                 formattedLayer.id = formattedLayer._id.toString();
               }
               return formattedLayer;
             });
-
-            // Update state WITHOUT history (direct update)
             setLayers(updatedLayers);
           }
 
-          alert("Layers updated successfully!");
-        } else {
-          console.log("Update API returned error:", data);
-          throw new Error(data.message || "Update failed");
+          alert("Layers updated successfully with images!");
+        } catch (putError) {
+          console.log("PUT with images failed, trying POST...", putError);
+
+          // Try POST (create)
+          try {
+            const result = await uploadLayersWithImages(editId, serializable, printareaLayers, "POST");
+            saveSuccessful = true;
+            savedData = result.data;
+
+            // Update local state
+            if (savedData && savedData.length > 0) {
+              const updatedLayers = savedData.map((layer) => {
+                const formattedLayer = { ...layer };
+                if (!formattedLayer.id && formattedLayer._id) {
+                  formattedLayer.id = formattedLayer._id.toString();
+                }
+                return formattedLayer;
+              });
+              setLayers(updatedLayers);
+            }
+
+            alert("New layers saved successfully with images!");
+          } catch (postError) {
+            throw new Error("Failed to save with images: " + postError.message);
+          }
         }
       } else {
-        // 4. Fallback: Create new using POST
-        console.log("Update endpoint not available, using POST create...");
+        // 4. No images to upload, use existing JSON approach
+        console.log("No images to upload, using existing JSON approach...");
 
-        const createResponse = await fetch("http://localhost:8000/api/layers", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ productId: editId, layers: serializable })
-        });
+        try {
+          const updateResponse = await updateLayers(editId, serializable);
 
-        const createData = await createResponse.json();
+          if (updateResponse && updateResponse.success) {
+            saveSuccessful = true;
+            savedData = updateResponse.data || updateResponse.layers;
+            console.log("Layers updated successfully:", savedData);
 
-        if (createData.success) {
-          saveSuccessful = true;
-          savedData = createData.data;
-          console.log("New layers saved successfully:", savedData);
+            // Update local layers
+            if (savedData && savedData.length > 0) {
+              const updatedLayers = savedData.map((layer) => {
+                const formattedLayer = { ...layer };
+                if (!formattedLayer.id && formattedLayer._id) {
+                  formattedLayer.id = formattedLayer._id.toString();
+                }
+                return formattedLayer;
+              });
+              setLayers(updatedLayers);
+            }
 
-          // Update local state with server response
-          if (savedData && savedData.length > 0) {
-            const updatedLayers = savedData.map(layer => {
-              const formattedLayer = { ...layer };
-              if (!formattedLayer.id && formattedLayer._id) {
-                formattedLayer.id = formattedLayer._id.toString();
-              }
-              return formattedLayer;
-            });
-
-            setLayers(updatedLayers);
+            alert("Layers updated successfully!");
+          } else {
+            console.log("Update API returned error:", updateResponse);
+            throw new Error(updateResponse?.message || "Update failed");
           }
+        } catch (updateError) {
+          console.log("Update endpoint failed, trying POST create...", updateError);
 
-          alert("New layers saved successfully!");
-        } else {
-          throw new Error(createData.message || "Create failed");
+          try {
+            const createResponse = await createLayers(editId, serializable);
+
+            if (createResponse.success) {
+              saveSuccessful = true;
+              savedData = createResponse.data;
+              console.log("New layers saved successfully:", savedData);
+
+              if (savedData && savedData.length > 0) {
+                const updatedLayers = savedData.map((layer) => {
+                  const formattedLayer = { ...layer };
+                  if (!formattedLayer.id && formattedLayer._id) {
+                    formattedLayer.id = formattedLayer._id.toString();
+                  }
+                  return formattedLayer;
+                });
+                setLayers(updatedLayers);
+              }
+
+              alert("New layers saved successfully!");
+            } else {
+              throw new Error(createResponse.message || "Create failed");
+            }
+          } catch (createError) {
+            throw new Error("Both update and create failed: " + createError.message);
+          }
         }
       }
 
@@ -882,8 +879,8 @@ function Editor() {
         const event = new CustomEvent('mockupSaved', {
           detail: {
             productId: editId,
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         });
         window.dispatchEvent(event);
 
@@ -891,7 +888,6 @@ function Editor() {
         setTimeout(() => {
           navigate(-1);
         }, 500);
-
       }
 
     } catch (error) {
@@ -909,12 +905,229 @@ function Editor() {
       }
     } finally {
       // Reset saving state
-      setIsSaving(false); // DIRECT STATE USE KARO
+      setIsSaving(false);
     }
   };
 
+  // ==================== HELPER FUNCTION FOR FORM DATA UPLOAD ====================
+const uploadLayersWithImages = async (productId, layersData, printareaLayers, method = "PUT") => {
+  try {
+    console.log("=== UPLOAD LAYERS WITH IMAGES ===");
+    console.log("Printarea layers count:", printareaLayers.length);
+    
+    // Create FormData
+    const formData = new FormData();
 
-  // Update onSave function to handle editing
+    // Add productId
+    formData.append("productId", productId);
+
+    // Add layers as JSON - IMPORTANT: Remove _id from each layer
+    const cleanedLayersData = layersData.map(layer => {
+      const cleanLayer = { ...layer };
+      // Remove MongoDB fields to avoid duplicate key error
+      delete cleanLayer._id;
+      delete cleanLayer.__v;
+      delete cleanLayer.createdAt;
+      delete cleanLayer.updatedAt;
+      return cleanLayer;
+    });
+    
+    const layersJson = JSON.stringify(cleanedLayersData);
+    console.log("Layers JSON length:", layersJson.length);
+    formData.append("layers", layersJson);
+
+    // Create array of layer IDs that have images
+    const layerIdsArray = [];
+
+    // Add each printarea image
+    for (let i = 0; i < printareaLayers.length; i++) {
+      const layer = printareaLayers[i];
+      console.log(`Processing image for layer ${layer.id}...`);
+
+      try {
+        // Convert blob URL to blob
+        const response = await fetch(layer.imageSrc);
+        const blob = await response.blob();
+
+        // Create file from blob
+        const file = new File([blob], `printarea-${layer.id}.png`, {
+          type: "image/png"
+        });
+
+        // Append to form data - SAME field name for multiple files
+        formData.append("printareaImages", file);
+        
+        // Add layer ID to array
+        layerIdsArray.push(layer.id);
+
+        console.log(`✓ Added image for layer ${layer.id}: ${file.size} bytes`);
+
+      } catch (blobError) {
+        console.error(`✗ Error processing blob for layer ${layer.id}:`, blobError);
+      }
+    }
+
+    // Append layer IDs as JSON string
+    if (layerIdsArray.length > 0) {
+      formData.append("layerIds", JSON.stringify(layerIdsArray));
+      console.log("Layer IDs to upload:", layerIdsArray);
+    }
+
+    // Get token
+    const token = localStorage.getItem("token");
+
+    // Determine endpoint
+    const endpoint = method === "PUT"
+      ? `${BaseUrl}/api/layers/${productId}`
+      : `${BaseUrl}/api/layers`;
+
+    console.log(`Sending to: ${endpoint}`);
+    console.log(`Total files: ${layerIdsArray.length}`);
+
+    // Make request
+    const response = await fetch(endpoint, {
+      method: method,
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData
+    });
+
+    console.log("Response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Backend error response:", errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log("Backend response:", data);
+
+    if (!data.success) {
+      throw new Error(data.message || "Upload failed");
+    }
+
+    console.log("✓ Upload successful!");
+    return data;
+
+  } catch (error) {
+    console.error("✗ Error in uploadLayersWithImages:", error);
+    throw error;
+  }
+};
+
+  // const uploadLayersWithImages = async (productId, layersData, printareaLayers, method = "PUT") => {
+  //   try {
+  //     console.log("=== START uploadLayersWithImages ===");
+  //     console.log("Product ID:", productId);
+  //     console.log("Layers data count:", layersData.length);
+  //     console.log("Printarea layers with images:", printareaLayers.length);
+
+  //     // Create FormData
+  //     const formData = new FormData();
+
+  //     // Add productId
+  //     formData.append("productId", productId);
+
+  //     // Add layers as JSON string
+  //     const layersJson = JSON.stringify(layersData);
+  //     console.log("Layers JSON length:", layersJson.length);
+  //     formData.append("layers", layersJson);
+
+  //     // Create array of layer IDs that have images
+  //     const layerIdsArray = [];
+
+  //     // Add each printarea image
+  //     for (let i = 0; i < printareaLayers.length; i++) {
+  //       const layer = printareaLayers[i];
+  //       console.log(`Processing image for layer ${layer.id}...`);
+
+  //       try {
+  //         // Convert blob URL to blob
+  //         const response = await fetch(layer.imageSrc);
+  //         const blob = await response.blob();
+
+  //         // Create file from blob
+  //         const file = new File([blob], `printarea-${layer.id}.png`, {
+  //           type: "image/png"
+  //         });
+
+  //         // Append to form data with SAME field name for array
+  //         formData.append("printareaImages", file);  // ✅ Same name for all files
+
+  //         // Add layer ID to array
+  //         layerIdsArray.push(layer.id);
+
+  //         console.log(`✓ Added image for layer ${layer.id}: ${file.size} bytes`);
+
+  //       } catch (blobError) {
+  //         console.error(`✗ Error processing blob for layer ${layer.id}:`, blobError);
+  //       }
+  //     }
+
+  //     // Append layer IDs as JSON string
+  //     formData.append("layerIds", JSON.stringify(layerIdsArray));
+  //     console.log("Layer IDs to upload:", layerIdsArray);
+
+  //     // 🔥 DEBUG: Log FormData contents
+  //     console.log("=== FormData Contents ===");
+  //     for (let [key, value] of formData.entries()) {
+  //       if (key === 'layers') {
+  //         console.log(`${key}: ${typeof value} (${value.length} chars)`);
+  //         console.log("First 100 chars:", value.substring(0, 100));
+  //       } else if (value instanceof File) {
+  //         console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+  //       } else {
+  //         console.log(`${key}: ${value} (${typeof value})`);
+  //       }
+  //     }
+
+  //     // Get token
+  //     const token = localStorage.getItem("token");
+
+  //     // Determine endpoint
+  //     const endpoint = method === "PUT"
+  //       ? `${BaseUrl}/api/layers/${productId}`
+  //       : `${BaseUrl}/api/layers`;
+
+  //     console.log(`Sending to: ${endpoint}`);
+  //     console.log(`Files: ${layerIdsArray.length}, Method: ${method}`);
+
+  //     // Make request
+  //     const response = await fetch(endpoint, {
+  //       method: method,
+  //       headers: {
+  //         "Authorization": `Bearer ${token}`,
+  //       },
+  //       body: formData
+  //     });
+
+  //     console.log("Response status:", response.status);
+
+  //     if (!response.ok) {
+  //       const errorText = await response.text();
+  //       console.error("Backend error response:", errorText);
+  //       throw new Error(`HTTP ${response.status}: ${errorText}`);
+  //     }
+
+  //     const data = await response.json();
+  //     console.log("Backend response:", data);
+
+  //     if (!data.success) {
+  //       throw new Error(data.message || "Upload failed");
+  //     }
+
+  //     console.log("✓ Upload successful!");
+  //     return data;
+
+  //   } catch (error) {
+  //     console.error("✗ Error in uploadLayersWithImages:", error);
+  //     throw error;
+  //   }
+  // };
+
+  // ========================================== last working func
   // const onSave = async () => {
   //   try {
   //     if (!editId) {
@@ -922,103 +1135,281 @@ function Editor() {
   //       return;
   //     }
 
-  //     // Copy layers array and add required fields
+  //     // Set saving state
+  //     setIsSaving(true);
+
+  //     // 1. Prepare layers data
   //     const serializable = layers.map((l) => {
   //       const layerCopy = { ...l };
 
-  //       // Ensure each layer has productId
+  //       // Ensure productId is set
   //       layerCopy.productId = editId;
 
-  //       // Ensure required fields
-  //       if (!layerCopy._id) {
-  //         delete layerCopy._id; // Let backend generate new _id for new layers
+  //       // Remove React-specific or temporary fields
+  //       delete layerCopy.__v; // Remove mongoose version key
+
+  //       // Handle _id - if it's a temporary ID (starts with 'layer-' or 'printarea-'), remove it
+  //       if (
+  //         layerCopy._id &&
+  //         (layerCopy._id.toString().startsWith('layer-') ||
+  //           layerCopy._id.toString().startsWith('printarea-'))
+  //       ) {
+  //         delete layerCopy._id;
   //       }
 
-  //       // Handle blob URLs
-  //       if (layerCopy.src && layerCopy.src.startsWith("blob:")) {
-  //         // Blob URLs ko preserve karo, backend ke liye base64 convert karna hoga
-  //         // Ya fir server pe upload karo
-  //         console.warn("Blob URL found, need to handle upload:", layerCopy.src);
+  //       // If _id is ObjectId format (24 hex chars), keep it for updates
+  //       if (layerCopy._id && !/^[0-9a-fA-F]{24}$/.test(layerCopy._id.toString())) {
+  //         delete layerCopy._id;
   //       }
 
-  //       if (layerCopy.imageSrc && layerCopy.imageSrc.startsWith("blob:")) {
-  //         console.warn("Printarea blob URL found:", layerCopy.imageSrc);
+  //       // Convert corners to proper format if they exist
+  //       if (layerCopy.corners && Array.isArray(layerCopy.corners)) {
+  //         layerCopy.corners = layerCopy.corners.map((corner) => ({
+  //           x: Number(corner.x) || 0,
+  //           y: Number(corner.y) || 0,
+  //         }));
+  //       }
+
+  //       // Ensure all numeric fields are numbers
+  //       const numericFields = [
+  //         'x',
+  //         'y',
+  //         'width',
+  //         'height',
+  //         'rotation',
+  //         'opacity',
+  //         'perspective',
+  //         'rotateX',
+  //         'rotateY',
+  //         'rotateZ',
+  //         'skewX',
+  //         'skewY',
+  //         '_naturalWidth',
+  //         '_naturalHeight',
+  //       ];
+
+  //       numericFields.forEach((field) => {
+  //         if (layerCopy[field] !== undefined) {
+  //           layerCopy[field] = Number(layerCopy[field]) || 0;
+  //         }
+  //       });
+
+  //       // Ensure boolean fields are booleans
+  //       const booleanFields = ['locked', 'visible', 'hasImage', 'border', 'enablePerspective'];
+  //       booleanFields.forEach((field) => {
+  //         if (layerCopy[field] !== undefined) {
+  //           layerCopy[field] = Boolean(layerCopy[field]);
+  //         }
+  //       });
+
+  //       // Ensure id field exists (use _id if no id)
+  //       if (!layerCopy.id && layerCopy._id) {
+  //         layerCopy.id = layerCopy._id.toString();
   //       }
 
   //       return layerCopy;
   //     });
 
-  //     // Option 1: Update existing layers (PUT request)
-  //     const response = await fetch(`http://localhost:8000/api/layers/${editId}`, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ layers: serializable })
-  //     });
+  //     console.log("Prepared layers for save:", serializable);
 
-  //     const data = await response.json();
+  //     let saveSuccessful = false;
+  //     let savedData = null;
 
-  //     if (data.success) {
-  //       alert("Layers updated successfully!");
-  //       console.log("Updated layers:", data.data);
-  //     } else {
-  //       // Option 2: Agar update fail ho to create new
-  //       console.log("Update failed, trying create...");
-  //       const createResponse = await fetch("http://localhost:8000/api/layers", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ productId: editId, layers: serializable })
-  //       });
+  //     // 2. First try to update using PUT (update existing)
+  //     try {
+  //       const updateResponse = await updateLayers(editId, serializable);
 
-  //       const createData = await createResponse.json();
-  //       if (createData.success) {
-  //         alert("Layers saved successfully!");
+  //       if (updateResponse && updateResponse.success) {
+  //         saveSuccessful = true;
+  //         savedData = updateResponse.data || updateResponse.layers;
+  //         console.log("Layers updated successfully:", savedData);
+
+  //         // Update local layers with server response (to get proper _id)
+  //         if (savedData && savedData.length > 0) {
+  //           const updatedLayers = savedData.map((layer) => {
+  //             // Ensure layer has both id and _id
+  //             const formattedLayer = { ...layer };
+  //             if (!formattedLayer.id && formattedLayer._id) {
+  //               formattedLayer.id = formattedLayer._id.toString();
+  //             }
+  //             return formattedLayer;
+  //           });
+
+  //           // Update state WITHOUT history (direct update)
+  //           setLayers(updatedLayers);
+  //         }
+
+  //         alert("Layers updated successfully!");
   //       } else {
-  //         alert("Failed to save layers: " + createData.message);
+  //         console.log("Update API returned error:", updateResponse);
+  //         throw new Error(updateResponse?.message || "Update failed");
+  //       }
+  //     } catch (updateError) {
+  //       console.log("Update endpoint failed, trying POST create...", updateError);
+
+  //       // 3. Fallback: Create new using POST
+  //       try {
+  //         const createResponse = await createLayers(editId, serializable);
+
+  //         if (createResponse.success) {
+  //           saveSuccessful = true;
+  //           savedData = createResponse.data;
+  //           console.log("New layers saved successfully:", savedData);
+
+  //           // Update local state with server response
+  //           if (savedData && savedData.length > 0) {
+  //             const updatedLayers = savedData.map((layer) => {
+  //               const formattedLayer = { ...layer };
+  //               if (!formattedLayer.id && formattedLayer._id) {
+  //                 formattedLayer.id = formattedLayer._id.toString();
+  //               }
+  //               return formattedLayer;
+  //             });
+
+  //             setLayers(updatedLayers);
+  //           }
+
+  //           alert("New layers saved successfully!");
+  //         } else {
+  //           throw new Error(createResponse.message || "Create failed");
+  //         }
+  //       } catch (createError) {
+  //         console.error("Create also failed:", createError);
+  //         throw new Error("Both update and create failed: " + createError.message);
   //       }
   //     }
 
+  //     // 4. Save to localStorage as backup
+  //     if (saveSuccessful && savedData) {
+  //       try {
+  //         localStorage.setItem(`layers_${editId}`, JSON.stringify(savedData));
+  //         localStorage.setItem("mockupEditedLayers", JSON.stringify(layers));
+  //         console.log("Saved to localStorage as backup");
+  //       } catch (localStorageError) {
+  //         console.warn("Failed to save to localStorage:", localStorageError);
+  //       }
+
+  //       const event = new CustomEvent('mockupSaved', {
+  //         detail: {
+  //           productId: editId,
+  //           timestamp: Date.now(),
+  //         },
+  //       });
+  //       window.dispatchEvent(event);
+
+  //       // Navigate back
+  //       setTimeout(() => {
+  //         navigate(-1);
+  //       }, 500);
+  //     }
   //   } catch (error) {
   //     console.error("Error saving layers:", error);
-  //     alert("An error occurred while saving layers.");
+
+  //     // Fallback: Try to save to localStorage only
+  //     try {
+  //       localStorage.setItem("mockupEditedLayers", JSON.stringify(layers));
+  //       localStorage.setItem(`layers_${editId}`, JSON.stringify(layers));
+  //       console.log("Saved to localStorage as fallback");
+  //       alert("Saved locally (backend error: " + error.message + ")");
+  //     } catch (localStorageError) {
+  //       console.error("LocalStorage backup failed:", localStorageError);
+  //       alert("Save failed completely: " + error.message);
+  //     }
+  //   } finally {
+  //     // Reset saving state
+  //     setIsSaving(false);
   //   }
   // };
 
 
+  // const getCanvasSize = () => {
+  //   // 1. Pehle background layer dekho
+  //   const bgLayer = layers.find(l => l.type === "background");
+
+  //   // 2. Agar background layer hai
+  //   if (bgLayer && bgLayer.width && bgLayer.height) {
+  //     // MAXIMUM CANVAS SIZE SET KARO
+  //     const MAX_CANVAS_SIZE = 820; // Max canvas width/height
+
+  //     // Calculate scaled dimensions
+  //     let canvasWidth = bgLayer.width;
+  //     let canvasHeight = bgLayer.height;
+
+  //     // Agar image bohat bari hai, toh scale down karo
+  //     if (bgLayer.width > MAX_CANVAS_SIZE || bgLayer.height > MAX_CANVAS_SIZE) {
+  //       const widthRatio = MAX_CANVAS_SIZE / bgLayer.width;
+  //       const heightRatio = MAX_CANVAS_SIZE / bgLayer.height;
+  //       const minRatio = Math.min(widthRatio, heightRatio);
+
+  //       canvasWidth = Math.floor(bgLayer.width * minRatio);
+  //       canvasHeight = Math.floor(bgLayer.height * minRatio);
+  //     }
+
+  //     return {
+  //       width: canvasWidth,
+  //       height: canvasHeight
+  //       // width: bgLayer.width,
+  //       // height: bgLayer.height
+  //     };
+  //   }
+
+  //   // 3. Default
+  //   return { width: 800, height: 800 };
+  // };
+
+
+  // const getCanvasSize = () => {
+  //   // 1. Pehle background layer dekho
+  //   const bgLayer = layers.find(l => l.type === "background");
+
+  //   // 2. Agar background layer hai
+  //   if (bgLayer && bgLayer.width && bgLayer.height) {
+  //     // BACKGROUND IMAGE KA EXACT SIZE USE KARO (No scaling)
+  //     return {
+  //       width: bgLayer.width,
+  //       height: bgLayer.height
+  //     };
+  //   }
+
+  //   // 3. Default - Agar printarea hai to uske hisaab se
+  //   const printAreaLayer = layers.find(l => l.type === "printarea");
+  //   if (printAreaLayer) {
+  //     return {
+  //       width: Math.max(800, printAreaLayer.width),
+  //       height: Math.max(800, printAreaLayer.height)
+  //     };
+  //   }
+
+  //   // 4. Default
+  //   return { width: 800, height: 800 };
+  // };
 
   const getCanvasSize = () => {
+    // ✅ FIXED CANVAS SIZE - Original background image size nahi use karo
+    const MAX_CANVAS_SIZE = 820; // Maximum canvas size
+
     // 1. Pehle background layer dekho
     const bgLayer = layers.find(l => l.type === "background");
 
-    // 2. Agar background layer hai
     if (bgLayer && bgLayer.width && bgLayer.height) {
-      // MAXIMUM CANVAS SIZE SET KARO
-      const MAX_CANVAS_SIZE = 800; // Max canvas width/height
+      // ✅ Calculate scaling to fit within MAX_CANVAS_SIZE
+      const canvasWidth = Math.min(MAX_CANVAS_SIZE, bgLayer.width);
+      const canvasHeight = Math.min(MAX_CANVAS_SIZE, bgLayer.height);
 
-      // Calculate scaled dimensions
-      let canvasWidth = bgLayer.width;
-      let canvasHeight = bgLayer.height;
-
-      // Agar image bohat bari hai, toh scale down karo
-      if (bgLayer.width > MAX_CANVAS_SIZE || bgLayer.height > MAX_CANVAS_SIZE) {
-        const widthRatio = MAX_CANVAS_SIZE / bgLayer.width;
-        const heightRatio = MAX_CANVAS_SIZE / bgLayer.height;
-        const minRatio = Math.min(widthRatio, heightRatio);
-
-        canvasWidth = Math.floor(bgLayer.width * minRatio);
-        canvasHeight = Math.floor(bgLayer.height * minRatio);
-      }
+      // ✅ Maintain aspect ratio
+      const widthRatio = MAX_CANVAS_SIZE / bgLayer.width;
+      const heightRatio = MAX_CANVAS_SIZE / bgLayer.height;
+      const minRatio = Math.min(widthRatio, heightRatio);
 
       return {
-        width: canvasWidth,
-        height: canvasHeight
+        width: Math.floor(bgLayer.width * minRatio),
+        height: Math.floor(bgLayer.height * minRatio)
       };
     }
 
-    // 3. Default
+    // 3. Default - Agar background nahi hai
     return { width: 800, height: 800 };
   };
-
-
 
   const duplicateLayer = () => {
     if (!selectedLayerId) return;
@@ -1104,8 +1495,10 @@ function Editor() {
     }
 
     // ✅ Inches ko wapas pixels mein convert (SCREEN DPI use karo)
-    const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
-    const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+    // const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
+    // const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+    const finalWidth = printArea.width;
+    const finalHeight = printArea.height;
 
     // Center position calculate karo
     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
