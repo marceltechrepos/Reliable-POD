@@ -132,32 +132,7 @@ const EditorPropertiesPanel = ({
                   onChange={(e) => operations.updateLayer(selectedLayer.id, { color: e.target.value })} />
               </div>
             </>
-          )}
-
-          {/* Image Layer Properties */}
-          {/* {selectedLayer.type === "image" && (
-            <>
-              <div>
-                <p className="text-gray-400 font-medium">Replace Image</p>
-                <input type="file" accept="image/*" onChange={(e) => {
-                  const file = e.target.files && e.target.files[0];
-                  if (!file) return;
-                  if (selectedLayer.src && selectedLayer.src.startsWith("blob:")) {
-                    try { URL.revokeObjectURL(selectedLayer.src); } catch (err) { }
-                  }
-                  const url = URL.createObjectURL(file);
-                  operations.updateLayer(selectedLayer.id, { src: url });
-                }} className="w-full mt-1 p-2 bg-gray-700 rounded" />
-              </div>
-              <div>
-                <p className="text-gray-400 font-medium">Fit Mode</p>
-                <select value={selectedLayer.fit || "contain"} onChange={(e) => operations.updateLayer(selectedLayer.id, { fit: e.target.value })}
-                  className="w-full p-2 rounded bg-gray-700 text-white">
-                  <option value="contain">Contain</option>
-                  <option value="cover">Cover</option>
-                  <option value="fill">Fill</option>
-                </select>
-              </div> */}
+          )} 
 
           {selectedLayer.type === "image" && (
             <>
@@ -248,44 +223,7 @@ const EditorPropertiesPanel = ({
           )}
 
           {/* Print Area Properties */}
-          {/* {selectedLayer.type === "printarea" && (
-            <>
-              <div className="pt-2 border-t border-gray-700">
-                <p className="text-gray-400 font-medium mb-2">Print Area Image</p>
-                <input ref={printAreaFileInputRef} type="file" accept="image/*" onChange={operations.handlePrintAreaImageUpload} className="hidden" />
-                {!selectedLayer.hasImage ? (
-                  <div className="space-y-3">
-                    <button onClick={operations.triggerPrintAreaImageUpload} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium transition flex items-center justify-center gap-2">
-                      Upload Image
-                    </button>
-                    <p className="text-xs text-gray-400 text-center">Upload image for {selectedLayer.width}×{selectedLayer.height} area</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="relative bg-gray-900 rounded-lg p-3">
-                      <img src={selectedLayer.imageSrc} alt="Print area preview" className="w-full h-40 object-contain rounded" />
-                      <div className="flex justify-between mt-3">
-                        <button onClick={operations.triggerPrintAreaImageUpload} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded transition">
-                          Replace Image
-                        </button>
-                        <button onClick={operations.removePrintAreaImage} className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded transition">
-                          Remove Image
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 font-medium">Image Fit</p>
-                      <select value={selectedLayer.fit || "cover"} onChange={(e) => operations.updateLayer(selectedLayer.id, { fit: e.target.value })}
-                        className="w-full p-2 rounded bg-gray-700 text-white">
-                        <option value="cover">Cover (Fill entire area)</option>
-                        <option value="contain">Contain (Fit inside)</option>
-                        <option value="fill">Fill (Stretch)</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div> */}
-
+          
           {selectedLayer.type === "printarea" && (
             <>
               <div className="pt-2 border-t border-gray-700">
@@ -384,7 +322,7 @@ const EditorPropertiesPanel = ({
           {/* Layer Order Controls */}
           <div className="flex gap-2 pt-4 border-t border-gray-700">
             <button onClick={() => operations.bringForward(selectedLayer.id)} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
-              Bring Forward
+              Brings Forwards
             </button>
             <button onClick={() => operations.sendBackward(selectedLayer.id)} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
               Send Backward

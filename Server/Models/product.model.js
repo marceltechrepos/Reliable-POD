@@ -6,10 +6,9 @@ const productSchema = new Schema(
     internalName: String,
     fulfilmentProvider: {
       type: Types.ObjectId,
-      ref: "Provider", // ye model ka naam hoga
+      ref: "Provider",
       required: true,
     },
-    // fulfilmentProvider: String,
     fulfilmentCatalogID: String,
     description: String,
     thumbnail: {
@@ -34,29 +33,12 @@ const productSchema = new Schema(
     thumbnail: {
       url: {
         type: String,
-        // required: true
       },
       public_id: {
         type: String,
-        // required: true
       }
     },
 
-
-    // Variants: [
-    //   {
-    //     sku: String,
-    //     size: Number,
-    //     weight: Number,
-    //     color: String,
-    //     colorHex: String,
-    //     basePrice: Number,
-    //     comparePrice: Number,
-    //     createdAt: String,
-    //     updatedAt: String,
-
-    //   },
-    // ],
     Variants: [
       {
         sku: String,
