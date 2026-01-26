@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getProductsByCategory, deleteProductById } from "../api/product.api";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 /** Small placeholder when image is missing */
 const PlaceholderImage = ({ className = "" }) => (
@@ -94,7 +95,7 @@ const SubCategoryProduct = () => {
       setProducts((prev) => prev.filter((p) => p._id !== productId));
     } catch (err) {
       console.error("Delete product error:", err);
-      alert("Failed to delete product");
+      toast.error("Failed to delete product");
     }
   };
 
