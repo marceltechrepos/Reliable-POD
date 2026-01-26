@@ -322,7 +322,7 @@ const EditorPropertiesPanel = ({
           {/* Layer Order Controls */}
           <div className="flex gap-2 pt-4 border-t border-gray-700">
             <button onClick={() => operations.bringForward(selectedLayer.id)} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
-              Brings Forwards
+              Brings Forward
             </button>
             <button onClick={() => operations.sendBackward(selectedLayer.id)} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
               Send Backward
