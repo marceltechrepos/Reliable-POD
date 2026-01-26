@@ -1,8 +1,6 @@
 
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Signin from "./components/Signin"
-import Signup from "./components/Signup"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css"
 import ProductBase from "./pages/ProductBase";
 import SubCategoryProduct from "./pages/SubCategoryProduct";
@@ -11,14 +9,13 @@ import Dashboard from "./pages/Dashboard";
 import Order from "./pages/Order";
 import Provider from "./pages/Provider";
 import Category from "./pages/Category";
-import { useEffect } from "react";
 import Settings from "./pages/Settings";
 import AdminLogin from "./components/Admin/AdminLogin";
 import Editor from "./pages/AdminEditor/Editor";
 import ProtectedRoute from "./components/ProtectedRoute"
 import PerspectiveWarp from "./pages/PerspectiveImage";
 import SubCategory from "./pages/SubCategory";
-
+import { ToastContainer } from "react-toastify"
 function App() {
   // const token = localStorage.getItem("token");
   return (
@@ -43,10 +40,14 @@ function App() {
         <Route path="/per" element={<PerspectiveWarp />} />
         <Route path="/admin/editor/:editId?" element={<Editor />} />
         {/* AUTH ROUTES */}
-        {/* <Route path="/" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} /> */}
+        {/* <Route path="/" element={<Signin />} /> */}
+
+        <Route path="/" element={<Navigate to="/admin/login" replace />} />
+
+        {/* <Route path="/signup" element={<Signup />} /> */}
 
       </Routes>
+      <ToastContainer />
     </Router>
   )
 }

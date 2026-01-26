@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
 import { loginApi } from '../../api/auth.api';
+import { toast } from 'react-toastify';
 
 const BRAND = {
     primary: "#3b6d92",
@@ -20,7 +21,7 @@ function AdminLogin() {
         e.preventDefault();
 
         if (email.trim() === "" || password.trim() === "") {
-            alert("All fields are required");
+            toast.error("All fields are required");
             return;
         }
 

@@ -5,6 +5,7 @@ import {
   deletePrintArea
 } from '../api/printArea.api';
 import { getProductById } from '../api/product.api';
+import { toast } from 'react-toastify';
 
 function PrintArea({ productId }) {
   const [showForm, setShowForm] = useState(false);
@@ -68,7 +69,7 @@ function PrintArea({ productId }) {
 
   const handleAddClick = async () => {
     if (!formData.key || !formData.displayName || !formData.width || !formData.height) {
-      alert('Please fill all fields!');
+      toast.warn('Please fill all fields!');
       return;
     }
 
@@ -112,7 +113,7 @@ function PrintArea({ productId }) {
 
   const handleSaveEdit = async areaId => {
     if (!editFormData.key || !editFormData.displayName || !editFormData.width || !editFormData.height) {
-      alert("Please fill all fields!");
+      toast.warn("Please fill all fields!");
       return;
     }
 
@@ -138,9 +139,9 @@ function PrintArea({ productId }) {
         )
       );
       setEditingId(null);
-      alert("Print area updated successfully");
+      toast.success("Print area updated successfully");
     } else {
-      alert("Failed to update print area");
+      toast.error("Failed to update print area");
     }
   };
 

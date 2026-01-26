@@ -31,6 +31,7 @@ import DialogActions from '@mui/material/DialogActions';
 import { useParams } from 'react-router-dom';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { getVariants, createVariant, updateVariant, deleteVariant } from '../api/variant.api';
+import { toast } from 'react-toastify';
 
 // Helper function to create data (local usage)
 function createData(id, sku, color, size, colorHex, weight, price, comparePrice, baseCost, available, addToCampaigns, createdAt, updatedAt) {
@@ -170,7 +171,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
   // ---------- CREATE (POST) ----------
   const handleSubmit = async () => {
     // if (!formData.sku|| !formData.price) {
-    //   alert('Please fill all required fields!');
+    //   toast('Please fill all required fields!');
     //   return;
     // }
 
@@ -209,7 +210,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       if (onFormClose) onFormClose();
       setFormData({ sku: '', color: '', size: '', colorHex: '#ffffff', weight: '', price: '', comparePrice: '', baseCost: '', available: 'available', addToCampaigns: false });
     } else {
-      alert(json?.message || 'Failed to create variant');
+      toast.error(json?.message || 'Failed to create variant');
     }
   };
 
@@ -217,12 +218,12 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
   // ---------- UPDATE (PUT) ----------
   const handleSaveEdit = async () => {
     if (!editFormData.sku || !editFormData.color || !editFormData.size || !editFormData.price) {
-      alert('Please fill all required fields!');
+      toast.warn('Please fill all required fields!');
       return;
     }
 
     const variantId = editingId;
-    if (!variantId) return alert('No variant selected to update.');
+    if (!variantId) return toast.error('No variant selected to update.');
 
     const payload = {
       sku: editFormData.sku,
@@ -285,12 +286,12 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       setRows(prev => prev.filter(r => r.id !== variantId));
       setSelectedRows(prev => prev.filter(i => i !== variantId));
     } else {
-      alert(json?.message || 'Delete failed');
+      toast.error(json?.message || 'Delete failed');
     }
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedRows.length === 0) return alert('Please select at least one row to delete.');
+    if (selectedRows.length === 0) return toast.warn('Please select at least one row to delete.');
     if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} selected variant(s)?`)) return;
 
     const deletePromises = selectedRows.map(vId => deleteVariant(id, vId));
@@ -383,7 +384,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
 
   const handlePrintAreaSubmit = () => {
     if (!printAreaData.key || !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
-      alert('Please fill all fields!');
+      toast.warn('Please fill all fields!');
       return;
     }
     const newPrintArea = {
@@ -396,7 +397,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       createdAt: new Date().toISOString(),
     };
     console.log('New Print Area Added:', newPrintArea);
-    alert('Print area added successfully!');
+    toast.success('Print area added successfully!');
     handleModalClose();
   };
 

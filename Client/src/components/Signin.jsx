@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
 import { loginApi } from '../api/auth.api';
+import { toast } from 'react-toastify';
 
 function Signin() {
     const navigate = useNavigate();
@@ -13,7 +14,7 @@ function Signin() {
         e.preventDefault();
 
         if (email.trim() === "" || password.trim() === "") {
-            alert("all fields are required");
+            toast.error("all fields are required");
             return;
         }
 
