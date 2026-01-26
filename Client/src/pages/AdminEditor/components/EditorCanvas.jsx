@@ -232,31 +232,14 @@ const EditorCanvas = ({
             {drawGrid()}
 
             {layers.map((layer, index) => {
-              if (layer.visible === false) return null;
+              if (layer.visible === false) return null; 
               const zIndex = index + 1;
+              const isSelected = selectedLayerId === layer.id;
 
-              // if (layer.type === "background") {
-              //   return (
-              //     <img
-              //       key={layer.id}
-              //       src={layer.src}
-              //       alt="background"
-              //       style={{
-              //         width: "100%",
-              //         height: "100%",
-              //         objectFit: "contain",
-              //         display: "block",
-              //         borderRadius: 8,
-              //         boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
-              //         position: "absolute",
-              //         left: 0,
-              //         top: 0,
-              //       }}
-              //     />
-              //   );
-              // }
+              // Allow pointer events only for selected layer or when no layer is selected
+              const shouldHandlePointerEvents = isSelected || selectedLayerId === null;
 
-              // Background layer rendering section (~line 200) ko update karo:
+
               if (layer.type === "background") {
                 return (
                   <div
@@ -282,8 +265,8 @@ const EditorCanvas = ({
                         height: "100%",
                         objectFit: "contain", // Ensures full image is visible
                         display: "block",
-                        borderRadius: 8,
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+                        // borderRadius: 8,
+                        // boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
                       }}
                     />
                   </div>
@@ -371,7 +354,6 @@ const EditorCanvas = ({
                   key={layer.id}
                   size={{ width: layer.width, height: layer.height }}
                   position={{ x: layer.x, y: layer.y }}
-                  // bounds="parent"
                   onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
 
                   // Naya onResizeStart handler
@@ -463,7 +445,7 @@ const EditorCanvas = ({
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: layer.locked ? "not-allowed" : "move",
-                    pointerEvents: "auto",
+                    pointerEvents: selectedLayerId === layer.id ? "auto" : "none", // ← ADD THIS LINE
                     position: "absolute",
                   }}
                 >
@@ -656,7 +638,7 @@ const EditorCanvas = ({
                               border: "2px solid white",
                               cursor: "move",
                               zIndex: 9999,
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                              // boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
                             }}
                             title={`Drag to adjust perspective (Point ${index + 1})`}
                           />
