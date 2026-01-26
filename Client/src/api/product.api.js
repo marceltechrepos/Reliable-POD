@@ -109,28 +109,7 @@ export const getProductsByCategory = async (categoryId) => {
         return [];
     }
 };
-
-// const updateProduct = async (productId, payload) => {
-//     try {
-//         const token = localStorage.getItem("token");
-//         const response = await fetch(`${BASE_URL}/api/update-product/${productId}`, { 
-//             method: 'PUT',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 Authorization: `Bearer ${token}`,
-//             },
-//             body: JSON.stringify(payload)
-//         });
-
-//         const data = await response.json();
-//         return data;
-//     } catch (error) {
-//         console.log(error, '<<<< update product error');
-//         return { success: false, error: error.message };
-//     }
-// };
-
-
+ 
 const updateProduct = async (productId, payload) => {
     try {
         const token = localStorage.getItem("token");

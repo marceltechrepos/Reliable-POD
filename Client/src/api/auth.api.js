@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const registerAPi = async (payload, setLoading, navigate) => {
@@ -43,11 +45,11 @@ export const loginApi = async (payload, setLoading, navigate) => {
         const data = await res.json();
 
         if (!data.success) {
-            alert(data.message || "invalid credentials");
+            toast.error(data.message || "invalid credentials");
             setLoading(false);
             return;
         } else {
-            alert(data.message)
+            toast.success(data.message)
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             setLoading(false);
@@ -58,7 +60,7 @@ export const loginApi = async (payload, setLoading, navigate) => {
 
     } catch (error) {
         console.log(error, "<<<< error");
-        alert("server error");
+        toast.error("server error");
     } finally {
         setLoading(false);
     }
@@ -75,16 +77,6 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
             formData.append("profileImage", profileImageFile);
         }
 
-        // loop through payload keys
-        // for (const key in payload) {
-        //     if (payload[key] !== null && payload[key] !== undefined) {
-        //         if (key === "profileImage") {
-        //             formData.append("profileImage", payload[key]); // file object
-        //         } else {
-        //             formData.append(key, payload[key]);
-        //         }
-        //     }
-        // }
         for (const key in payload) {
             if (payload[key] !== null && payload[key] !== undefined) {
 
@@ -106,20 +98,6 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
             }
         }
 
-
-        // for (const key in payload) {
-        //     if (payload[key] !== null && payload[key] !== undefined) {
-        //         if (key === "profileImage") {
-        //             formData.append("profileImage", payload[key]);
-        //         } else if (booleanFields.includes(key)) {
-        //             // Boolean values ko actual boolean mein convert karein
-        //             formData.append(key, payload[key] === "true" || payload[key] === true);
-        //         } else {
-        //             formData.append(key, payload[key]);
-        //         }
-        //     }
-        // }
-
         const token = localStorage.getItem("token");
 
         const res = await fetch(`${BASE_URL}/api/User/AddUserInfo`, {
@@ -133,17 +111,17 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
         const data = await res.json();
 
         if (!data.success) {
-            alert(data.message || "Failed to update user info");
+            toast.error(data.message || "Failed to update user info");
             return null;
         }
         localStorage.setItem("user", JSON.stringify(data.user));
-        alert(data.message || "User info updated successfully");
+        toast.success(data.message || "User info updated successfully");
 
         return data.user;
 
     } catch (error) {
         console.log(error);
-        alert("Server error");
+        toast.error("Server error");
         return null;
     } finally {
         setLoading(false);
@@ -156,8 +134,9 @@ export const getUserDetail = async (setLoading = () => { }) => {
         setLoading(true);
         const token = localStorage.getItem("token");
         if (!token) {
-            console.warn("no token in localStorage");
+            toast.error("Session Expired");
             setLoading(false);
+            window.location.href = "/";
             return null;
         }
 

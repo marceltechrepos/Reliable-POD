@@ -291,59 +291,6 @@ function OverviewTab() {
               </ResponsiveContainer>
             </div>
           </div>
-
-
-          {/* <div className="bg-white rounded-xl shadow p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Products by Category</h3>
-            <div className="h-28 flex items-center justify-center mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={productsByCategory}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={28}
-                    outerRadius={48}
-                    paddingAngle={3}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {productsByCategory.map((entry, idx) => (
-                      <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Legend verticalAlign="bottom" height={24} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div> */}
-
-          {/* <div className="bg-white rounded-xl shadow p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Quick System</h3>
-            <div className="space-y-3 mt-3">
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-slate-600"><Server size={15} /> API Server</div>
-                <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  Online
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-slate-600"><Cloud size={15} /> Cloud Storage</div>
-                <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  Connected
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-slate-600"><Activity size={15} /> Provider Sync</div>
-                <div className="flex items-center gap-1 text-amber-600 font-medium">
-                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                  Active
-                </div>
-              </div>
-            </div>
-          </div> */}
-
         </div>
       </div>
     </div>

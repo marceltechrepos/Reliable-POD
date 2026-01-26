@@ -9,12 +9,9 @@ import EditorHeader from "./components/EditorHeader";
 import EditorCanvas from "./components/EditorCanvas";
 import EditorLayersPanel from "./components/EditorLayersPanel";
 import EditorPropertiesPanel from "./components/EditorPropertiesPanel";
-// import { createLayer, getLayersByProductId } from "../../api/layers.api";
 import {
-  createLayer,
   getLayersByProductId,
   updateLayers,
-  createLayers
 } from "../../api/layers.api";
 
 function Editor() {
@@ -160,21 +157,34 @@ function Editor() {
       const canvasSize = getCanvasSize();
 
       // ✅ NEW: Calculate maximum size for uploaded image (40% of canvas)
-      const maxCanvasWidth = canvasSize.width * 0.4;  // 40% of canvas width
-      const maxCanvasHeight = canvasSize.height * 0.4; // 40% of canvas height
+      // const maxCanvasWidth = canvasSize.width * 0.4;  // 40% of canvas width
+      // const maxCanvasHeight = canvasSize.height * 0.4; // 40% of canvas height
 
+      // let finalWidth = naturalWidth;
+      // let finalHeight = naturalHeight;
+
+      // // Scale down if image is larger than allowed size
+      // if (naturalWidth > maxCanvasWidth || naturalHeight > maxCanvasHeight) {
+      //   const widthRatio = maxCanvasWidth / naturalWidth;
+      //   const heightRatio = maxCanvasHeight / naturalHeight;
+      //   const minRatio = Math.min(widthRatio, heightRatio);
+
+      //   finalWidth = Math.floor(naturalWidth * minRatio);
+      //   finalHeight = Math.floor(naturalHeight * minRatio);
+      // }
       let finalWidth = naturalWidth;
       let finalHeight = naturalHeight;
 
-      // Scale down if image is larger than allowed size
-      if (naturalWidth > maxCanvasWidth || naturalHeight > maxCanvasHeight) {
-        const widthRatio = maxCanvasWidth / naturalWidth;
-        const heightRatio = maxCanvasHeight / naturalHeight;
-        const minRatio = Math.min(widthRatio, heightRatio);
+      // Only scale DOWN if image is bigger than canvas
+      if (naturalWidth > canvasSize.width || naturalHeight > canvasSize.height) {
+        const widthRatio = canvasSize.width / naturalWidth;
+        const heightRatio = canvasSize.height / naturalHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
 
-        finalWidth = Math.floor(naturalWidth * minRatio);
-        finalHeight = Math.floor(naturalHeight * minRatio);
+        finalWidth = Math.floor(naturalWidth * scaleRatio);
+        finalHeight = Math.floor(naturalHeight * scaleRatio);
       }
+
 
       // Also ensure minimum size for very small images
       const minSize = Math.min(canvasSize.width, canvasSize.height) * 0.15;
@@ -226,94 +236,6 @@ function Editor() {
     img.src = url;
   };
 
-  // const addImageLayerFromFile = (file) => {
-  //   if (!file) return;
-  //   const url = URL.createObjectURL(file);
-
-  //   const img = new Image();
-  //   img.onload = function () {
-  //     const naturalWidth = this.naturalWidth;
-  //     const naturalHeight = this.naturalHeight;
-
-  //     const canvasSize = getCanvasSize();
-
-  //     // ✅ Assume image ka DPI 72 (web images) ya 300 (print images)
-  //     // Aap file ke metadata se DPI get kar sakte hain, lekin simple solution:
-  //     const ASSUMED_IMAGE_DPI = 300; // Photoshop default
-
-  //     // Image size in inches
-  //     const imageWidthInInches = naturalWidth / ASSUMED_IMAGE_DPI;
-  //     const imageHeightInInches = naturalHeight / ASSUMED_IMAGE_DPI;
-
-  //     // Canvas size in inches (screen DPI)
-  //     const canvasWidthInInches = canvasSize.width / SCREEN_DPI;
-  //     const canvasHeightInInches = canvasSize.height / SCREEN_DPI;
-
-  //     // Max size: canvas ka 60-70%
-  //     const maxWidthInInches = canvasWidthInInches * 0.7;
-  //     const maxHeightInInches = canvasHeightInInches * 0.7;
-
-  //     let finalWidthInInches = imageWidthInInches;
-  //     let finalHeightInInches = imageHeightInInches;
-
-  //     // Scale down if needed
-  //     if (imageWidthInInches > maxWidthInInches ||
-  //       imageHeightInInches > maxHeightInInches) {
-
-  //       const widthRatio = maxWidthInInches / imageWidthInInches;
-  //       const heightRatio = maxHeightInInches / imageHeightInInches;
-  //       const minRatio = Math.min(widthRatio, heightRatio);
-
-  //       finalWidthInInches = imageWidthInInches * minRatio;
-  //       finalHeightInInches = imageHeightInInches * minRatio;
-  //     }
-
-  //     // ✅ Convert back to pixels (screen DPI)
-  //     const finalWidth = naturalWidth;
-  //     const finalHeight = naturalHeight;
-
-  //     // Center position
-  //     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
-  //     const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
-
-
-  //     const newLayer = {
-  //       id: `layer-${Date.now()}`,
-  //       type: "image",
-  //       src: url,
-  //       name: "",
-  //       x: x,
-  //       y: y,
-  //       width: finalWidth,
-  //       height: finalHeight,
-  //       _naturalWidth: naturalWidth,
-  //       _naturalHeight: naturalHeight,
-  //       rotation: 0,
-  //       opacity: 1,
-  //       visible: true,
-  //       fit: "contain",
-  //       locked: false,
-  //       perspective: 0,
-  //       rotateX: 0,
-  //       rotateY: 0,
-  //       rotateZ: 0,
-  //       skewX: 0,
-  //       skewY: 0,
-  //       transformOrigin: "center center",
-  //       enablePerspective: false,
-  //       corners: [
-  //         { x: 0, y: 0 },
-  //         { x: finalWidth, y: 0 },
-  //         { x: finalWidth, y: finalHeight },
-  //         { x: 0, y: finalHeight }
-  //       ]
-  //     };
-
-  //     setLayersWithHistory((prev) => [...prev, newLayer]);
-  //     setSelectedLayerId(newLayer.id);
-  //   };
-  //   img.src = url;
-  // };
 
   const handleFileInputChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -639,18 +561,35 @@ function Editor() {
           const naturalWidth = this.naturalWidth;
           const naturalHeight = this.naturalHeight;
 
-          const MAX_DISPLAY_SIZE = 1000;
+          // const MAX_DISPLAY_SIZE = 1000;
+          // let displayWidth = naturalWidth;
+          // let displayHeight = naturalHeight;
+
+          // if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+          //   const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+          //   const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+          //   const minRatio = Math.min(widthRatio, heightRatio);
+
+          //   displayWidth = Math.floor(naturalWidth * minRatio);
+          //   displayHeight = Math.floor(naturalHeight * minRatio);
+          // }
+
+          // DON'T UPSCALE: use original natural dimensions, but scale DOWN if larger than viewport
           let displayWidth = naturalWidth;
           let displayHeight = naturalHeight;
 
-          if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
-            const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
-            const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
-            const minRatio = Math.min(widthRatio, heightRatio);
+          // compute available space (90% of viewport)
+          const maxViewportWidth = window.innerWidth * 0.9;
+          const maxViewportHeight = window.innerHeight * 0.9;
 
-            displayWidth = Math.floor(naturalWidth * minRatio);
-            displayHeight = Math.floor(naturalHeight * minRatio);
-          }
+          // compute ratio to scale down if needed; the `1` prevents upscaling
+          const widthRatio = maxViewportWidth / naturalWidth;
+          const heightRatio = maxViewportHeight / naturalHeight;
+          const scaleDownRatio = Math.min(widthRatio, heightRatio, 1); // <= 1
+
+          displayWidth = Math.floor(naturalWidth * scaleDownRatio);
+          displayHeight = Math.floor(naturalHeight * scaleDownRatio);
+
 
           setLayersWithHistory([
             {
@@ -858,33 +797,6 @@ function Editor() {
     // Default - Agar background nahi hai
     return { width: 800, height: 800, scaleFactor: 1 };
   };
-
-  // const getCanvasSize = () => {
-  //   // ✅ FIXED CANVAS SIZE - Original background image size nahi use karo
-  //   const MAX_CANVAS_SIZE = 820; // Maximum canvas size
-
-  //   // 1. Pehle background layer dekho
-  //   const bgLayer = layers.find(l => l.type === "background");
-
-  //   if (bgLayer && bgLayer.width && bgLayer.height) {
-  //     // ✅ Calculate scaling to fit within MAX_CANVAS_SIZE
-  //     const canvasWidth = Math.min(MAX_CANVAS_SIZE, bgLayer.width);
-  //     const canvasHeight = Math.min(MAX_CANVAS_SIZE, bgLayer.height);
-
-  //     // ✅ Maintain aspect ratio
-  //     const widthRatio = MAX_CANVAS_SIZE / bgLayer.width;
-  //     const heightRatio = MAX_CANVAS_SIZE / bgLayer.height;
-  //     const minRatio = Math.min(widthRatio, heightRatio);
-
-  //     return {
-  //       width: Math.floor(bgLayer.width * minRatio),
-  //       height: Math.floor(bgLayer.height * minRatio)
-  //     };
-  //   }
-
-  //   // 3. Default - Agar background nahi hai
-  //   return { width: 800, height: 800 };
-  // };
 
   const duplicateLayer = () => {
     if (!selectedLayerId) return;

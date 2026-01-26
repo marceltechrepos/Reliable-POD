@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import AddSubCategoryModal from "../components/Admin/AddSubCategoryModal";
 import { createSubCategory, getSubCategoriesByParent } from "../api/subCategory.api";
+import { toast } from "react-toastify";
 
 const SubCategoryPage = () => {
   const { categoryId } = useParams();
@@ -46,7 +47,7 @@ const SubCategoryPage = () => {
 
   const addSubCategoryHandler = async () => {
     if (!title.trim()) {
-      alert("Title required");
+      toast.error("Title required");
       return;
     }
 
@@ -71,7 +72,7 @@ const SubCategoryPage = () => {
 
       setOpenModal(false);
     } else {
-      alert("Failed to create sub category");
+      toast.error("Failed to create sub category");
     }
   };
 

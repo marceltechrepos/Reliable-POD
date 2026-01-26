@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import BasicTable from './BasicTable';
+import { toast } from 'react-toastify';
 
 function ProductVariant() {
   // State to control form visibility
@@ -84,7 +85,7 @@ function ProductVariant() {
   const handlePrintAreaSubmit = () => {
     // Basic validation
     if (!printAreaData.key || !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
-      alert('Please fill all fields!');
+      toast.warn('Please fill all fields!');
       return;
     }
 
@@ -102,7 +103,7 @@ function ProductVariant() {
 
 
     // Show success message
-    alert('Print area added successfully!');
+    toast.success('Print area added successfully!');
 
     // You can add logic here to update your print areas list
     // For example: setPrintAreas([...printAreas, newPrintArea]);
