@@ -3,6 +3,7 @@ import {
   CreateUser,
   getUserDetail,
   addUserInformation,
+  VerifyToken,
 } from "../Controllers/User.Controller.js";
 
 import { Router } from "express";
@@ -18,6 +19,8 @@ UserRouter.post(
   isLogin,
   addUserInformation
 );
+
+UserRouter.get("/User/VerifyToken", isLogin, VerifyToken);
 
 UserRouter.get("/User/getUserDetail", isLogin, getUserDetail);
 export default UserRouter;
