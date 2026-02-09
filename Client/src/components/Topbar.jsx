@@ -1,7 +1,9 @@
+// components/Topbar.js
 import React, { useState, useEffect } from "react";
 import logo from "../assets/images/POD-logo.png";
 import { Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function Topbar({ onMenuClick }) {
   const [open, setOpen] = useState(false);
@@ -50,10 +52,18 @@ function Topbar({ onMenuClick }) {
     };
   }, []);
 
-
   const logout = () => {
+    // Clear all auth data
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
+    // Clear axios headers
+    delete axios.defaults.headers.common['Authorization'];
+
+    // Show logout message
+    toast.success("Logged out successfully");
+
+    // Navigate to login page
     navigate("/admin/login");
   };
 

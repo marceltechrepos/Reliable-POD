@@ -1,3 +1,4 @@
+import axios from "axios";
 import { toast } from "react-toastify";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -65,6 +66,39 @@ export const loginApi = async (payload, setLoading, navigate) => {
         setLoading(false);
     }
 }
+
+
+export const logoutApi = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete axios.defaults.headers.common['Authorization'];
+
+    // Redirect to login page
+    window.location.href = "/admin/login";
+};
+
+export const verifyTokenApi = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        return { valid: false };
+    }
+
+    try {
+        const res = await axios.get(
+            `${import.meta.env.VITE_BASE_URL}/api/User/VerifyToken`
+        );
+
+        return { valid: res.data.success, user: res.data.user };
+    } catch (error) {
+        if (error.response?.status === 401) {
+            // Token expired, clear it
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+        }
+        return { valid: false };
+    }
+};
 
 
 export const userInfoApi = async (payload, setLoading, profileImageFile) => {
