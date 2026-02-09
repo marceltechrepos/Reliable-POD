@@ -1,5 +1,4 @@
-// ==================================================== ORGANIZED CODE ==================
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getProductById } from "../../api/product.api";
 import { toPng, toJpeg } from "html-to-image";
@@ -13,6 +12,7 @@ import {
   getLayersByProductId,
   updateLayers,
 } from "../../api/layers.api";
+
 
 function Editor() {
   const BaseUrl = import.meta.env.VITE_BASE_URL;

@@ -148,41 +148,58 @@ function CategoryPage() {
                 </div>
 
                 {/* Category Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4 cursor-pointer">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {categories.map((cat) => (
-
                         <div
                             key={cat.id}
-                            className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border"
+                            className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border cursor-pointer"
+                            style={{ borderColor: "#3B6D92" }} // theme border
                         >
-                            <div className="relative h-56 bg-gray-100 group overflow-hidden">
-                                {cat.thumbnail ? (
-                                    <Link to={`/admin/category/${cat.id}`} key={cat.id}>
-                                        <img src={cat.thumbnail} alt={cat.label} className="w-full h-full object-cover" />
-                                    </Link>
-                                ) : (
-                                    <Link to={`/admin/category/${cat.id}`} key={cat.id}>
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
-                                    </Link>
-                                )}
+                            {/* Image (clickable) */}
+                            <Link to={`/admin/category/${cat.id}`}>
+                                <div className="h-52 bg-gray-100">
+                                    {cat.thumbnail ? (
+                                        <img
+                                            src={cat.thumbnail}
+                                            alt={cat.label}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-gray-400">
+                                            No Image
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
 
-                                {/* Hover Overlay */}
-                                <div className="absolute bottom-0 left-0 w-full h-[35%] bg-black/80 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out flex flex-col justify-between p-4">
-                                    <h3 className="text-md font-bold text-center">{cat.label}</h3>
-                                    <div className="flex justify-between text-sm">
-                                        <button onClick={() => openEditModal(cat)} className="hover:underline cursor-pointer">
-                                            Edit
-                                        </button>
-                                        <button onClick={() => deleteCategoryHandler(cat?.id)} className="text-red-400 hover:underline cursor-pointer">
-                                            Delete
-                                        </button>
-                                    </div>
+                            {/* Content */}
+                            <div className="p-4">
+                                <h3 className="font-semibold text-gray-800">{cat.label}</h3>
+                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                    {cat.description}
+                                </p>
+
+                                {/* Actions */}
+                                <div className="flex justify-between mt-4 text-sm">
+                                    <button
+                                        onClick={() => openEditModal(cat)}
+                                        className="text-[#3B6D92] hover:underline"
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        onClick={() => deleteCategoryHandler(cat.id)}
+                                        className="text-[#F05A28] hover:underline"
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        // </Link>
                     ))}
                 </div>
+
             </div>
 
             {/* Add/Edit Category Modal */}
@@ -197,7 +214,7 @@ function CategoryPage() {
                 onAdd={submitCategoryHandler} // ✅ combined Add/Edit
                 isEdit={isEdit}
             />
-        </div>
+        </div >
     );
 }
 

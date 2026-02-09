@@ -26,6 +26,7 @@ import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
 import { deleteMockupImage } from '../api/mockupApi';
+import RichTextEditor from '../components/RichTextEditor';
 
 // Local storage se data load karne ka function
 const loadMockupsFromStorage = () => {
@@ -560,7 +561,7 @@ function ProductBase() {
                 value={fulfilmentCatalogID}
                 onChange={(e) => setFulfilmentCatalogID(e.target.value)}
               />
-              <TextField
+              {/* <TextField
                 label="Your Message"
                 multiline
                 rows={4}
@@ -568,7 +569,19 @@ function ProductBase() {
                 sx={{ mb: 2 }}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-              />
+              /> */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Your Message
+                </label>
+
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                />
+              </div>
+
+
 
               {/* // Replace current button with: */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between mt-3">
