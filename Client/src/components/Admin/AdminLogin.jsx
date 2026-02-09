@@ -1,3 +1,4 @@
+// components/Admin/AdminLogin.js
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
 import { loginApi } from '../../api/auth.api';
@@ -12,10 +13,58 @@ const BRAND = {
 
 function AdminLogin() {
     const navigate = useNavigate();
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [checkingToken, setCheckingToken] = useState(true);
+
+    useEffect(() => {
+        const verifyTokenAndRedirect = async () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                setCheckingToken(false);
+                return;
+            }
+
+            try {
+                const res = await fetch(
+                    `${import.meta.env.VITE_BASE_URL}/api/User/VerifyToken`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        // Token is valid, redirect to dashboard
+                        navigate("/admin/dashboard");
+                    } else {
+                        // Token is invalid
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("user");
+                        setCheckingToken(false);
+                    }
+                } else {
+                    // Token is invalid or expired
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    setCheckingToken(false);
+                }
+            } catch (error) {
+                console.error("Token verification error:", error);
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCheckingToken(false);
+            }
+        };
+
+        verifyTokenAndRedirect();
+    }, [navigate]);
 
     const SubmitHandler = async (e) => {
         e.preventDefault();
@@ -29,10 +78,17 @@ function AdminLogin() {
         loginApi(payload, setLoading, navigate);
     };
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) navigate("/admin/dashboard");
-    }, []);
+    // Show loading while checking token
+    if (checkingToken) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9]">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Checking session...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-[#f1f5f9]">

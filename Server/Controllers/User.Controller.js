@@ -75,7 +75,7 @@ export const Login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role, email: user.email },
       process.env.JWT_TOKEN,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
     return res
@@ -190,6 +190,7 @@ export const addUserInformation = async (req, res) => {
     });
   }
 };
+
 export const getUserDetail = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -208,6 +209,40 @@ export const getUserDetail = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error while fetching user details.",
+      error,
+    });
+  }
+};
+
+export const VerifyToken = async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, process.env.JWT_TOKEN);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(403).json({ message: "Unauthorized: User not found" });
+
+    };
+    return res.status(200).json({
+      success: true,
+      message: "Token is valid.",
+      user
+    });
+
+  } catch (error) {
+    console.error("VerifyToken Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while verifying token.",
       error,
     });
   }
