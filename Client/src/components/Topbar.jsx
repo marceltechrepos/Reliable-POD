@@ -5,10 +5,22 @@ import { Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-function Topbar({ onMenuClick }) {
+function Topbar({ onMenuClick, onSearch }) {
   const [open, setOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const navigate = useNavigate();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (onSearch) {
+      onSearch(value); // Pass value up to parent
+    }
+  };
+
 
   useEffect(() => {
     const updateProfileFromStorage = () => {
@@ -89,11 +101,12 @@ function Topbar({ onMenuClick }) {
       <div className="hidden md:flex flex-1 max-w-sm lg:max-w-md xl:max-w-lg mx-4">
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={handleSearchChange}
           className="w-full px-4 py-2 rounded-lg text-sm outline-none border border-white/60 bg-transparent text-white placeholder:text-white/70 focus:ring-2 focus:ring-amber-600"
         />
       </div>
-
       {/* Profile */}
       <div className="relative">
         <button

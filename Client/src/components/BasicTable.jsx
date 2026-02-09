@@ -418,14 +418,14 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                 lg: 'repeat(auto-fill, minmax(250px, 1fr))'
               }, gap: 2
             }}>
-              <TextField label="Fulfield SKU *" name="sku" value={formData.sku} onChange={handleInputChange} fullWidth size="small" required />
+              <TextField label="Variant SKU" name="sku" value={formData.sku} onChange={handleInputChange} fullWidth size="small" required InputLabelProps={{ required: false }} />
               {/* <TextField label="Color *" name="color" value={formData.color} onChange={handleInputChange} fullWidth size="small" required /> */}
               {/* <TextField label="Size *" name="size" value={formData.size} onChange={handleInputChange} fullWidth size="small" required /> */}
               {/* <TextField label="Color Hex" name="colorHex" value={formData.colorHex} onChange={handleInputChange} fullWidth size="small" type="color" InputProps={{ style: { height: '40px' } }} /> */}
               {/* <TextField label="Weight" name="weight" value={formData.weight} onChange={handleInputChange} fullWidth size="small" /> */}
-              <TextField label="Price (GBP) *" name="price" value={formData.price} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} required />
+              <TextField label="Your Selling Price" name="price" value={formData.price} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} required InputLabelProps={{ required: false }} />
               {/* <TextField label="Compare Price" name="comparePrice" value={formData.comparePrice} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} /> */}
-              <TextField label="Base Cost" name="baseCost" value={formData.baseCost} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} />
+              <TextField label="Your Cost Price" name="baseCost" value={formData.baseCost} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} InputLabelProps={{ required: false }} />
               <FormControl fullWidth size="small">
                 <InputLabel>Available</InputLabel>
                 <Select name="available" value={formData.available} onChange={handleInputChange} label="Available">
@@ -436,7 +436,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                 <Checkbox name="addToCampaigns" checked={formData.addToCampaigns} onChange={handleInputChange} />
                 <Typography>Add to Campaigns</Typography>
               </Box> */}
-              <TextField label="TIB Variant ID" value="Auto-generated on save" fullWidth size="small" disabled InputProps={{ readOnly: true }} helperText="Auto-generated unique ID" />
+              <TextField label="Variant ID" value="Auto-generated on save" fullWidth size="small" disabled InputProps={{ readOnly: true }} helperText="Auto-generated unique ID" />
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
               <Button variant="outlined" onClick={handleCancelForm}>Cancel</Button>
@@ -526,9 +526,9 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                   <TableCell>Size</TableCell>
                   <TableCell>Color Hex</TableCell>
                   <TableCell>Weight</TableCell> */}
-                  <TableCell>Price(GBP)</TableCell>
+                  <TableCell>Your Selling Price</TableCell>
                   {/* <TableCell>Compare Price</TableCell> */}
-                  <TableCell>Base Cost</TableCell>
+                  <TableCell>Your Cost Price</TableCell>
                   <TableCell>Available</TableCell>
                   <TableCell>Add to Campaigns</TableCell>
                   <TableCell>Create at</TableCell>
@@ -641,12 +641,12 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         <DialogTitle>Add Custom Print Area</DialogTitle>
         <DialogContent>
           <div className='space-y-4 mt-2'>
-            <TextField fullWidth label='TIB' value={printAreaData.tib || 'Will be auto-generated'} variant='outlined' size='small' InputProps={{ readOnly: true }} helperText="Auto-generated unique identifier" />
-            <TextField fullWidth label='Fulfill Key *' name='key' value={printAreaData.key} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Fulfill Key (e.g., Front, Back)' />
-            <TextField fullWidth label='Display Name *' name='displayName' value={printAreaData.displayName} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Display Name' />
+            <TextField fullWidth label='Variant ID' value={printAreaData.tib || 'Will be auto-generated'} variant='outlined' size='small' InputProps={{ readOnly: true }} helperText="Auto-generated unique identifier" InputLabelProps={{ required: false }} />
+            <TextField fullWidth label='Fulfill Key' name='key' value={printAreaData.key} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Fulfill Key (e.g., Front, Back)' InputLabelProps={{ required: false }} />
+            <TextField fullWidth label='Display Name' name='displayName' value={printAreaData.displayName} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Display Name' InputLabelProps={{ required: false }} />
             <div className='grid grid-cols-2 gap-4'>
-              <TextField label='Width (px) *' name='width' value={printAreaData.width} onChange={handlePrintAreaChange} variant='outlined' size='small' type='number' required placeholder='e.g., 1314' />
-              <TextField label='Height (px) *' name='height' value={printAreaData.height} onChange={handlePrintAreaChange} variant='outlined' size='small' type='number' required placeholder='e.g., 1314' />
+              <TextField label='Width (px)' name='width' value={printAreaData.width} onChange={handlePrintAreaChange} variant='outlined' size='small' type='number' required placeholder='e.g., 1314' />
+              <TextField label='Height (px)' name='height' value={printAreaData.height} onChange={handlePrintAreaChange} variant='outlined' size='small' type='number' required placeholder='e.g., 1314' />
             </div>
           </div>
         </DialogContent>
