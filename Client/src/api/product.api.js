@@ -39,31 +39,28 @@ const createMockup = async (productId, payload) => {
     }
 }
 
-
 const getProductById = async (productId) => {
     try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${BASE_URL}/api/get-product`, {
+        const res = await fetch(`${BASE_URL}/api/get-product-By-Id/${productId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         });
+
         const data = await res.json();
 
         if (data.success) {
-            // product find by id
-            const product = data.data.find(
-                (item) => item._id === productId
-            );
-
-            return product || null;
+            // The API already returns a single product object
+            return data.data || null;
         }
+
+        return null;
     } catch (error) {
-        console.log(error, "<<<< getProductById error");
+        console.error(error, "<<<< getProductById error");
         return null;
     }
 };
-
 
 const deleteProductById = async (productId) => {
     const token = localStorage.getItem("token");
@@ -109,7 +106,7 @@ export const getProductsByCategory = async (categoryId) => {
         return [];
     }
 };
- 
+
 const updateProduct = async (productId, payload) => {
     try {
         const token = localStorage.getItem("token");

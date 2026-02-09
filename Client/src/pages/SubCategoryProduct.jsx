@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getProductsByCategory, deleteProductById } from "../api/product.api";
-import { Link, useParams } from "react-router-dom";
+import { Link, useOutletContext, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 /** Small placeholder when image is missing */
@@ -14,14 +14,15 @@ const PlaceholderImage = ({ className = "" }) => (
 
 const SubCategoryProduct = () => {
   const { subCategoryId } = useParams();
+  const { searchQuery } = useOutletContext(); // <-- get search query
 
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]); // <-- added
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-
-  console.log(products, " <<<< product")
+  console.log(products, " <<<< product");
 
   useEffect(() => {
     if (!subCategoryId) return;
@@ -31,26 +32,19 @@ const SubCategoryProduct = () => {
     setError("");
     setProducts([]);
 
-
-
-
     const fetchProducts = async () => {
       try {
         const result = await getProductsByCategory(subCategoryId);
-        // result might be { success: true, data: [...] } if your API returns full response
         const arrRaw = Array.isArray(result) ? result : Array.isArray(result?.data) ? result.data : [];
 
-        // Normalize each product: create lowercase `printareas` and `variants`
         const normalized = arrRaw.map((r) => {
           return {
             ...r,
-            // normalize print areas (handle different casing coming from backend)
             printareas: Array.isArray(r.Printareas)
               ? r.Printareas
               : Array.isArray(r.printareas)
                 ? r.printareas
                 : [],
-            // normalize variants (handle different casing coming from backend)
             variants: Array.isArray(r.Variants)
               ? r.Variants
               : Array.isArray(r.variants)
@@ -78,6 +72,24 @@ const SubCategoryProduct = () => {
     };
   }, [subCategoryId]);
 
+  // --- FILTER PRODUCTS BASED ON SEARCH ---
+  useEffect(() => {
+    if (!searchQuery) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    const filtered = products.filter((p) => {
+      const title = p.productTitle?.toLowerCase() || "";
+      const internal = p.internalName?.toLowerCase() || "";
+      const skuMatch = (p.variants || []).some(v => v.sku?.toLowerCase().includes(query));
+      return title.includes(query) || internal.includes(query) || skuMatch;
+    });
+
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
 
   const handleDeleteProduct = async (productId) => {
     if (!productId) return;
@@ -108,14 +120,13 @@ const SubCategoryProduct = () => {
         <div className="text-center py-12 text-gray-500">Loading products…</div>
       ) : error ? (
         <div className="text-center py-12 text-red-500">{error}</div>
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No products found.</div>
       ) : null}
 
       {/* GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {products.map((p) => {
-          // NOW we rely on normalized fields:
+        {filteredProducts.map((p) => {
           const variantsArr = Array.isArray(p?.variants) ? p?.variants : [];
           const printareasArr = Array.isArray(p?.printareas) ? p?.printareas : [];
           const firstVariant = variantsArr[0] || null;
@@ -126,8 +137,7 @@ const SubCategoryProduct = () => {
               onClick={() => setSelected(p)}
               className="bg-white rounded-2xl shadow hover:shadow-xl transition cursor-pointer overflow-hidden"
             >
-              {/* CATEGORY THUMB */}
-              <div className="h-40 bg-gray-200">
+              <div className="h-80 bg-gray-200">
                 {p?.category && p?.category?.thumbnail && p?.category?.thumbnail?.url ? (
                   <img
                     src={p?.mockupImage || p?.category?.thumbnail.url}
@@ -148,7 +158,6 @@ const SubCategoryProduct = () => {
 
                 <p className="text-sm text-gray-600 line-clamp-2">{p?.description || "No description"}</p>
 
-                {/* TAGS */}
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
                     {p?.category?.name || "—"}
@@ -159,7 +168,6 @@ const SubCategoryProduct = () => {
                   </span>
                 </div>
 
-                {/* VARIANT PREVIEW */}
                 {firstVariant ? (
                   <div className="flex items-center gap-2 mt-3">
                     <span className="text-lg font-bold text-indigo-600">${firstVariant?.basePrice}</span>
@@ -186,7 +194,6 @@ const SubCategoryProduct = () => {
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-2">
                   <span>{variantsArr?.length} Variant</span>
-                  {/* <span>ID #{p.fulfilmentCatalogID || "—"}</span> */}
                   <span>base Price #{firstVariant?.basePrice || "—"}</span>
                 </div>
               </div>
@@ -204,7 +211,6 @@ const SubCategoryProduct = () => {
             </button>
             {console.log(selected, " <<<<< selected")}
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* LEFT */}
               <div className="lg:w-1/2">
                 <div className="rounded-xl w-full h-64 overflow-hidden bg-gray-100">
                   {selected.category?.thumbnail?.url ? (
@@ -222,7 +228,6 @@ const SubCategoryProduct = () => {
                 </div>
               </div>
 
-              {/* RIGHT */}
               <div className="lg:w-1/2">
                 <h2 className="text-2xl font-bold">{selected.productTitle || "Untitled"}</h2>
 
@@ -230,7 +235,6 @@ const SubCategoryProduct = () => {
 
                 <p className="mt-4 text-gray-700">{selected.description || "No description"}</p>
 
-                {/* PRINT AREAS */}
                 <div className="mt-6">
                   <h3 className="font-semibold mb-2">Print Areas</h3>
                   <div className="space-y-2">
@@ -247,7 +251,6 @@ const SubCategoryProduct = () => {
                   </div>
                 </div>
 
-                {/* VARIANTS */}
                 <div className="mt-6">
                   <h3 className="font-semibold mb-2">Variants</h3>
 
@@ -261,10 +264,8 @@ const SubCategoryProduct = () => {
                           <span className="font-bold text-indigo-600">${v.basePrice ?? "—"}</span>
                         </div>
 
-
                         <div className="flex justify-baseline items-center gap-2 mt-3">
                           <div>
-
                             <span className={`ml-auto text-xs px-2 py-1 rounded ${v.available === "available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                               {v.available || "unknown"}
                             </span>

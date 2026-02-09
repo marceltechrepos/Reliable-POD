@@ -19,6 +19,7 @@ import {
   updateVariant,
   removeVariant,
   createMockup,
+  getProductsById,
 } from "../Controllers/product.controller.js";
 import {
   isLogin, isAdmin,
@@ -31,6 +32,12 @@ productRouter.get(
   "/get-product",
   isLogin,
   getProducts
+);
+
+productRouter.get(
+  "/get-product-By-Id/:id",
+  isLogin,
+  getProductsById
 );
 
 productRouter.get(

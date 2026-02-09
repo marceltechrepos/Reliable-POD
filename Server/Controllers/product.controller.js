@@ -1,5 +1,7 @@
 import productModel from "../Models/product.model.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
+import Category from "../Models/Categories.Model.js";
+
 import mongoose from "mongoose";
 
 
@@ -12,6 +14,35 @@ export const getProducts = async (req, res) => {
   }
 };
 
+
+export const getProductsById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch product
+    const product = await productModel.findById(id).lean();
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    // Fetch category and its parent
+    const category = await Category.findById(product.category)
+      .populate({ path: "parent", select: "name slug" }) // populate parent category
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...product,
+        category: category || null,
+      },
+      status: 200,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const getProductsByCategoryId = async (req, res) => {
   try {
