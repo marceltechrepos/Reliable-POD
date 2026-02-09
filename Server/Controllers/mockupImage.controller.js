@@ -35,7 +35,7 @@ export const createMockupImage = async (req, res) => {
           message: validationItem.errorMessage,
         });
       }
-    }
+      }
     const uploadResult = await cloudinary.uploader.upload(image.path);
 
     const newMockupImage = new mockupImageModel({
