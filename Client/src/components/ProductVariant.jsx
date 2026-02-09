@@ -295,7 +295,7 @@ function ProductVariant() {
               {/* TIB Field (Read-only, auto-generated) */}
               <TextField
                 fullWidth
-                label='TIB'
+                label='Variant ID'
                 value={printAreaData.tib || 'Will be auto-generated'}
                 variant='outlined'
                 size='small'
@@ -304,12 +304,13 @@ function ProductVariant() {
                 }}
                 helperText="Auto-generated unique identifier"
                 margin='dense'
+                InputLabelProps={{ required: false }}
               />
 
               {/* Fulfill Key Field */}
               <TextField
                 fullWidth
-                label='Fulfill Key *'
+                label='Fulfill Key'
                 name='key'
                 value={printAreaData.key}
                 onChange={handlePrintAreaChange}
@@ -318,12 +319,13 @@ function ProductVariant() {
                 required
                 placeholder='Enter Fulfill Key (e.g., Front, Back)'
                 margin='dense'
+                InputLabelProps={{ required: false }}
               />
 
               {/* Display Name Field */}
               <TextField
                 fullWidth
-                label='Display Name *'
+                label='Display Name'
                 name='displayName'
                 value={printAreaData.displayName}
                 onChange={handlePrintAreaChange}
@@ -332,12 +334,13 @@ function ProductVariant() {
                 required
                 placeholder='Enter Display Name'
                 margin='dense'
+                InputLabelProps={{ required: false }}
               />
 
               {/* Width and Height Fields */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <TextField
-                  label='Width (px) *'
+                  label='Width (px)'
                   name='width'
                   value={printAreaData.width}
                   onChange={handlePrintAreaChange}
@@ -348,9 +351,10 @@ function ProductVariant() {
                   placeholder='e.g., 1314'
                   margin='dense'
                   fullWidth
+                  InputLabelProps={{ required: false }}
                 />
                 <TextField
-                  label='Height (px) *'
+                  label='Height (px)'
                   name='height'
                   value={printAreaData.height}
                   onChange={handlePrintAreaChange}
@@ -361,6 +365,7 @@ function ProductVariant() {
                   placeholder='e.g., 1314'
                   margin='dense'
                   fullWidth
+                  InputLabelProps={{ required: false }}
                 />
               </div>
             </div>

@@ -87,26 +87,31 @@ function ProductBase() {
       // POPULATE FORM FIELDS
       setProductTitle(data?.productTitle || '');
       setInternalName(data?.internalName || '');
-      setProvider(data?.fulfilmentProvider?._id || '');
+      setProvider(data?.fulfilmentProvider || '');
       setFulfilmentCatalogID(data?.fulfilmentCatalogID || '');
       setDescription(data?.description || '');
       setPreview(data?.thumbnail.url || "")
 
-      if (data?.category) {
+      setEditProductById(data);
 
-        setSubCategory(data.category._id);
-
+      // Category - handle parent and child
+      const category = data?.category;
+      if (category) {
+        if (category.parent) {
+          setParentCategory(category.parent._id); // parent dropdown
+          setSubCategory(category._id);           // child dropdown
+        } else {
+          setParentCategory(category._id);
+          setSubCategory('');
+        }
       }
 
-      // Set thumbnail preview if exists
-      if (data?.thumbnail) {
-        setPreview(data.thumbnail.url);
-      }
 
     } catch (error) {
       console.log(error);
     }
   };
+
 
   // Thumbnail Update Handler - For Modal
   const updateThumbnailHandler = async () => {
@@ -272,6 +277,21 @@ function ProductBase() {
     };
   }, []); // Empty dependency array means it runs on every render
 
+
+  useEffect(() => {
+    if (editProductById && categoriesLoaded) {
+      const cat = editProductById.category;
+      if (cat) {
+        if (cat.parent) {
+          setParentCategory(cat.parent._id); // Home Decor
+          setSubCategory(cat._id);           // Tile & Easel
+        } else {
+          setParentCategory(cat._id);
+          setSubCategory('');
+        }
+      }
+    }
+  }, [editProductById, categoriesLoaded]);
 
   const [open, setOpen] = useState(false);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
@@ -448,7 +468,7 @@ function ProductBase() {
     const fetchCategories = async () => {
       const data = await getAllCategory();
       if (data && data.length > 0) {
-        const formattedCategories = data.map(c => ({ label: c.slug, value: c.name, thumbnail: c.thumbnail, name: c.name, id: c._id }));
+        const formattedCategories = data.map(c => ({ label: c.slug, value: c.id, thumbnail: c.thumbnail, name: c.name, id: c._id }));
         setCategories(formattedCategories);
         console.log(formattedCategories, " <<<< formattedCategories");
       }
@@ -553,8 +573,8 @@ function ProductBase() {
               <TextField
                 style={{ marginTop: '12px' }}
                 className='mt-3'
-                type="number"
-                label="Fulfillment catalog ID"
+                type="text"
+                label="Product SKU"
                 fullWidth
                 size="small"
                 sx={{ mb: 2 }}
