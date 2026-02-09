@@ -5,15 +5,19 @@ import { useState } from "react";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState("");
   return (
     <>
-      <Topbar onMenuClick={() => setSidebarOpen(true)} />
+      <Topbar
+        onMenuClick={() => setSidebarOpen(true)}
+        onSearch={(value) => setSearchQuery(value)} // <-- pass callback
+      />
 
       <div className="flex min-h-screen bg-slate-100">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+
         />
 
         <main
@@ -25,7 +29,7 @@ const AdminLayout = () => {
             mt-12
           "
         >
-          <Outlet />
+          <Outlet context={{ searchQuery }} />
         </main>
       </div>
     </>
