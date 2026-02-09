@@ -106,7 +106,7 @@ const SubCategoryPage = () => {
                   <img
                     src={sub.thumbnail}
                     alt={sub.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-400">
@@ -117,9 +117,6 @@ const SubCategoryPage = () => {
 
               <div className="p-4">
                 <h3 className="font-semibold text-gray-800">{sub.title}</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {sub.description}
-                </p>
               </div>
             </div>
           </Link>
