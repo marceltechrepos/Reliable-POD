@@ -1,194 +1,89 @@
-// import { Card, CardContent, Box, Typography, Chip, Button } from "@mui/material";
+import React from 'react';
 
-// export default function StoreCard({ store }) {
-//   return (
-// <Card
-//   elevation={0}
-//   sx={{
-//     borderRadius: 3,
-//     p: 2,
-//     border: "1px solid #E3E7EF",
-//     background: "#fff",
-//     cursor: "pointer",
-//     transition: "0.25s",
-//     width: "100%",
-//     height: "100%",
-//     display: "flex",
-//     flexDirection: "column",
-//     justifyContent: "space-between",
-//     "&:hover": {
-//       boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-//       transform: "translateY(-2px)",
-//     },
-//   }}
-// >
-//   <CardContent sx={{ p: 0, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-//     <Box>
-//       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-//         <Typography fontWeight={700} fontSize={16}>{store.name}</Typography>
-//         <Chip label={store.type} size="small" sx={{ bgcolor: "#EEF2FF", color: "#4F46E5", fontWeight: 600 }} />
-//       </Box>
-
-//       <Typography fontSize={13} color="text.secondary" sx={{ mt: 0.5 }}>
-//         Status: <span style={{ color: "#22C55E" }}>Connected</span>
-//       </Typography>
-
-//       <Box sx={{ mt: 1.5, fontSize: 13, color: "text.secondary" }}>
-//         Products: {store.products || 0}<br />
-//         Orders Synced: {store.orders || 0}<br />
-//         Last Sync: {store.lastSync || "N/A"}
-//       </Box>
-//     </Box>
-
-//     <Button variant="text" sx={{ mt: 2, fontSize: 13, fontWeight: 600, textTransform: "none" }}>
-//       Manage Store →
-//     </Button>
-//   </CardContent>
-// </Card>
-
-//   );
-// }
-
-import { Card, CardContent, Box, Typography, Chip, Button, Avatar } from "@mui/material";
-import {
-  Store as StoreIcon,
-  ShoppingBag,
-  Receipt
-} from "@mui/icons-material";
-
-const getStoreIcon = (type) => {
+const getStoreMeta = (type) => {
   switch (type) {
-    // case 'Shopify': return <Shopify />;
-    case 'Etsy': return <span style={{ fontSize: '20px' }}>E</span>;
-    case 'WooCommerce': return <span style={{ fontSize: '20px' }}>WC</span>;
-    case 'Anywhere POD': return <ShoppingBag />;
-    case 'Manual Order': return <Receipt />;
-    default: return <StoreIcon />;
-  }
-};
-
-const getStoreColor = (type) => {
-  switch (type) {
-    case 'Shopify': return { bg: '#96BF48', color: '#fff' };
-    case 'Etsy': return { bg: '#F16521', color: '#fff' };
-    case 'WooCommerce': return { bg: '#96588A', color: '#fff' };
-    case 'Anywhere POD': return { bg: '#3B82F6', color: '#fff' };
-    case 'Manual Order': return { bg: '#6B7280', color: '#fff' };
-    default: return { bg: '#4F46E5', color: '#fff' };
+    case 'Shopify': return { bg: 'from-[#96BF48] to-[#79a336]', color: '#fff', icon: 'S' };
+    case 'Etsy': return { bg: 'from-[#F16521] to-[#d35400]', color: '#fff', icon: 'E' };
+    case 'WooCommerce': return { bg: 'from-[#96588A] to-[#7a426e]', color: '#fff', icon: 'WC' };
+    case 'Anywhere POD': return { bg: 'from-[#3B82F6] to-[#1d4ed8]', color: '#fff', icon: 'A' };
+    case 'Manual Order': return { bg: 'from-[#6B7280] to-[#374151]', color: '#fff', icon: 'M' };
+    default: return { bg: 'from-[#f05a28] to-[#d04a1e]', color: '#fff', icon: 'ST' };
   }
 };
 
 export default function StoreCard({ store, onClick }) {
-  const iconColor = getStoreColor(store.type);
+  const meta = getStoreMeta(store.type);
 
   return (
-    <Card
-      elevation={0}
+    <div 
       onClick={onClick}
-      sx={{
-        borderRadius: 3,
-        p: 2,
-        border: "1px solid #E3E7EF",
-        background: "#fff",
-        cursor: "pointer",
-        transition: "0.25s",
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        "&:hover": {
-          boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-          transform: "translateY(-2px)",
-          borderColor: iconColor.bg,
-        },
-      }}
+      className="group relative bg-white rounded-[40px] p-1 border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-700 cursor-pointer overflow-hidden flex flex-col h-full min-h-[340px]"
     >
-      <CardContent sx={{ p: 0, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: iconColor.bg,
-                color: iconColor.color,
-                width: 50,
-                height: 50,
-                fontSize: '1.5rem'
-              }}
-            >
-              {getStoreIcon(store.type)}
-            </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Typography fontWeight={700} fontSize={18}>{store.name}</Typography>
-              <Chip
-                label={store.type}
-                size="small"
-                sx={{
-                  bgcolor: `${iconColor.bg}15`,
-                  color: iconColor.bg,
-                  fontWeight: 600,
-                  mt: 0.5
-                }}
-              />
-            </Box>
-          </Box>
+      {/* 🔮 Glass Inner Container */}
+      <div className="relative z-10 bg-white rounded-[38px] p-7 h-full flex flex-col">
+        
+        {/* 🚀 Header: Floating Icon & Stats */}
+        <div className="flex justify-between items-start mb-8">
+          <div className={`w-16 h-16 bg-gradient-to-br ${meta.bg} rounded-[22px] flex items-center justify-center text-white font-[1000] text-2xl shadow-2xl shadow-inner transform group-hover:-rotate-12 group-hover:scale-110 transition-all duration-500`}>
+            {meta.icon}
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 justify-end">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-mono">Live Sync</span>
+            </div>
+            <p className="text-[11px] font-bold text-gray-300 mt-1 font-mono italic">{store.lastSync || "Just now"}</p>
+          </div>
+        </div>
 
-          <Typography component="div" fontSize={13} color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <Box sx={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              bgcolor: '#22C55E',
-              mr: 1
-            }} />
-            Status: <span style={{ color: "#22C55E", marginLeft: 4 }}>Connected</span>
-          </Typography>
+        {/* 📝 Name & Type */}
+        <div className="mb-8">
+          <h3 className="text-2xl font-[1000] text-gray-900 tracking-tighter leading-none mb-2 group-hover:translate-x-1 transition-transform">
+            {store.name}
+          </h3>
+          <div className="flex gap-2">
+             <span className="px-3 py-1 bg-gray-50 rounded-full text-[9px] font-black text-gray-500 uppercase tracking-widest border border-gray-100">
+              ID: #{store.id.toString().padStart(3, '0')}
+            </span>
+             <span className={`px-3 py-1 bg-gradient-to-r ${meta.bg} bg-opacity-10 text-white rounded-full text-[9px] font-black uppercase tracking-widest`}>
+              {store.type}
+            </span>
+          </div>
+        </div>
 
-          <Box sx={{
-            mt: 2,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: '#F8FAFC',
-            border: '1px solid #F1F5F9'
-          }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-              <Box>
-                <Typography fontSize={11} color="text.secondary">Products</Typography>
-                <Typography fontWeight={600}>{store.products || 0}</Typography>
-              </Box>
-              <Box>
-                <Typography fontSize={11} color="text.secondary">Orders</Typography>
-                <Typography fontWeight={600}>{store.orders || 0}</Typography>
-              </Box>
-              <Box>
-                <Typography fontSize={11} color="text.secondary">Revenue</Typography>
-                <Typography fontWeight={600}>${store.revenue || '0'}</Typography>
-              </Box>
-              <Box>
-                <Typography fontSize={11} color="text.secondary">Last Sync</Typography>
-                <Typography fontSize={12}>{store.lastSync || "N/A"}</Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
+        {/* 📊 Stats Section (The Apple Look) */}
+        <div className="grid grid-cols-3 gap-2 mt-auto">
+          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
+            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Items</p>
+            <p className="text-sm font-[1000] text-gray-900 font-mono tracking-tighter">{store.products || '0'}</p>
+          </div>
+          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
+            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Orders</p>
+            <p className="text-sm font-[1000] text-gray-900 font-mono tracking-tighter">{store.orders || '0'}</p>
+          </div>
+          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
+            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Sales</p>
+            <p className="text-sm font-[1000] text-[#f05a28] font-mono tracking-tighter">${store.revenue || '0'}</p>
+          </div>
+        </div>
 
-        <Button
-          variant="text"
-          sx={{
-            mt: 2,
-            fontSize: 13,
-            fontWeight: 600,
-            textTransform: "none",
-            color: iconColor.bg,
-            alignSelf: 'flex-start',
-            '&:hover': {
-              bgcolor: `${iconColor.bg}10`
-            }
-          }}
-        >
-          Manage Store →
-        </Button>
-      </CardContent>
-    </Card>
+        {/* 🖱️ Interaction Line */}
+        <div className="mt-6 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#f05a28]">Deep Analytics</span>
+          <div className="h-[2px] flex-1 bg-gradient-to-r from-[#f05a28] to-transparent rounded-full" />
+        </div>
+      </div>
+
+      {/* 🎨 Creative Watermark Background */}
+      <div className="absolute -right-4 -bottom-4 text-[120px] font-black text-gray-50/50 leading-none select-none italic tracking-tighter group-hover:text-gray-100 transition-colors duration-700">
+        {meta.icon}
+      </div>
+
+      {/* Background Gradient Blur */}
+      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${meta.bg} opacity-[0.03] blur-3xl group-hover:opacity-[0.1] transition-opacity`} />
+    </div>
   );
 }
