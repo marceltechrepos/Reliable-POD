@@ -305,16 +305,8 @@ function ProductBase() {
 
   /* ================== MOCKUP STATES ================== */
   const [openMockupModal, setOpenMockupModal] = useState(false);
-  const [selectedMockup, setSelectedMockup] = useState(null);
 
-  const [mockupCategories, setMockupCategories] = useState(['All', 'TIB']);
-  const [selectedMockupCategory, setSelectedMockupCategory] = useState('All');
-  const [showAddMockupCategory, setShowAddMockupCategory] = useState(false);
-
-  const [mockupImages, setMockupImages] = useState([
-    { id: 1, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Front', category: 'TIB' },
-    { id: 2, url: 'https://i.pinimg.com/736x/37/b8/da/37b8da1abf03a7defd4dfc76d9f8d536.jpg', title: 'T-Shirt Back', category: 'TIB' },
-  ]);
+  const [mockupImages, setMockupImages] = useState([]);
 
   useEffect(() => {
     const fetchDropdown = async () => {
