@@ -13,6 +13,8 @@ import Stores from "./pages/Stores.jsx";
 import Settings from "./pages/Settings.jsx";
 import ContactUs from "./pages/ContactUs.jsx";
 import StoreDetail from "./pages/StoreDetail.jsx";
+import Subcatalogue from "./pages/Subcatalogue.jsx";
+import SingleProduct from "./pages/Singleproduct.jsx";
 
 
 function App() {
@@ -34,6 +36,8 @@ function App() {
           <Route path="stores/:id" element={<StoreDetail />} />
           <Route path="settings" element={<Settings />} />
           <Route path="contact" element={<ContactUs />} />
+          <Route path="sub-catalogue" element={<Subcatalogue />} />
+          <Route path="/user/detail-product/" element={<SingleProduct />} />
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}
