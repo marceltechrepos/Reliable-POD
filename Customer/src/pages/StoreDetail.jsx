@@ -150,6 +150,12 @@ export default function StoreDetail() {
                   color="success" 
                   variant="outlined"
                 />
+                 <Chip 
+                  label="12345678" 
+                  size="small" 
+                  color="success" 
+                  variant="outlined"
+                />
               </Box>
             </Box>
           </Box>
