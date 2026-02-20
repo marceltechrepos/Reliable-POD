@@ -8,6 +8,7 @@ import productRouter from "./Routes/product.route.js";
 import CategoryRouter from "./Routes/Category.Route.js";
 import layerRoute from "./Routes/Printarea.Route.js";
 import ThumbnailRoute from "./Routes/Thumbnail.Route.js";
+import StoreRoute from "./Routes/Store.Route.js";
 
 const app = express();
 
@@ -21,7 +22,7 @@ app.use(express.static("public"));
 ConnectDB();
 app.get("/", (req, res) => res.send("Hello World!"));
 
-const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter, layerRoute, ThumbnailRoute];
+const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter, layerRoute, ThumbnailRoute, StoreRoute];
 routes.forEach((route) => app.use("/api", route));
 
 app.listen(process.env.PORT, () => {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, 
-  Snackbar, Alert, Switch 
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Snackbar, Alert, Switch
 } from "@mui/material";
 
 export default function Settings() {
@@ -19,6 +19,7 @@ export default function Settings() {
     region: "Sindh",
     country: "Pakistan",
     postcode: "74000",
+    taxNumber: "NTN-1234567",
     vatNumber: "",
     reference: "",
     pref_imageLibraryOnUpload: true,
@@ -93,7 +94,7 @@ export default function Settings() {
             <p className="hidden md:block text-[10px] text-gray-400 font-black uppercase tracking-widest">Profile Configuration</p>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={handleDiscard}
               className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${dirty ? 'text-gray-500 hover:bg-gray-100' : 'text-gray-200 pointer-events-none'}`}
             >
@@ -118,7 +119,7 @@ export default function Settings() {
               <InputField label="Email Address" value={state.userEmail} onChange={(v) => updateState("userEmail", v)} helper="Must be a valid email." />
               <InputField label="Username" value={state.username} onChange={(v) => updateState("username", v)} />
             </div>
-            <button 
+            <button
               onClick={() => setPwdOpen(true)}
               className="mt-2 text-[#f05a28] text-[11px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4 transition-all"
             >
@@ -141,6 +142,7 @@ export default function Settings() {
               <InputField label="Address Line 2" value={state.address2} onChange={(v) => updateState("address2", v)} />
               <InputField label="City" value={state.town} onChange={(v) => updateState("town", v)} />
               <InputField label="Postcode" value={state.postcode} onChange={(v) => updateState("postcode", v)} />
+              <InputField label="Tax Number" value={state.taxNumber} onChange={(v) => updateState("taxNumber", v)} />
             </div>
           </SectionWrapper>
         </div>
@@ -158,15 +160,15 @@ export default function Settings() {
               </div>
             </div>
             <div className="space-y-3">
-               <button className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Export Data</button>
-               <button className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Clear App Cache</button>
+              <button className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Export Data</button>
+              {/* <button className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Clear App Cache</button> */}
             </div>
           </div>
 
           <div className="bg-red-50 border border-red-100 rounded-[28px] p-6">
             <h4 className="text-red-600 text-[11px] font-black uppercase tracking-[0.15em] mb-2">Danger Zone</h4>
             <p className="text-[12px] text-red-800/70 mb-5 font-medium leading-relaxed italic">Account termination is permanent. All your data will be wiped instantly.</p>
-            <button 
+            <button
               onClick={() => setCloseOpen(true)}
               className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-red-200"
             >
@@ -177,9 +179,9 @@ export default function Settings() {
       </div>
 
       {/* --- Password Dialog --- */}
-      <Dialog 
-        open={pwdOpen} 
-        onClose={() => setPwdOpen(false)} 
+      <Dialog
+        open={pwdOpen}
+        onClose={() => setPwdOpen(false)}
         PaperProps={{ sx: { borderRadius: '28px', maxWidth: '420px', width: '100%', p: 2 } }}
       >
         <DialogTitle className="font-black text-center text-xl tracking-tight">Update Password</DialogTitle>
@@ -191,8 +193,8 @@ export default function Settings() {
         </DialogContent>
         <DialogActions className="p-6 justify-between">
           <button onClick={() => setPwdOpen(false)} className="text-[11px] font-black uppercase tracking-widest text-gray-400 px-4">Cancel</button>
-          <button 
-            onClick={() => { setPwdOpen(false); setSnack({ open: true, message: "Password updated!", severity: "success" }); }} 
+          <button
+            onClick={() => { setPwdOpen(false); setSnack({ open: true, message: "Password updated!", severity: "success" }); }}
             className="px-8 py-3 bg-black text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-[#f05a28] transition-all"
           >
             Update Security
@@ -212,7 +214,7 @@ export default function Settings() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack({...snack, open: false})}>
+      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack({ ...snack, open: false })}>
         <Alert severity={snack.severity} variant="filled" sx={{ borderRadius: '16px', fontWeight: 'bold', px: 3 }}>{snack.message}</Alert>
       </Snackbar>
     </div>

@@ -23,7 +23,7 @@ const UserSchema = new Schema({
     public_id: { type: String, default: "" },
     alt: { type: String, default: "Profile picture" },
   },
-
+  
   NotificationEmail: { type: Boolean, default: false },
   UpdatedEmail: { type: Boolean, default: false },
   PendingOrderEmail: { type: Boolean, default: false },
