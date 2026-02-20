@@ -1,13 +1,19 @@
-import React from 'react';
+import React from "react";
 
 const getStoreMeta = (type) => {
   switch (type) {
-    case 'Shopify': return { bg: 'from-[#96BF48] to-[#79a336]', color: '#fff', icon: 'S' };
-    case 'Etsy': return { bg: 'from-[#F16521] to-[#d35400]', color: '#fff', icon: 'E' };
-    case 'WooCommerce': return { bg: 'from-[#96588A] to-[#7a426e]', color: '#fff', icon: 'WC' };
-    case 'Anywhere POD': return { bg: 'from-[#3B82F6] to-[#1d4ed8]', color: '#fff', icon: 'A' };
-    case 'Manual Order': return { bg: 'from-[#6B7280] to-[#374151]', color: '#fff', icon: 'M' };
-    default: return { bg: 'from-[#f05a28] to-[#d04a1e]', color: '#fff', icon: 'ST' };
+    case "Shopify":
+      return { bg: "from-[#95BF47] to-[#5E8E3E]", icon: "S" };
+    case "Etsy":
+      return { bg: "from-[#F16521] to-[#C94E0E]", icon: "E" };
+    case "WooCommerce":
+      return { bg: "from-[#96588A] to-[#6E3E66]", icon: "WC" };
+    case "Anywhere POD":
+      return { bg: "from-[#3B82F6] to-[#1D4ED8]", icon: "A" };
+    case "Manual Order":
+      return { bg: "from-[#6B7280] to-[#374151]", icon: "M" };
+    default:
+      return { bg: "from-[#f05a28] to-[#d04a1e]", icon: "ST" };
   }
 };
 
@@ -15,75 +21,111 @@ export default function StoreCard({ store, onClick }) {
   const meta = getStoreMeta(store.type);
 
   return (
-    <div 
+    <div
       onClick={onClick}
-      className="group relative bg-white rounded-[40px] p-1 border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-700 cursor-pointer overflow-hidden flex flex-col h-full min-h-[340px]"
+      className="group relative rounded-3xl bg-white border border-gray-100 p-[1px]
+      shadow-[0_8px_30px_rgba(0,0,0,0.05)]
+      hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)]
+      transition-all duration-500 cursor-pointer overflow-hidden"
     >
-      {/* 🔮 Glass Inner Container */}
-      <div className="relative z-10 bg-white rounded-[38px] p-7 h-full flex flex-col">
-        
-        {/* 🚀 Header: Floating Icon & Stats */}
-        <div className="flex justify-between items-start mb-8">
-          <div className={`w-16 h-16 bg-gradient-to-br ${meta.bg} rounded-[22px] flex items-center justify-center text-white font-[1000] text-2xl shadow-2xl shadow-inner transform group-hover:-rotate-12 group-hover:scale-110 transition-all duration-500`}>
+      {/* Gradient Hover Border */}
+      <div
+        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-br ${meta.bg}`}
+      />
+
+      {/* Inner */}
+      <div className="relative bg-white rounded-3xl p-6 flex flex-col h-full min-h-[320px]">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-6">
+          <div
+            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.bg}
+            flex items-center justify-center text-white font-bold text-xl
+            shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition`}
+          >
             {meta.icon}
           </div>
+
+          {/* Sync */}
           <div className="text-right">
             <div className="flex items-center gap-2 justify-end">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Live
               </span>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-mono">Live Sync</span>
             </div>
-            <p className="text-[11px] font-bold text-gray-300 mt-1 font-mono italic">{store.lastSync || "Just now"}</p>
+            <p className="text-[11px] text-gray-300 mt-1">
+              {store.lastSync || "Just now"}
+            </p>
           </div>
         </div>
 
-        {/* 📝 Name & Type */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-[1000] text-gray-900 tracking-tighter leading-none mb-2 group-hover:translate-x-1 transition-transform">
+        {/* Store Info */}
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:translate-x-1 transition">
             {store.name}
           </h3>
-          <div className="flex gap-2">
-             <span className="px-3 py-1 bg-gray-50 rounded-full text-[9px] font-black text-gray-500 uppercase tracking-widest border border-gray-100">
-              ID: #{store.id.toString().padStart(3, '0')}
+
+          <div className="flex gap-2 flex-wrap">
+            <span className="text-[10px] px-2 py-1 rounded-full bg-gray-50 border text-gray-500 font-medium">
+              ID #{store.id?.toString().padStart(3, "0")}
             </span>
-             <span className={`px-3 py-1 bg-gradient-to-r ${meta.bg} bg-opacity-10 text-white rounded-full text-[9px] font-black uppercase tracking-widest`}>
+
+            <span
+              className={`text-[10px] px-2 py-1 rounded-full text-white bg-gradient-to-r ${meta.bg}`}
+            >
               {store.type}
             </span>
           </div>
         </div>
 
-        {/* 📊 Stats Section (The Apple Look) */}
-        <div className="grid grid-cols-3 gap-2 mt-auto">
-          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
-            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Items</p>
-            <p className="text-sm font-[1000] text-gray-900 font-mono tracking-tighter">{store.products || '0'}</p>
-          </div>
-          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
-            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Orders</p>
-            <p className="text-sm font-[1000] text-gray-900 font-mono tracking-tighter">{store.orders || '0'}</p>
-          </div>
-          <div className="bg-[#fcfcfc] border border-gray-50 rounded-[20px] p-3 text-center group-hover:bg-white transition-colors">
-            <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Sales</p>
-            <p className="text-sm font-[1000] text-[#f05a28] font-mono tracking-tighter">${store.revenue || '0'}</p>
-          </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mt-auto">
+          <Stat label="Products" value={store.products || 0} />
+          <Stat label="Orders" value={store.orders || 0} />
+          <Stat
+            label="Revenue"
+            value={`$${store.revenue || 0}`}
+            highlight
+          />
         </div>
 
-        {/* 🖱️ Interaction Line */}
-        <div className="mt-6 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#f05a28]">Deep Analytics</span>
-          <div className="h-[2px] flex-1 bg-gradient-to-r from-[#f05a28] to-transparent rounded-full" />
+        {/* Footer */}
+        <div className="mt-5 opacity-0 group-hover:opacity-100 transition flex items-center gap-2">
+          <span className="text-xs font-semibold text-orange-500">
+            View Analytics
+          </span>
+          <div className="flex-1 h-[2px] bg-gradient-to-r from-orange-400 to-transparent rounded-full" />
         </div>
       </div>
 
-      {/* 🎨 Creative Watermark Background */}
-      <div className="absolute -right-4 -bottom-4 text-[120px] font-black text-gray-50/50 leading-none select-none italic tracking-tighter group-hover:text-gray-100 transition-colors duration-700">
-        {meta.icon}
-      </div>
+      {/* Background Glow */}
+      <div
+        className={`absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br ${meta.bg}
+        opacity-10 blur-3xl group-hover:opacity-20 transition`}
+      />
+    </div>
+  );
+}
 
-      {/* Background Gradient Blur */}
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${meta.bg} opacity-[0.03] blur-3xl group-hover:opacity-[0.1] transition-opacity`} />
+function Stat({ label, value, highlight }) {
+  return (
+    <div
+      className={`rounded-2xl p-3 text-center border transition
+      ${highlight
+          ? "bg-orange-50 border-orange-100"
+          : "bg-gray-50 border-gray-100"}
+      `}
+    >
+      <p className="text-[10px] uppercase text-gray-400 font-semibold mb-1">
+        {label}
+      </p>
+      <p
+        className={`text-sm font-bold ${
+          highlight ? "text-orange-600" : "text-gray-900"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
