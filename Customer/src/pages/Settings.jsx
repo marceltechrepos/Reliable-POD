@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, 
-  Snackbar, Alert, Switch 
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Snackbar, Alert, Switch
 } from "@mui/material";
 
 // ✅ UI Components ko bahar rakha hai taaki focus/render ka masla na ho
@@ -62,6 +62,7 @@ export default function Settings() {
     region: "Sindh",
     country: "Pakistan",
     postcode: "74000",
+    taxNumber: "NTN-1234567",
     vatNumber: "",
     reference: "",
     // Preferences fields
@@ -109,7 +110,7 @@ export default function Settings() {
             <p className="hidden md:block text-[10px] text-gray-400 font-black uppercase tracking-widest">Profile Configuration</p>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={handleDiscard}
               className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${dirty ? 'text-gray-500 hover:bg-gray-100' : 'text-gray-200 pointer-events-none'}`}
             >
