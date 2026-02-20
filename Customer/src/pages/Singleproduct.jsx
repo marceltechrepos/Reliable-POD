@@ -1,165 +1,708 @@
 import React, { useState } from "react";
-import { LayoutGrid, List, ChevronLeft, ShoppingBag, Star, ShieldCheck, Truck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export default function SingleProduct({ product, onBack }) {
+
+
+import image from "../../public/dummy.jpg"
+import { 
+  ShoppingBag, Edit3, Copy, Archive, RefreshCw, Download, Plus, X, Image as ImageIcon, Layout
+} from "lucide-react";
+
+const SingleProduct = ({ product }) => {
+  const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState("M");
-const [mainImage, setMainImage] = useState(product?.image || "/public/dummy.jpg");
+  const [selectedColor, setSelectedColor] = useState("Black");
+  const [selectedTab, setSelectedTab] = useState("PRODUCT");
+  
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isConfiguratorModalOpen, setIsConfiguratorModalOpen] = useState(false);
+  const [selectedConfigColor, setSelectedConfigColor] = useState("Black");
+  const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
+  const [isAddStoreModalOpen, setIsAddStoreModalOpen] = useState(false);
+
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
 
-  // Placeholder data agar product pass na ho
   const p = product || {
-    title: "JACKED JOINTS OVERSIZED TEE",
+    title: "30oz Laser Engraved Insulated Tumbler",
     price: "73.00",
+    sku: "HGDGHDHGC",
+    createdAt: "15/12/25 16:50",
     discount: "15",
-    type: "Premium Apparel",
-    description: "Experience ultimate comfort with our signature oversized fit. Crafted from 100% heavy-weight cotton, this tee features dropped shoulders and a structured silhouette.",
+    type: "Premium Drinkware",
+    description: "Experience Unmatched Durability and Temperature Retention with our 30oz Laser Engraved Polar Camel High Endurance Drinkware. Meticulously engineered for those who demand style and functionality.",
     rating: 4.8,
-    reviews: 124
+    reviews: 124,
+    image: image
   };
 
+  const colors = [
+    { name: "Black", bg: "bg-black" }, { name: "Red", bg: "bg-red-600" }, 
+    { name: "Royal Blue", bg: "bg-blue-700" }, { name: "Coral", bg: "bg-orange-400" },
+    { name: "Teal", bg: "bg-teal-500" }, { name: "White", bg: "bg-white" }
+  ];
+
+  const sizes = ["Small", "Medium", "Large", "XL", "2XL", "3XL"];
+
   return (
-    <div className="min-h-screen bg-[#fcfcfc] py-8 px-4 md:px-8" style={{ fontFamily: fontStack }}>
+    <div className="min-h-screen bg-[#fcfcfc] py-6 px-4 md:px-8" style={{ fontFamily: fontStack }}>
       <div className="max-w-7xl mx-auto">
         
-        {/* Navigation Row */}
-        <button 
-          onClick={onBack}
-          className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-[#f05a28] transition-colors mb-8 group"
-        >
-          {/* <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> */}
-          {/* Back to Catalog */}
-        </button>
+        {/* Top Action Bar - Updated with all options from your images */}
+        <div className="flex flex-wrap gap-2 mb-8 items-center justify-start  pb-6">
+          <button 
+         
+            className="flex items-center gap-2 px-4 py-2 bg-[#f05a28] text-white text-[13px] font-bold rounded hover:opacity-90 transition-all"
+           
+             onClick={() =>  setIsAddStoreModalOpen(true)}
+          >
+            <Plus size={14} /> Add to Store
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+             onClick={() => setIsModalOpen(true)}
+          >
+            <ShoppingBag size={14} /> Add to Cart
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+            
+              onClick={() => setIsEditModalOpen(true)}
+          
+          >
+            <Edit3 size={14} /> Edit Product
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
+            <ImageIcon size={14} /> Edit Design
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+           onClick={() => setIsConfiguratorModalOpen(true)}
+          >
+            <Layout size={14} /> Preview Configurator
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
+            <Download size={14} /> Download CSV
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+           onClick={() => setIsEditModalOpen(true)}
+          >
+            <Copy size={14} /> Duplicate
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+           onClick={() => setIsArchiveModalOpen(true)}
+          >
+            <Archive size={14} /> Archive
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+             onClick={() => setIsRegenerateModalOpen(true)}
+             
+         
+          >
+            <RefreshCw size={14} /> Regenerate Mockups
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          
-          {/* Left Side: Image Gallery (Lg: 7 columns) */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="relative aspect-square bg-white border border-gray-100 rounded-[0px] overflow-hidden shadow-sm">
-              <img 
-                src={mainImage} 
-                alt={p.title} 
-                className="w-full h-full object-cover"
-              />
-              {p.discount && (
-                <div className="absolute top-6 left-6 bg-[#f05a28] text-white px-4 py-1.5 rounded-full z-10 shadow-lg shadow-[#f05a28]/20">
-                  <span className="text-[11px] font-black italic">SAVE {p.discount}%</span>
-                </div>
-              )}
+          {/* Left: Image Gallery */}
+          <div className="lg:col-span-6 space-y-4">
+            <div className="relative aspect-square bg-white border border-gray-100 overflow-hidden shadow-sm">
+              <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
             </div>
-            
-            {/* Thumbnail Row */}
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div 
-                  key={i}
-                  className="aspect-square bg-white border border-gray-100 rounded-[0px] overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all"
-                >
-                  <img src={mainImage}  className="w-full h-full object-cover opacity-50 hover:opacity-100" />
+                <div key={i} className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
+                  <img src={p.image} className="w-full h-full object-cover opacity-60" />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right Side: Product Details (Lg: 5 columns) */}
-          <div className="lg:col-span-5 space-y-8">
+          {/* Right: Details */}
+          <div className="lg:col-span-6 space-y-8">
+            <div className="space-y-2">
+              <p className="text-[13px] font-bold text-gray-400">{p.sku}</p>
+              <h1 className="text-3xl font-black text-gray-900">{p.title}</h1>
+              <p className="text-[11px] text-gray-400">Created at {p.createdAt}</p>
+            </div>
+
+            {/* Color Swatches */}
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="h-[2px] w-6 bg-[#f05a28]" />
-                <span className="text-[11px] font-black text-[#f05a28] uppercase tracking-[0.2em]">
-                  {p.type}
-                </span>
-              </div>
-              
-              <h1 className="text-4xl md:text-[25px] font-[900] text-gray-900 leading-[1.1] tracking-tight">
-                {p.title}
-              </h1>
-
-              <div className="flex items-center gap-4">
-                <div className="flex items-center bg-gray-900 text-white px-3 py-1 rounded-lg gap-1.5">
-                  <Star size={12} fill="white" />
-                  <span className="text-[12px] font-black">{p.rating}</span>
-                </div>
-                <span className="text-[12px] font-bold text-gray-400 border-l pl-4 border-gray-200">
-                  {p.reviews} Verified Reviews
-                </span>
+              <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">Color</label>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((c) => (
+                  <button
+                    key={c.name}
+                    onClick={() => setSelectedColor(c.name)}
+                    className={`px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 border transition-all
+                      ${selectedColor === c.name ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"}`}
+                  >
+                    <div className={`w-3 h-3 rounded-full ${c.bg} border border-gray-200`} />
+                    {c.name}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
-              {/* Price Section */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-[900] text-gray-900 tracking-tighter">
-                  ${p.price}
-                </span>
-                {p.discount && (
-                  <span className="text-xl font-bold text-gray-300 line-through">
-                    ${(parseFloat(p.price) * 1.2).toFixed(2)}
-                  </span>
-                )}
+            {/* Production Costs Info */}
+            <div className="grid grid-cols-2 gap-8 p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase">Production Costs</p>
+                <button className="text-[#00a185] text-[12px] font-bold underline">View our production costs</button>
               </div>
-
-              {/* Size Selection */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">Select Size</label>
-                  <button className="text-[10px] font-black text-[#f05a28] underline">Size Guide</button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {['S', 'M', 'L', 'XL', '2XL'].map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center text-[11px] font-black transition-all border-2
-                        ${selectedSize === size 
-                          ? "bg-gray-900 border-gray-900 text-white shadow-xl scale-110" 
-                          : "bg-gray-50 border-transparent text-gray-500 hover:border-gray-200"}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-3 pt-4">
-                <button className="w-full bg-[#f05a28] text-white py-5 rounded-2xl font-[900] uppercase tracking-widest text-[13px] shadow-lg shadow-[#f05a28]/20 hover:bg-black hover:shadow-gray-200 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-                  <ShoppingBag size={18} />
-                  Add to Cart
-                </button>
-                <button className="w-full bg-white border-2 border-gray-100 text-gray-900 py-5 rounded-2xl font-[900] uppercase tracking-widest text-[13px] hover:bg-gray-50 transition-all">
-                  Buy it now
-                </button>
-              </div>
-
-              {/* Trust Badges */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-green-50 rounded-xl text-green-600">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-gray-500 leading-tight">Secure<br/>Checkout</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600">
-                    <Truck size={18} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-gray-500 leading-tight">Free Express<br/>Shipping</span>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase">Production Location</p>
+                <div className="mt-1">
+                  <img src="https://flagcdn.com/w40/us.png" className="w-7 shadow-sm" alt="USA" />
                 </div>
               </div>
             </div>
 
-            {/* Description Section */}
-            <div className="px-4">
-              <h4 className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">Product Info</h4>
-              <p className="text-[14px] text-gray-600 leading-relaxed font-medium">
-                {p.description}
-              </p>
+            {/* Description */}
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase text-gray-400">Description</h4>
+              <p className="text-[14px] text-gray-600 leading-relaxed">{p.description}</p>
             </div>
           </div>
-
         </div>
       </div>
+
+      {/* --- MODAL SECTION --- */}
+      {isModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="bg-white w-full max-w-4xl rounded shadow-2xl flex flex-col md:flex-row overflow-hidden relative animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Left: Product Preview */}
+      <div className="w-full md:w-1/3 bg-[#f9fafb] p-8 flex flex-col items-center border-r border-gray-100">
+        <img src={p.image} alt="modal-preview" className="w-full h-auto mb-6" />
+        <div className="text-center">
+          <h2 className="text-[16px] font-bold text-gray-800 uppercase italic">Test</h2>
+          <h3 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight leading-tight">
+            DTF GILDAN 6400 SOFTSTYLE <br /> UNISEX T-SHIRT FRONT PRINT
+          </h3>
+          <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-tighter">CREATED AT 1/12/25 15:55</p>
+        </div>
+      </div>
+
+      {/* Modal Right: Selection Details */}
+      <div className="w-full md:w-2/3 p-10 space-y-6 overflow-y-auto max-h-[90vh]">
+        
+        {/* --- COLOR SECTION (Updated as per your image) --- */}
+        <div>
+          <label className="text-[14px] font-bold text-gray-800 uppercase block mb-3">Color</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: "Black", bg: "#000000", text: "white" },
+              { name: "White", bg: "#ffffff", text: "black" },
+              { name: "Sports Gray", bg: "#d1d5db", text: "black" },
+              { name: "Dark Heather", bg: "#374151", text: "white" },
+              { name: "Light Pink", bg: "#fbcfe8", text: "black" },
+              { name: "Azalea", bg: "#f472b6", text: "white" },
+              { name: "Light Blue", bg: "#bfdbfe", text: "black" },
+              { name: "Forest Green", bg: "#064e3b", text: "white" },
+              { name: "Sand", bg: "#d2b48c", text: "black" },
+              { name: "Maroon", bg: "#800000", text: "white" },
+              { name: "Irish Green", bg: "#22c55e", text: "white" },
+            ].map((c) => (
+              <button
+                key={c.name}
+                onClick={() => setSelectedColor(c.name)}
+                style={{ backgroundColor: c.bg, color: c.text }}
+                className={`px-3 py-1.5 rounded border text-[12px] font-bold transition-all shadow-sm
+                  ${selectedColor === c.name ? "ring-2 ring-offset-2 ring-black scale-105" : "border-gray-300 hover:border-gray-500"}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* --- SIZE SECTION --- */}
+        <div>
+          <label className="text-[14px] font-bold text-gray-800 uppercase block mb-3">Size</label>
+          <div className="flex flex-wrap gap-2">
+            {["Small", "Medium", "Large", "XL", "2XL", "3XL"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setSelectedSize(s)}
+                className={`px-5 py-2 rounded border text-[13px] font-semibold transition-all
+                  ${selectedSize === s ? "border-black bg-gray-50 ring-1 ring-black" : "border-gray-200 bg-[#f9fafb] text-gray-400 hover:border-gray-400"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button className="text-[14px] font-bold text-[#1fb684] underline mt-2">
+          Show Advanced Quantity Selection
+        </button>
+
+        {/* --- MODAL FOOTER BUTTONS --- */}
+        <div className="pt-6 flex items-center gap-4 border-t border-gray-100">
+          <button className="flex items-center gap-2 px-8 py-2.5 bg-[#f05a28] text-white text-[14px] font-bold rounded hover:bg-[#199d71] transition-all shadow-md">
+            <ShoppingBag size={18} /> Add Product
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(false)}
+            className="px-8 py-2.5 text-[14px] font-semibold text-gray-500 border border-gray-300 rounded hover:bg-gray-50 ml-auto"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      {/* Close Icon */}
+      <button 
+        onClick={() => setIsModalOpen(false)} 
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  </div>
+)}
+
+{isEditModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    {/* Max-height set to 85vh for a shorter modal */}
+    <div className="bg-white w-full max-w-5xl rounded-sm shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Edit Product</h2>
+        <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Modal Body */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        
+        {/* Left: Product Image Preview (Fixed width, non-scrollable) */}
+        <div className="w-full md:w-1/2 p-6 flex justify-center items-start bg-white border-r border-gray-50">
+          <img 
+            src={p.image} 
+            alt="edit-preview" 
+            className="w-full max-w-[320px] h-auto object-contain"
+          />
+        </div>
+
+        {/* Right: Form Fields (Scrollable area) */}
+        <div className="w-full md:w-1/2 p-6 flex flex-col">
+          
+          {/* Tabs Section */}
+          <div className="flex gap-6 border-b border-gray-200 mb-6">
+            <button 
+              onClick={() => setSelectedTab("PRODUCT")}
+              className={`pb-2 text-[12px] font-bold tracking-tight uppercase ${
+                (typeof selectedTab === 'undefined' ? "PRODUCT" : selectedTab) === "PRODUCT" 
+                ? "text-black border-b-2 border-black" 
+                : "text-[#1fb684]"
+              }`}
+            >
+              PRODUCT
+            </button>
+            <button className="pb-2 text-[12px] font-bold tracking-tight text-[#1fb684] opacity-50 cursor-not-allowed">VARIANTS</button>
+            <button 
+              onClick={() => setSelectedTab("SETTINGS")}
+              className={`pb-2 text-[12px] font-bold tracking-tight uppercase ${
+                selectedTab === "SETTINGS" 
+                ? "text-black border-b-2 border-black" 
+                : "text-[#1fb684]"
+              }`}
+            >
+              Settings
+            </button>
+          </div>
+
+          {/* Tab Content Area */}
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {/* PRODUCT TAB */}
+            {(!selectedTab || selectedTab === "PRODUCT") && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase mb-2">Name</label>
+                  <input type="text" defaultValue={p.title} className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase mb-2">Tags</label>
+                  <input type="text" placeholder="Add a tag" className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase">Description</label>
+                  <textarea rows="5" className="w-full border border-gray-300 rounded px-3 py-3 text-[13px] text-gray-600 leading-relaxed focus:outline-none" defaultValue={p.description} />
+                </div>
+              </div>
+            )}
+
+            {/* SETTINGS TAB */}
+            {selectedTab === "SETTINGS" && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="relative inline-flex h-5 w-10 items-center rounded-full bg-gray-300 cursor-pointer">
+                    <span className="inline-block h-3.5 w-3.5 transform rounded-full bg-white translate-x-1" />
+                  </div>
+                  <span className="text-[13px] font-bold text-gray-700">Hold Orders</span>
+                </div>
+                <div className="space-y-4 text-[13px] text-gray-500 leading-snug">
+                  <p>If selected, Orders containing this item will be placed in a held state for review.</p>
+                  <p className="font-medium text-gray-600">NOTE: This will only apply if the Hold Option settings for a shop is set to 'Per Product'.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Warning Footer Note */}
+      <div className="bg-[#fffbeb] p-3 border-t border-gray-100">
+        <p className="text-[11px] text-gray-600 text-center">
+          These changes will only take effect on the product within your app. To update ecommerce store products, you need to sync the product within the Stores screen.
+        </p>
+      </div>
+
+      {/* Modal Footer Buttons */}
+      <div className="flex justify-between items-center p-3 bg-white border-t border-gray-100">
+        <button className="px-6 py-2 bg-[#f05a28] text-white text-[13px] font-bold rounded hover:bg-[#199d71] transition-all">
+          Update
+        </button>
+        <button onClick={() => setIsEditModalOpen(false)} className="px-6 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{isDuplicateModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-5xl rounded shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-[#f9fafb]">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Duplicate Product</h2>
+        <button onClick={() => setIsDuplicateModalOpen(false)} className="text-gray-400 hover:text-gray-900">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Modal Body */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        
+        {/* Left Side: Product Image */}
+        <div className="w-full md:w-1/2 p-8 flex justify-center items-start bg-white">
+          <img 
+            src={p.image} 
+            alt="duplicate-preview" 
+            className="w-full max-w-[380px] h-auto object-contain"
+          />
+        </div>
+
+        {/* Right Side: Rich Text Editor Area */}
+        <div className="w-full md:w-1/2 p-8 overflow-y-auto custom-scrollbar bg-white">
+          
+          {/* Editor Toolbar Icons */}
+          <div className="flex items-center gap-4 mb-4 text-gray-500 border-b border-gray-50 pb-2">
+            <span className="font-serif font-bold cursor-pointer hover:text-black">B</span>
+            <span className="italic cursor-pointer hover:text-black">I</span>
+            <span className="underline cursor-pointer hover:text-black">U</span>
+            <Edit3 size={16} className="cursor-pointer hover:text-black" />
+            <div className="h-4 w-[1px] bg-gray-300 mx-1"></div>
+            <List size={16} className="cursor-pointer hover:text-black" />
+            <ListOrdered size={16} className="cursor-pointer hover:text-black" />
+            <div className="h-4 w-[1px] bg-gray-300 mx-1"></div>
+            <Code size={16} className="cursor-pointer hover:text-black" />
+            <ImageIcon size={16} className="cursor-pointer hover:text-black" />
+            <Link size={16} className="cursor-pointer hover:text-black" />
+            <RefreshCw size={14} className="cursor-pointer hover:text-black" />
+            <Undo size={16} className="cursor-pointer hover:text-black" />
+          </div>
+
+          {/* Description Text Area */}
+          <div className="space-y-4 text-[13px] text-gray-600 leading-relaxed outline-none border border-gray-100 p-4 rounded-sm min-h-[300px]">
+            <p>The Gildan 6400 Unisex T-Shirt, crafted from 100% premium cotton, offers the perfect blend of comfort, style, and personal expression for everyone.</p>
+            <p>This unisex tee features a crew neck and short sleeves, making it a versatile choice for any event or as a thoughtful thank you gift. Its smooth fabric not only ensures a cozy fit for all body types.</p>
+            <p>Available in a wide range of sizes and an array of colors—from solid shades that boast 100% cotton to heather colors with a soft cotton-poly blend—there's a Gildan 6400 T-Shirt for everyone's taste and preference, transcending gender norms and embracing individuality.</p>
+            
+            <div className="mt-6">
+              <p className="font-bold text-gray-800 mb-2">Key Features:</p>
+              <ul className="list-disc ml-5 space-y-2">
+                <li><strong>Soft Touch:</strong> Ringspun pre-shrunk cotton and a 30 single yarn for a softer feel, designed to comfort every body.</li>
+                <li><strong>Durability:</strong> Features a seamless double-needle collar, taped neck & shoulders, and double-needle sleeves & bottom hem, crafted to endure daily wear and tear.</li>
+                <li><strong>Sleek Design:</strong> Quarter-turned to eliminate the center crease, ensuring a smooth, unblemished surface for printing.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Footer */}
+      <div className="flex justify-between items-center p-4 bg-white border-t border-gray-100">
+        <button className="px-6 py-2 bg-[#1fb684] text-white text-[13px] font-bold rounded shadow-sm hover:bg-[#199d71] transition-all">
+          Duplicate
+        </button>
+        <button 
+          onClick={() => setIsDuplicateModalOpen(false)}
+          className="px-8 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+{isArchiveModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Archive Product</h2>
+        <button onClick={() => setIsArchiveModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Modal Body - Confirmation Message */}
+      <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
+        <p className="text-[15px] text-gray-600">
+          You have requested to archive <span className="font-bold text-gray-800">{p.title || "hgdghdhgc"}</span>.
+        </p>
+        <p className="text-[15px] text-gray-600">
+          Please confirm your intention.
+        </p>
+      </div>
+
+      {/* Modal Footer - Buttons */}
+      <div className="flex justify-end items-center gap-3 p-4 bg-white border-t border-gray-100">
+        <button 
+          onClick={() => {
+            console.log("Product Archived");
+            setIsArchiveModalOpen(false);
+          }}
+          className="px-6 py-2 bg-[#F05828] text-white text-[13px] font-bold rounded shadow-sm hover:bg-[#199d71] transition-all"
+        >
+          OK
+        </button>
+        <button 
+          onClick={() => setIsArchiveModalOpen(false)}
+          className="px-6 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+{isConfiguratorModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Select Variant for Configurator</h2>
+        <button 
+          onClick={() => setIsConfiguratorModalOpen(false)} 
+          className="text-gray-400 hover:text-gray-600 text-xl font-light px-2"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Modal Body - Color Selection */}
+      <div className="p-6 space-y-4">
+        <label className="block text-[14px] font-bold text-gray-600">Color</label>
+        
+        <div className="flex flex-wrap gap-2">
+          {[
+            { name: "Black", bg: "bg-[#1a1a1a]" },
+            { name: "Red", bg: "bg-[#be1e2d]" },
+            { name: "Royal Blue", bg: "bg-[#4a77b5]" },
+            { name: "Coral", bg: "bg-[#f16d63]" },
+            { name: "Dark Gray", bg: "bg-[#6d6e71]" },
+            { name: "Green", bg: "bg-[#1d6b41]" },
+            { name: "Light Blue", bg: "bg-[#92cedf]" },
+            { name: "Light Purple", bg: "bg-[#db8ab6]" },
+            { name: "Maroon", bg: "bg-[#7b111a]" },
+            { name: "Navy Blue", bg: "bg-[#2c3544]" },
+            { name: "Orange", bg: "bg-[#e46d1b]" },
+            { name: "Pink", bg: "bg-[#e586b3]" },
+            { name: "Purple", bg: "bg-[#4e3694]" },
+            { name: "Teal", bg: "bg-[#7bc8bb]" },
+            { name: "White", bg: "bg-white border border-gray-200 text-black" },
+            { name: "Yellow", bg: "bg-[#fdb933]" }
+          ].map((color) => {
+            // Safety check: agar state na ho toh 'Black' ko default maano
+            const isSelected = (typeof selectedConfigColor !== 'undefined' ? selectedConfigColor : "Black") === color.name;
+            
+            return (
+              <div 
+                key={color.name}
+                onClick={() => typeof setSelectedConfigColor !== 'undefined' && setSelectedConfigColor(color.name)}
+                className={`
+                  ${color.bg} 
+                  ${color.name === 'White' && !isSelected ? 'text-black' : 'text-white'} 
+                  px-3 py-1 rounded-sm text-[13px] font-medium cursor-pointer flex items-center gap-1 transition-all
+                  ${isSelected ? 'ring-2 ring-offset-1 ring-gray-400' : 'hover:opacity-90'}
+                `}
+              >
+                {/* ✓ mark logic */}
+                {isSelected && <span className="font-bold">✓</span>}
+                {color.name}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Modal Footer - Buttons */}
+      <div className="flex justify-between items-center p-4 bg-white border-t border-gray-100 mt-4">
+        <div className="flex gap-2">
+          <button className="px-4 py-2 bg-[#F05828] text-white text-[13px] font-bold rounded shadow-sm hover:bg-[#199d71]">
+            Launch Configurator
+          </button>
+          <button className="px-4 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50">
+            Launch In New Tab
+          </button>
+        </div>
+        
+        <button 
+          onClick={() => setIsConfiguratorModalOpen(false)}
+          className="px-6 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{isRegenerateModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Regenerate Mockups</h2>
+        <button 
+          onClick={() => setIsRegenerateModalOpen(false)} 
+          className="text-gray-400 hover:text-gray-600 text-xl font-light px-2"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Modal Body - Confirmation Text */}
+      <div className="p-6 pt-8 pb-10 space-y-4 text-[14px] text-gray-600 leading-relaxed">
+        <p>
+          You have requested to regenerate mockups for this product. The existing mockups will be replaced once the new mockups are produced.
+        </p>
+        <p>
+          Mockups are generated in the background and can take a few minutes to produce.
+        </p>
+        <p>
+          Please confirm your intention.
+        </p>
+      </div>
+
+      {/* Modal Footer - Action Buttons */}
+      <div className="flex justify-between items-center p-4 bg-white border-t border-gray-100">
+        <button 
+          onClick={() => {
+            console.log("Regenerating...");
+            setIsRegenerateModalOpen(false);
+          }}
+          className="px-6 py-2 bg-[#F05828] text-white text-[13px] font-bold rounded shadow-sm hover:bg-[#199d71] transition-all"
+        >
+          Regenerate
+        </button>
+        
+        <button 
+          onClick={() => setIsRegenerateModalOpen(false)}
+          className="px-8 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{isAddStoreModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-5xl rounded shadow-2xl flex flex-col min-h-[500px] max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      {/* Modal Header */}
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
+        <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Add Product to Store</h2>
+        <button 
+          onClick={() => setIsAddStoreModalOpen(false)} 
+          className="text-gray-400 hover:text-gray-600 text-xl font-light px-2 leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Modal Body */}
+      <div className="p-6 flex-1 flex flex-col bg-white">
+        {/* Step Title */}
+        <h3 className="text-[15px] font-bold text-gray-600 mb-6">Step 1 - Store</h3>
+
+        {/* Full Width Filters Row */}
+        <div className="flex flex-col md:flex-row gap-6 mb-8 w-full">
+          {/* Full Width Search Input */}
+          <div className="relative flex-1">
+            <input 
+              type="text" 
+              placeholder="Search for Store" 
+              className="w-full border border-gray-200 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400 placeholder:text-gray-300 shadow-sm"
+            />
+            {/* Search Icon Placeholder */}
+            <span className="absolute right-3 top-2.5 text-gray-400 font-bold transform scale-x-[-1]">Q</span>
+          </div>
+
+          {/* Full Width Dropdown */}
+          <div className="flex-1">
+            <select className="w-full border border-gray-200 rounded px-3 py-2 text-[14px] text-gray-600 focus:outline-none bg-white shadow-sm appearance-none cursor-pointer">
+              <option>Shopify</option>
+              <option>WooCommerce</option>
+              <option>Etsy</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Table Headers */}
+        <div className="grid grid-cols-2 border-b border-gray-200 pb-3 px-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Name</span>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Type</span>
+        </div>
+
+        {/* Empty State Area */}
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-300 text-[14px]">No stores connected yet.</p>
+        </div>
+      </div>
+
+      {/* Modal Footer */}
+      <div className="flex justify-end p-4 bg-white border-t border-gray-100">
+        <button 
+          onClick={() => setIsAddStoreModalOpen(false)}
+          className="px-6 py-1.5 border border-gray-300 text-gray-600 text-[13px] rounded hover:bg-gray-50 transition-all font-medium"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
-}
+};
+
+export default SingleProduct;
