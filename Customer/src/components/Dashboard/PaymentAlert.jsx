@@ -1,49 +1,73 @@
 import React, { useState } from 'react';
-import { AlertTriangle, X, CreditCard } from 'lucide-react';
+import { AlertTriangle, X, CreditCard, ArrowRight } from 'lucide-react';
 
 const PaymentAlert = () => {
     const [isVisible, setIsVisible] = useState(true);
+    const themeColor = "#f05a28";
 
     if (!isVisible) return null;
 
     return (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 mt-6">
-            <div className="flex items-start">
-                <div className="flex-shrink-0">
-                    <AlertTriangle className="w-5 h-5 text-red-400" />
+        <div 
+            className="rounded-2xl p-5 mb-6 mt-6 border relative overflow-hidden transition-all duration-300 shadow-sm"
+            style={{ 
+                backgroundColor: `${themeColor}05`, // Ultra light tint
+                borderColor: `${themeColor}20` 
+            }}
+        >
+            {/* Subtle Left Accent Line */}
+            <div 
+                className="absolute left-0 top-0 bottom-0 w-1.5"
+                style={{ backgroundColor: themeColor }}
+            ></div>
+
+            <div className="flex items-start gap-4">
+                <div 
+                    className="flex-shrink-0 p-2.5 rounded-xl"
+                    style={{ backgroundColor: `${themeColor}15` }}
+                >
+                    <AlertTriangle className="w-5 h-5" style={{ color: themeColor }} />
                 </div>
-                <div className="ml-3 flex-1">
-                    <h3 className="text-sm font-medium text-red-800">
+
+                <div className="flex-1">
+                    <h3 className="text-base font-black text-gray-900 tracking-tight">
                         Payment Method Required
                     </h3>
-                    <div className="mt-2 text-sm text-red-700">
+                    <div className="mt-1.5 text-sm text-gray-600 font-medium leading-relaxed max-w-2xl">
                         <p>
-                            You need to add a payment method to start processing orders.
-                            Orders will be accepted but not processed until payment is configured.
+                            You need to add a payment method to start processing orders. 
+                            <span className="font-bold text-gray-800 ml-1">Orders will be accepted</span> but not processed until your configuration is complete.
                         </p>
                     </div>
-                    <div className="mt-4">
-                        <div className="flex space-x-3">
-                            <button className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
-                                <CreditCard className="w-4 h-4" />
-                                <span>Add Payment Method</span>
-                            </button>
-                            <button className="text-red-700 hover:text-red-600 px-3 py-2 text-sm font-medium transition-colors">
-                                Learn More
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div className="ml-auto pl-3">
-                    <div className="-mx-1.5 -my-1.5">
-                        <button
-                            onClick={() => setIsVisible(false)}
-                            className="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 transition-colors"
+
+                    <div className="mt-5 flex flex-wrap items-center gap-4">
+                        <button 
+                            className="px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
+                            style={{ 
+                                backgroundColor: themeColor,
+                                boxShadow: `0 8px 20px ${themeColor}30`
+                            }}
                         >
-                            <X className="w-4 h-4" />
+                            <CreditCard className="w-4 h-4" />
+                            Add Payment Method
+                        </button>
+                        
+                        <button 
+                            className="flex items-center gap-1.5 text-sm font-bold transition-colors group"
+                            style={{ color: themeColor }}
+                        >
+                            Learn More
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
                 </div>
+
+                <button
+                    onClick={() => setIsVisible(false)}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
+                >
+                    <X className="w-5 h-5" />
+                </button>
             </div>
         </div>
     );

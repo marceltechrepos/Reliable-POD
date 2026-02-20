@@ -39,9 +39,12 @@ export default function ContactUs() {
   return (
     <Box sx={{ minHeight: "100vh", py: 8, bgcolor: "#f9fafc" }}>
       <Container maxWidth="lg">
-        <Typography variant="h3" fontWeight={900} sx={{ mb: 1, textAlign: "center" }}>
+        {/* <Typography variant="h3" fontWeight={900} sx={{ mb: 1, textAlign: "center" }}>
           Contact Us
-        </Typography>
+        </Typography> */}
+           <h1 className="text-[50px] font-[900] text-gray-900 tracking-tight text-center">
+                Contact Us
+            </h1>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4, textAlign: "center" }}>
           Need assistance? Fill the form below and we'll get back to you promptly.
         </Typography>
@@ -120,33 +123,60 @@ export default function ContactUs() {
             </Button>
 
             {/* contact info moved BELOW the form */}
-            <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-              {[
-                { icon: <EmailIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Email", value: "support@yourapp.com" },
-                { icon: <PhoneIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Phone", value: "+92 300 0000000" },
-                { icon: <HomeWorkIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Address", value: "123 Street, Karachi, Pakistan" },
-              ].map((info) => (
-                <Paper
-                  key={info.title}
-                  sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    bgcolor: "#f5f7fa",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    transition: "0.25s",
-                    "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(0,0,0,0.08)" },
-                  }}
-                >
-                  {info.icon}
-                  <Box>
-                    <Typography fontWeight={700}>{info.title}</Typography>
-                    <Typography variant="body2" color="text.secondary">{info.value}</Typography>
-                  </Box>
-                </Paper>
-              ))}
-            </Box>
+          <Box 
+  sx={{ 
+    mt: 3, 
+    display: "flex", 
+    flexDirection: { xs: "column", md: "row" }, // Mobile pe vertical, desktop pe ek line mein
+    gap: 2,
+    justifyContent: "center", // Center align karne ke liye
+    alignItems: "stretch" 
+  }}
+>
+  {[
+    { icon: <EmailIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Email", value: "support@yourapp.com" },
+    { icon: <PhoneIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Phone", value: "+92 300 0000000" },
+    { icon: <HomeWorkIcon sx={{ fontSize: 26, color: "#4F46E5" }} />, title: "Address", value: "Karachi, Pakistan" },
+  ].map((info) => (
+    <Paper
+      key={info.title}
+      elevation={0}
+      sx={{
+        p: 2.5,
+        flex: 1, // Teeno cards barabar jagah lenge
+        borderRadius: 4,
+        bgcolor: "#fff", // White background zyada premium lagta hai
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        border: "1px solid #f1f5f9", // Light border for clean look
+        transition: "all 0.3s ease",
+        "&:hover": { 
+          transform: "translateY(-5px)", 
+          boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
+          borderColor: "#4F46E5" 
+        },
+      }}
+    >
+      <Box sx={{ 
+        p: 1.5, 
+        borderRadius: "12px", 
+        bgcolor: "#EEF2FF", 
+        display: "flex" 
+      }}>
+        {info.icon}
+      </Box>
+      <Box>
+        <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          {info.title}
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 800, color: "#1e293b" }}>
+          {info.value}
+        </Typography>
+      </Box>
+    </Paper>
+  ))}
+</Box>
           </Stack>
         </Paper>
 
