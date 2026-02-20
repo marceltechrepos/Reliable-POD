@@ -244,7 +244,7 @@ function PrintArea({ productId }) {
         ) : (
           <>
             <ul className="grid grid-cols-6 font-semibold border-b border-gray-200 pb-2">
-              <li>TIB</li>
+              <li>Variant ID</li>
               <li>Fulfill Key</li>
               <li>Display Name</li>
               <li>Width (px)</li>
