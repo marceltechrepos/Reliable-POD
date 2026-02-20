@@ -18,7 +18,9 @@ export const getProducts = async (req, res) => {
 export const getProductsById = async (req, res) => {
   try {
     const { id } = req.params;
-
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Product ID is required" });
+    } 
     // Fetch product
     const product = await productModel.findById(id).lean();
     if (!product) {
