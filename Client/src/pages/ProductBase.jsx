@@ -79,6 +79,7 @@ function ProductBase() {
 
   const fetchProductByProductId = async (id) => {
     try {
+      if (!id) return;
       const data = await getProductById(id);
 
       console.log(data, "<<<<< main data")
