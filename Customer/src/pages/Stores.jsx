@@ -94,7 +94,7 @@ export default function Stores() {
         </div>
       </div>
 
-      {/* 🖥️ View Switcher (Pill Style) */}
+     
       <div className="flex bg-gray-100/80 p-1.5 rounded-[22px] gap-1 shadow-inner">
         <button
           onClick={() => setView('card')}
@@ -137,9 +137,9 @@ export default function Stores() {
         ) : (
           <div className={`transition-all duration-700 ${view === "card" ? "opacity-100" : "opacity-100"}`}>
             {view === "card" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filtered.map(store => (
-                  <div key={store.id} className="h-full">
+                  <div key={store.id} className="h-full mt-[20px]">
                     <StoreCard store={store} onClick={() => handleStoreClick(store)} />
                   </div>
                 ))}
