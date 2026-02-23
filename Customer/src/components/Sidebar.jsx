@@ -1,7 +1,6 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import {menuItems} from "./MenuItems"
+import { menuItems } from "./MenuItems";
 
 function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
@@ -20,55 +19,43 @@ function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-      {/* <aside
-        className={`
-    fixed md:static
-    top-0 left-0 z-50
-    h-auto
-    w-[260px] lg:w-[280px] xl:w-[300px]
-    bg-white shadow-md
-    pt-14 sm:pt-16 md:pt-0
-    transform transition-transform duration-300 ease-in-out
-    ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        `}
-      > */}
-
       <aside
         className={`
-    fixed md:static
-    top-14 sm:top-16 md:top-0
-    bottom-0
-    left-0 z-40
-    w-[260px] lg:w-[280px] xl:w-[300px]
-    bg-white shadow-md
-    transform transition-transform duration-300 ease-in-out
-    ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-  `}
+          fixed md:static
+          top-14 sm:top-16 md:top-0
+          bottom-0
+          left-0 z-40
+          w-[260px] lg:w-[280px] xl:w-[300px]
+          bg-white shadow-md
+          transform transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
       >
-
-
         <div className="p-5 overflow-y-auto h-full">
           <ul className="lg:mt-15">
-            {menuItems.map((item, index) => (
-              <li key={index}>
-                <NavLink
-                  to={item.path}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    ` mb-2 flex items-center gap-3 p-3 rounded-lg transition-all
-                    ${isActive
-                      ? "bg-tiger text-white shadow-md"
-                      : "hover:bg-tiger hover:text-white"
-                    }`
-                  }
-                >
-                  {item.icon}
-                  <span className="text-sm font-medium">
-                    {item.label}
-                  </span>
-                </NavLink>
-              </li>
-            ))}
+            {/* 1. Yahan filter lagaya hai taaki 'My Products' sidebar mein na dikhe */}
+            {menuItems
+              .filter((item) => item.path !== "/user/products") // Us page ka path hide karein
+              .map((item, index) => (
+                <li key={index}>
+                  <NavLink
+                    to={item.path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      ` mb-2 flex items-center gap-3 p-3 rounded-lg transition-all
+                      ${isActive
+                        ? "bg-tiger text-white shadow-md"
+                        : "hover:bg-tiger hover:text-white"
+                      }`
+                    }
+                  >
+                    {item.icon}
+                    <span className="text-sm font-medium">
+                      {item.label}
+                    </span>
+                  </NavLink>
+                </li>
+              ))}
           </ul>
         </div>
       </aside>

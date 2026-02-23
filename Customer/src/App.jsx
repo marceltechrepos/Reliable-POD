@@ -15,6 +15,10 @@ import ContactUs from "./pages/ContactUs.jsx";
 import StoreDetail from "./pages/StoreDetail.jsx";
 import Subcatalogue from "./pages/Subcatalogue.jsx";
 import SingleProduct from "./pages/Singleproduct.jsx";
+import DynamicDesignTool from "./pages/DynamicDesignTool.jsx";
+import Productcatloge from "./pages/productcatloge";
+import Singlecatalogue from "./pages/Singlecatalogue.jsx";
+
 
 
 function App() {
@@ -38,6 +42,10 @@ function App() {
           <Route path="contact" element={<ContactUs />} />
           <Route path="sub-catalogue" element={<Subcatalogue />} />
           <Route path="/user/detail-product/" element={<SingleProduct />} />
+           <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
+            <Route path="Product-catloge" element={<Productcatloge />} />
+
+          <Route path="single-catalogue" element={<Singlecatalogue />} />  
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}
