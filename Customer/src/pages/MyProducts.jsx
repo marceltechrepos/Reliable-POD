@@ -79,8 +79,9 @@ export default function MyProducts() {
               const isSelected = selectedProducts.includes(p.id);
               return (
                 <div key={p.id} className="group relative font-sans">
+                  
                   <div
-                    onClick={() => navigate("/user/detail-product")} // 3. SIMPLE URL BAGAIR ID KE
+                    onClick={() => navigate("/user/single-catalogue")} // 3. SIMPLE URL BAGAIR ID KE
                     className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
                     ${isSelected ? "border-[#f05a28] ring-1 ring-[#f05a28]" : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1"}`}
                   >

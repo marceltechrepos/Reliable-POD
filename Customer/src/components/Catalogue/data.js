@@ -1,4 +1,5 @@
-import DUMMYIMG from "../../../public/catalogue.jpg"
+// import DUMMYIMG from "../../../public/catalogue.jpg"
+import DUMMYIMG from "../../assets/image/catalogue.jpg"
 
 export const CATALOGUES = [
     { id: 1, name: "Summer Collection", discount: true, image: DUMMYIMG },
