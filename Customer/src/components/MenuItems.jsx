@@ -24,14 +24,8 @@ export const menuItems = [
     path: "/user/catalogue",
     label: "Catalogue",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path d="M10 3H3v7h7V3zm11 0h-7v7h7V3zM10 14H3v7h7v-7zm11 0h-7v7h7v-7z" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2 2h4v4H2V2zm0 6h4v4H2V8zm6-6h4v4H8V2zm0 6h4v4H8V8z" />
       </svg>
     ),
   },
@@ -39,14 +33,9 @@ export const menuItems = [
     path: "/user/prices",
     label: "Price List",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path d="M10 3H3v7h7V3zm11 0h-7v7h7V3zM10 14H3v7h7v-7zm11 0h-7v7h7v-7z" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M3 2v4.586l5.293 5.293a1 1 0 0 0 1.414 0l3.586-3.586a1 1 0 0 0 0-1.414L7.414 1H4a1 1 0 0 0-1 1z" />
+        <circle cx="5.5" cy="4.5" r="1" />
       </svg>
     ),
   },
@@ -54,14 +43,8 @@ export const menuItems = [
     path: "/user/stores",
     label: "Stores",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path d="M10 3H3v7h7V3zm11 0h-7v7h7V3zM10 14H3v7h7v-7zm11 0h-7v7h7v-7z" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2 2h12l1 4H1l1-4zm1 5h10v7H3V7z" />
       </svg>
     ),
   },
