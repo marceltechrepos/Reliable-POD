@@ -125,35 +125,35 @@ export default function StoreDetail() {
                 fontSize: '1.5rem'
               }}
             >
-              {store.type === 'Shopify' ? 'S' : 
-               store.type === 'Etsy' ? 'E' : 
-               store.type === 'WooCommerce' ? 'WC' : 
-               store.type === 'Anywhere POD' ? 'POD' : 'MO'}
+              {store.type === 'Shopify' ? 'S' :
+                store.type === 'Etsy' ? 'E' :
+                  store.type === 'WooCommerce' ? 'WC' :
+                    store.type === 'Anywhere POD' ? 'POD' : 'MO'}
             </Avatar>
             <Box>
               <Typography variant="h5" fontWeight={700}>
                 {store.name}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                <Chip 
-                  label={store.type} 
-                  size="small" 
-                  sx={{ 
-                    bgcolor: `${storeColor}15`, 
+                <Chip
+                  label={store.type}
+                  size="small"
+                  sx={{
+                    bgcolor: `${storeColor}15`,
                     color: storeColor,
-                    fontWeight: 600 
-                  }} 
+                    fontWeight: 600
+                  }}
                 />
-                <Chip 
-                  label={store.status} 
-                  size="small" 
-                  color="success" 
+                <Chip
+                  label={store.status}
+                  size="small"
+                  color="success"
                   variant="outlined"
                 />
-                 <Chip 
-                  label="12345678" 
-                  size="small" 
-                  color="success" 
+                <Chip
+                  label="0z5ky0a6fbqcprod7effmne"
+                  size="small"
+                  color="success"
                   variant="outlined"
                 />
               </Box>
@@ -217,7 +217,7 @@ export default function StoreDetail() {
                 ),
               }}
             />
-            
+
             <FormControl size="small" sx={{ width: 150 }}>
               <InputLabel>State</InputLabel>
               <Select label="State" defaultValue="">
@@ -278,13 +278,13 @@ export default function StoreDetail() {
                       <Typography fontWeight={500}>{product.name}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={product.state} 
+                      <Chip
+                        label={product.state}
                         size="small"
                         color={
                           product.state === 'Published' ? 'success' :
-                          product.state === 'Draft' ? 'warning' :
-                          'default'
+                            product.state === 'Draft' ? 'warning' :
+                              'default'
                         }
                         variant="outlined"
                       />
@@ -296,7 +296,7 @@ export default function StoreDetail() {
                           height: 8,
                           borderRadius: '50%',
                           bgcolor: product.sync === 'Synced' ? '#10B981' :
-                                   product.sync === 'Pending' ? '#F59E0B' : '#EF4444'
+                            product.sync === 'Pending' ? '#F59E0B' : '#EF4444'
                         }} />
                         {product.sync}
                       </Box>
