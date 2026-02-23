@@ -30,7 +30,7 @@ export default function Productcatloge() {
 return (
     <Box sx={{ p: 4, bgcolor: "#f5f5f5" }}>
       <h1 className="text-4xl font-[900] mb-[20px] text-gray-900 tracking-tight">
-        Sub Catalogue
+        Product Catalogue
       </h1>
 
       <div className="w-full flex flex-col mb-10 md:flex-row items-center gap-4">
