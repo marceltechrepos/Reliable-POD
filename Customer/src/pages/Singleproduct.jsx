@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 
 
-import image from "../../public/dummy.jpg"
+import image from "../assets/image/dummy.jpg"
 import { 
   ShoppingBag, Edit3, Copy, Archive, RefreshCw, Download, Plus, X, Image as ImageIcon, Layout
 } from "lucide-react";
@@ -23,6 +25,7 @@ const SingleProduct = ({ product }) => {
   const [selectedConfigColor, setSelectedConfigColor] = useState("Black");
   const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
   const [isAddStoreModalOpen, setIsAddStoreModalOpen] = useState(false);
+    const [value, setValue] = useState();
 
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
@@ -74,9 +77,7 @@ const SingleProduct = ({ product }) => {
           >
             <Edit3 size={14} /> Edit Product
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
-            <ImageIcon size={14} /> Edit Design
-          </button>
+          
           <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
            onClick={() => setIsConfiguratorModalOpen(true)}
           >
@@ -102,6 +103,26 @@ const SingleProduct = ({ product }) => {
           >
             <RefreshCw size={14} /> Regenerate Mockups
           </button>
+    <button 
+  className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50 transition-all"
+  onClick={(e) => {
+    e.stopPropagation(); // Card ke click ko rokne ke liye
+    navigate("/user/dynamicDesignTool", { 
+      state: { 
+        product: {
+          id: p.id,
+          title: p.title,
+          image: p.image,
+          price: p.price
+        } 
+      } 
+    });
+  }}
+>
+  <Archive size={14} /> Edit Design
+</button>
+  {/* Yahan aapka Archive ya Edit icon aa jayega */}
+ 
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
