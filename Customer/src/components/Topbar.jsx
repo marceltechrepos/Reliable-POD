@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// import logo from "../assets/images/POD-logo.png";
+import logo from "../assets/image/POD-logo.png";
 import { Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,7 +37,7 @@ function Topbar({ onMenuClick }) {
         </button>
 
         <img
-          src={"logo"}
+          src={logo}
           alt="ExpressPOD"
           className="h-7 sm:h-8 md:h-9 w-auto object-contain bg-white px-1 rounded"
         />

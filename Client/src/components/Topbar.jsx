@@ -76,7 +76,7 @@ function Topbar({ onMenuClick, onSearch }) {
     toast.success("Logged out successfully");
 
     // Navigate to login page
-    navigate("/admin/login");
+    navigate("/");
   };
 
   const profile = () => {
