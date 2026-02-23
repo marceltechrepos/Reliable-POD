@@ -82,7 +82,7 @@ return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {filtered.map((c) => (
         <Link 
-              to={c.link || `/user/products`}
+              to={c.link || `/user/Product-catloge`}
               key={c.id} 
               className="group relative font-sans w-full block no-underline cursor-pointer"
             >
