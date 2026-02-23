@@ -8,7 +8,7 @@ import CatalogueCard from "../components/Catalogue/CatalogueCard";
 import { Search, Percent, SlidersHorizontal } from 'lucide-react';
 import { Link } from "react-router-dom";
 
-export default function Subcatalogue() {
+export default function Productcatloge() {
   const [search, setSearch] = useState("");
   const [discountOnly, setDiscountOnly] = useState(false);
   
@@ -30,7 +30,7 @@ export default function Subcatalogue() {
 return (
     <Box sx={{ p: 4, bgcolor: "#f5f5f5" }}>
       <h1 className="text-4xl font-[900] mb-[20px] text-gray-900 tracking-tight">
-        Sub Catalogue
+        Product Catalogue
       </h1>
 
       <div className="w-full flex flex-col mb-10 md:flex-row items-center gap-4">
@@ -82,7 +82,7 @@ return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {filtered.map((c) => (
         <Link 
-              to={c.link || `/user/Product-catloge`}
+              to={c.link || `/user/products`}
               key={c.id} 
               className="group relative font-sans w-full block no-underline cursor-pointer"
             >
