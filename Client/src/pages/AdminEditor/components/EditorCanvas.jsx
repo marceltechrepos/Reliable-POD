@@ -32,32 +32,6 @@ const EditorCanvas = ({
   // EditorCanvas component ke top par yeh state variables add karo
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  // const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
-
-  // Alt key detect karne ke liye event listeners
-  // useEffect(() => {
-  //   const handleKeyDown = (e) => {
-  //     if (e.key === 'Alt' || e.key === 'Option') { // Alt key for Mac/Windows
-  //       setIsPanning(true);
-  //       document.body.style.cursor = 'grab';
-  //     }
-  //   };
-
-  //   const handleKeyUp = (e) => {
-  //     if (e.key === 'Alt' || e.key === 'Option') {
-  //       setIsPanning(false);
-  //       document.body.style.cursor = 'default';
-  //     }
-  //   };
-
-  //   window.addEventListener('keydown', handleKeyDown);
-  //   window.addEventListener('keyup', handleKeyUp);
-
-  //   return () => {
-  //     window.removeEventListener('keydown', handleKeyDown);
-  //     window.removeEventListener('keyup', handleKeyUp);
-  //   };
-  // }, []);
 
   // Mouse events for panning
   const handleMouseDown = (e) => {
@@ -192,38 +166,21 @@ const EditorCanvas = ({
             minWidth: getCanvasSize().width,
             minHeight: getCanvasSize().height,
             display: "flex",
-            maxWidth: "90vw",
-            maxHeight: "90vh",
             alignItems: "center",
             justifyContent: "center",
           }}
-        // style={{
-        // REMOVE minWidth/minHeight - Yeh overflow create kar raha tha
-        // display: "flex",
-        // alignItems: "center",
-        // justifyContent: "center",
-        // maxWidth: "100%", // ✅ Max width set karo
-        // maxHeight: "100%", // ✅ Max height set karo
-        // padding: '10px',
-        //   maxWidth: "90vw",
-        //   maxHeight: "90vh",
-        //   display: "flex",
-        //   alignItems: "center",
-        //   justifyContent: "center",
-        //   padding: '10px',
-
-        // }}
 
         >
           <div
             ref={innerCanvasRef}
             className="relative bg-gray-800"
             style={{
-              width: getCanvasSize().width,
-              height: getCanvasSize().height,
+              width: getCanvasSize().displayWidth,
+              height: getCanvasSize().displayHeight,
               display: "inline-block",
               position: "relative",
-              transform: `scale(${scale}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+              // transform: `scale(${1}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+              transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
               transformOrigin: "0 0",
               border: "1px solid rgba(255,255,255,0.1)", // Canvas border for visibility
               background: "rgba(0,0,0,0.3)", // Canvas background
@@ -232,7 +189,7 @@ const EditorCanvas = ({
             {drawGrid()}
 
             {layers.map((layer, index) => {
-              if (layer.visible === false) return null; 
+              if (layer.visible === false) return null;
               const zIndex = index + 1;
               const isSelected = selectedLayerId === layer.id;
 
@@ -248,11 +205,9 @@ const EditorCanvas = ({
                       position: "absolute",
                       left: 0,
                       top: 0,
-                      width: getCanvasSize().width,
-                      height: getCanvasSize().height,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+
                       zIndex: 0,
                       overflow: "hidden",
                     }}
@@ -263,98 +218,36 @@ const EditorCanvas = ({
                       style={{
                         width: "100%",
                         height: "100%",
-                        objectFit: "contain", // Ensures full image is visible
+                        objectFit: "fill",  
                         display: "block",
-                        // borderRadius: 8,
-                        // boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
                       }}
                     />
                   </div>
                 );
               }
-              // if (layer.type === "background") {
-              //   return (
-              //     <div
-              //       key={layer.id}
-              //       style={{
-              //         position: "absolute",
-              //         left:0,
-              //         top:0,
-              //         // left: 0,
-              //         // top: 130,
-              //         width: "100%",
-              //         height: "100%",
-              //         display: "flex",
-              //         alignItems: "center",
-              //         justifyContent: "center",
-              //         zIndex: 0, // Background sabse niche
-              //       }}
-              //     >
-              //       <img
-              //         src={layer.src}
-              //         alt="background"
-              //         style={{
-              //           maxWidth: "100%",    // ✅ Max width 100% of canvas
-              //           maxHeight: "100%",   // ✅ Max height 100% of canvas
-              //           objectFit: "contain", // ✅ IMPORTANT: Pura image fit karega
-              //           display: "block",
-              //           borderRadius: 8,
-              //           boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
-              //         }}
-              //       />
-              //     </div>
-              //   );
-              // }
-
               const showRotationHandle = selectedLayerId === layer.id && layer.type !== "background" && !layer.locked;
               const showPerspectiveHandles = selectedLayerId === layer.id &&
                 (layer.type === "image" || layer.type === "printarea") &&
                 layer.enablePerspective;
 
               return (
-
-
-                // <Rnd
-                //   key={layer.id}
-                //   size={{ width: layer.width, height: layer.height }}
-                //   position={{ x: layer.x, y: layer.y }}
-                //   // bounds="parent"
-                //   onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
-
-                //   onResizeStop={(e, direction, ref, delta, position) =>
-                //     operations.updateLayer(layer.id, {
-                //       width: parseInt(ref.style.width, 10),
-                //       height: parseInt(ref.style.height, 10),
-                //       ...position,
-                //     })
-                //   }
-                //   onClick={() => setSelectedLayerId(layer.id)}
-                //   enableResizing={layer.type !== "background" && !layer.locked &&
-                //     !(layer.enablePerspective && (layer.type === "image" || layer.type === "printarea"))}
-                //   disableDragging={!!layer.locked}
-                //   scale={1}
-                //   style={{
-                //     zIndex,
-                //     border:
-                //       selectedLayerId === layer.id
-                //         ? "2px solid #3b82f6"
-                //         : layer.type === "printarea" && layer.border
-                //           ? "2px dashed #22c55e"
-                //           : "1px dashed rgba(255,255,255,0.05)",
-                //     display: "flex",
-                //     alignItems: "center",
-                //     justifyContent: "center",
-                //     cursor: layer.locked ? "not-allowed" : "move",
-                //     pointerEvents: "auto",
-                //     position: "absolute",
-                //   }}
-                // >
-
                 <Rnd
                   key={layer.id}
-                  size={{ width: layer.width, height: layer.height }}
-                  position={{ x: layer.x, y: layer.y }}
-                  onDragStop={(e, d) => operations.updateLayer(layer.id, { x: d.x, y: d.y })}
+                  // ✅ Original size ke hisaab se dimensions do
+                  size={{
+                    width: layer.width * (getCanvasSize().displayWidth / getCanvasSize().originalWidth),
+                    height: layer.height * (getCanvasSize().displayHeight / getCanvasSize().originalHeight)
+                  }}
+                  position={{
+                    x: layer.x * (getCanvasSize().displayWidth / getCanvasSize().originalWidth),
+                    y: layer.y * (getCanvasSize().displayHeight / getCanvasSize().originalHeight)
+                  }}
+                  onDragStop={(e, d) => {
+                    // ✅ Wapas original size mein convert karo
+                    const originalX = d.x / (getCanvasSize().displayWidth / getCanvasSize().originalWidth);
+                    const originalY = d.y / (getCanvasSize().displayHeight / getCanvasSize().originalHeight);
+                    operations.updateLayer(layer.id, { x: originalX, y: originalY });
+                  }}
 
                   // Naya onResizeStart handler
                   onResizeStart={(e, direction, ref, delta) => {
@@ -417,13 +310,22 @@ const EditorCanvas = ({
                     });
                   }}
 
-                  onResizeStop={(e, direction, ref, delta, position) =>
+                  onResizeStop={(e, direction, ref, delta, position) => {
+                    // ✅ Wapas original size mein convert karo
+                    const displayToOriginalScale = getCanvasSize().originalWidth / getCanvasSize().displayWidth;
+                    const newWidth = parseInt(ref.style.width, 10) * displayToOriginalScale;
+                    const newHeight = parseInt(ref.style.height, 10) * displayToOriginalScale;
+                    const newX = position.x * displayToOriginalScale;
+                    const newY = position.y * displayToOriginalScale;
+
                     operations.updateLayer(layer.id, {
-                      width: parseInt(ref.style.width, 10),
-                      height: parseInt(ref.style.height, 10),
-                      ...position,
-                    })
-                  }
+                      width: newWidth,
+                      height: newHeight,
+                      x: newX,
+                      y: newY,
+                    });
+                  }}
+
 
                   // Naya prop add karo for better control
                   lockAspectRatio={resizeData.isShiftPressed} // This will lock aspect when Shift is pressed
@@ -487,18 +389,28 @@ const EditorCanvas = ({
                           width: "100%",
                           height: "100%",
                           position: "relative",
-                          transform: `scaleY(1)`,
+                          // transform: `scaleY(1)`,
                           // transform: `rotate(${layer.rotation || 0}deg)`,
-                          transformOrigin: "center center"
+                          // transformOrigin: "center center"
+                          //  transform: `scale(${getCanvasSize().scaleFactor})`,
+                          // transformOrigin: "0 0"
                         }}>
-                          <ThreeWarpedImage
-                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
-                            src={layer.src}
-                            corners={layer.corners}
-                            width={layer.width}
-                            height={layer.height}
-                            fit={layer.fit || "contain"}
-                          />
+                          <div style={{
+                            width: layer.width,
+                            height: layer.height,
+                            position: "relative",
+                            transform: `scale(${getCanvasSize().displayWidth / getCanvasSize().originalWidth})`,  // ← scaling yahan
+                            transformOrigin: "0 0"
+                          }}>
+                            <ThreeWarpedImage
+                              key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+                              src={layer.src}
+                              corners={layer.corners}
+                              width={layer.width}
+                              height={layer.height}
+                              fit={layer.fit || "contain"}
+                            />
+                          </div>
                         </div>
                       ) : (
                         // Normal image (no perspective)
@@ -538,18 +450,28 @@ const EditorCanvas = ({
                           width: "100%",
                           height: "100%",
                           position: "relative",
-                          transform: `scaleY(1)`,
+                          // transform: `scaleY(1)`,
+                          // transform: `scale(${getCanvasSize().scaleFactor})`,
                           // transform: `rotate(${layer.rotation || 0}deg)`,
-                          transformOrigin: "center center"
+                          // transformOrigin: "center center"
+                          // transformOrigin: "0 0"
                         }}>
-                          <ThreeWarpedImage
-                            key={`${layer.id}-${JSON.stringify(layer.corners)}`}
-                            src={layer.imageSrc}
-                            corners={layer.corners}
-                            width={layer.width}
-                            height={layer.height}
-                            fit={layer.fit || "cover"}
-                          />
+                          <div style={{
+                            width: layer.width,
+                            height: layer.height,
+                            position: "relative",
+                            transform: `scale(${getCanvasSize().displayWidth / getCanvasSize().originalWidth})`,
+                            transformOrigin: "0 0"
+                          }}>
+                            <ThreeWarpedImage
+                              key={`${layer.id}-${JSON.stringify(layer.corners)}`}
+                              src={layer.imageSrc}
+                              corners={layer.corners}
+                              width={layer.width}
+                              height={layer.height}
+                              fit={layer.fit || "cover"}
+                            />
+                          </div>
                         </div>
                       )
                         :
@@ -609,7 +531,7 @@ const EditorCanvas = ({
                               >
                                 {layer.name || "Print Area"}
                                 <br />
-                                {layer.width} × {layer.height}
+                                {Math.round(layer.width)} × {Math.round(layer.height)}
                                 <br />
                                 <span style={{ fontSize: 10, color: "#888", fontWeight: "normal" }}>
                                   Upload image from properties panel
@@ -622,6 +544,35 @@ const EditorCanvas = ({
 
                     {/* Perspective Handles - 4 points */}
                     {showPerspectiveHandles && layer.corners && (
+                      <>
+                        {layer.corners.slice(0, 4).map((corner, index) => {
+                          // ✅ Display size ke hisaab se coordinates scale karo
+                          const scaleFactor = getCanvasSize().displayWidth / getCanvasSize().originalWidth;
+                          const displayX = corner.x * scaleFactor;
+                          const displayY = corner.y * scaleFactor;
+
+                          return (
+                            <div
+                              key={`corner-${index}`}
+                              onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
+                              style={{
+                                position: "absolute",
+                                left: displayX - 6,  // ← scaled coordinates
+                                top: displayY - 6,   // ← scaled coordinates
+                                width: 12,
+                                height: 12,
+                                backgroundColor: "#f59e0b",
+                                borderRadius: "50%",
+                                border: "2px solid white",
+                                cursor: "move",
+                                zIndex: 9999,
+                              }}
+                            />
+                          );
+                        })}
+                      </>
+                    )}
+                    {/* {showPerspectiveHandles && layer.corners && (
                       <>
                         {layer.corners.slice(0, 4).map((corner, index) => ( // ✅ Only 4 points
                           <div
@@ -644,7 +595,7 @@ const EditorCanvas = ({
                           />
                         ))}
                       </>
-                    )}
+                    )} */}
 
                     {/* Rotation Handle */}
                     {showRotationHandle && (
@@ -662,8 +613,9 @@ const EditorCanvas = ({
         </div>
       ) : (
         <span className="text-gray-400 text-lg">No mockup selected</span>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

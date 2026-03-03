@@ -145,6 +145,98 @@ function Editor() {
     setSelectedLayerId(newLayer.id);
   };
 
+  // const addImageLayerFromFile = (file) => {
+  //   if (!file) return;
+  //   const url = URL.createObjectURL(file);
+
+  //   const img = new Image();
+  //   img.onload = function () {
+  //     const naturalWidth = this.naturalWidth;
+  //     const naturalHeight = this.naturalHeight;
+
+  //     const canvasSize = getCanvasSize();
+
+  //     // ✅ NEW: Calculate maximum size for uploaded image (40% of canvas)
+  //     // const maxCanvasWidth = canvasSize.width * 0.4;  // 40% of canvas width
+  //     // const maxCanvasHeight = canvasSize.height * 0.4; // 40% of canvas height
+
+  //     // let finalWidth = naturalWidth;
+  //     // let finalHeight = naturalHeight;
+
+  //     // // Scale down if image is larger than allowed size
+  //     // if (naturalWidth > maxCanvasWidth || naturalHeight > maxCanvasHeight) {
+  //     //   const widthRatio = maxCanvasWidth / naturalWidth;
+  //     //   const heightRatio = maxCanvasHeight / naturalHeight;
+  //     //   const minRatio = Math.min(widthRatio, heightRatio);
+
+  //     //   finalWidth = Math.floor(naturalWidth * minRatio);
+  //     //   finalHeight = Math.floor(naturalHeight * minRatio);
+  //     // }
+  //     let finalWidth = naturalWidth;
+  //     let finalHeight = naturalHeight;
+
+  //     // Only scale DOWN if image is bigger than canvas
+  //     if (naturalWidth > canvasSize.width || naturalHeight > canvasSize.height) {
+  //       const widthRatio = canvasSize.width / naturalWidth;
+  //       const heightRatio = canvasSize.height / naturalHeight;
+  //       const scaleRatio = Math.min(widthRatio, heightRatio);
+
+  //       finalWidth = Math.floor(naturalWidth * scaleRatio);
+  //       finalHeight = Math.floor(naturalHeight * scaleRatio);
+  //     }
+
+
+  //     // Also ensure minimum size for very small images
+  //     const minSize = Math.min(canvasSize.width, canvasSize.height) * 0.15;
+  //     if (finalWidth < minSize || finalHeight < minSize) {
+  //       const scaleUp = minSize / Math.min(finalWidth, finalHeight);
+  //       finalWidth = Math.floor(finalWidth * scaleUp);
+  //       finalHeight = Math.floor(finalHeight * scaleUp);
+  //     }
+
+  //     // Center position
+  //     const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //     const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //     const newLayer = {
+  //       id: `layer-${Date.now()}`,
+  //       type: "image",
+  //       src: url,
+  //       name: file.name || "Image Layer",
+  //       x: x,
+  //       y: y,
+  //       width: finalWidth,
+  //       height: finalHeight,
+  //       _naturalWidth: naturalWidth,
+  //       _naturalHeight: naturalHeight,
+  //       rotation: 0,
+  //       opacity: 1,
+  //       visible: true,
+  //       fit: "contain",
+  //       locked: false,
+  //       perspective: 0,
+  //       rotateX: 0,
+  //       rotateY: 0,
+  //       rotateZ: 0,
+  //       skewX: 0,
+  //       skewY: 0,
+  //       transformOrigin: "center center",
+  //       enablePerspective: false,
+  //       corners: [
+  //         { x: 0, y: 0 },
+  //         { x: finalWidth, y: 0 },
+  //         { x: finalWidth, y: finalHeight },
+  //         { x: 0, y: finalHeight }
+  //       ]
+  //     };
+
+  //     setLayersWithHistory((prev) => [...prev, newLayer]);
+  //     setSelectedLayerId(newLayer.id);
+  //   };
+  //   img.src = url;
+  // };
+
+
   const addImageLayerFromFile = (file) => {
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -155,48 +247,34 @@ function Editor() {
       const naturalHeight = this.naturalHeight;
 
       const canvasSize = getCanvasSize();
+      // ✅ ORIGINAL dimensions use karo
+      const originalWidth = canvasSize.originalWidth;
+      const originalHeight = canvasSize.originalHeight;
 
-      // ✅ NEW: Calculate maximum size for uploaded image (40% of canvas)
-      // const maxCanvasWidth = canvasSize.width * 0.4;  // 40% of canvas width
-      // const maxCanvasHeight = canvasSize.height * 0.4; // 40% of canvas height
-
-      // let finalWidth = naturalWidth;
-      // let finalHeight = naturalHeight;
-
-      // // Scale down if image is larger than allowed size
-      // if (naturalWidth > maxCanvasWidth || naturalHeight > maxCanvasHeight) {
-      //   const widthRatio = maxCanvasWidth / naturalWidth;
-      //   const heightRatio = maxCanvasHeight / naturalHeight;
-      //   const minRatio = Math.min(widthRatio, heightRatio);
-
-      //   finalWidth = Math.floor(naturalWidth * minRatio);
-      //   finalHeight = Math.floor(naturalHeight * minRatio);
-      // }
       let finalWidth = naturalWidth;
       let finalHeight = naturalHeight;
 
-      // Only scale DOWN if image is bigger than canvas
-      if (naturalWidth > canvasSize.width || naturalHeight > canvasSize.height) {
-        const widthRatio = canvasSize.width / naturalWidth;
-        const heightRatio = canvasSize.height / naturalHeight;
+      // Only scale DOWN if image is bigger than canvas (original size se compare)
+      if (naturalWidth > originalWidth || naturalHeight > originalHeight) {
+        const widthRatio = originalWidth / naturalWidth;
+        const heightRatio = originalHeight / naturalHeight;
         const scaleRatio = Math.min(widthRatio, heightRatio);
 
         finalWidth = Math.floor(naturalWidth * scaleRatio);
         finalHeight = Math.floor(naturalHeight * scaleRatio);
       }
 
-
-      // Also ensure minimum size for very small images
-      const minSize = Math.min(canvasSize.width, canvasSize.height) * 0.15;
+      // Also ensure minimum size for very small images (original size ke hisaab se)
+      const minSize = Math.min(originalWidth, originalHeight) * 0.15;
       if (finalWidth < minSize || finalHeight < minSize) {
         const scaleUp = minSize / Math.min(finalWidth, finalHeight);
         finalWidth = Math.floor(finalWidth * scaleUp);
         finalHeight = Math.floor(finalHeight * scaleUp);
       }
 
-      // Center position
-      const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
-      const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+      // Center position (original coordinates)
+      const x = Math.max(0, (originalWidth - finalWidth) / 2);
+      const y = Math.max(0, (originalHeight - finalHeight) / 2);
 
       const newLayer = {
         id: `layer-${Date.now()}`,
@@ -235,7 +313,6 @@ function Editor() {
     };
     img.src = url;
   };
-
 
   const handleFileInputChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -433,6 +510,191 @@ function Editor() {
   };
 
   // Replace your initial useEffect with this optimized version
+  // useEffect(() => {
+  //   const loadEditorData = async () => {
+  //     // 1. First load mockup
+  //     const savedMockup = localStorage.getItem("mockupToEdit");
+  //     if (savedMockup) {
+  //       const parsed = JSON.parse(savedMockup);
+  //       setMockup(parsed);
+  //     }
+
+  //     // 2. Try to load saved layers from API
+  //     if (editId) {
+  //       try {
+  //         const response = await getLayersByProductId(editId);
+
+  //         if (response.success && response.data && response.data.length > 0) {
+  //           // Format and set layers
+  //           const formattedLayers = response.data.map(layer => {
+  //             const baseLayer = {
+  //               id: layer.id || layer._id,
+  //               _id: layer._id,
+  //               type: layer.type,
+  //               x: layer.x,
+  //               y: layer.y,
+  //               width: layer.width,
+  //               height: layer.height,
+  //               rotation: layer.rotation || 0,
+  //               opacity: layer.opacity !== undefined ? layer.opacity : 1,
+  //               locked: !!layer.locked,
+  //               visible: layer.visible !== false,
+  //               name: layer.name || "",
+  //               // Add other common fields if they exist
+  //               ...(layer.productId && { productId: layer.productId }),
+  //             };
+
+  //             // Add type-specific fields
+  //             switch (layer.type) {
+  //               case "background":
+  //                 return {
+  //                   ...baseLayer,
+  //                   src: layer.src,
+  //                   _naturalWidth: layer._naturalWidth,
+  //                   _naturalHeight: layer._naturalHeight
+  //                 };
+
+  //               case "text":
+  //                 return {
+  //                   ...baseLayer,
+  //                   text: layer.name || "New Text", // Ensure text field is included
+  //                   fontSize: layer.fontSize || 22,
+  //                   color: layer.color || "#000000",
+  //                 };
+
+  //               case "printarea":
+  //                 return {
+  //                   ...baseLayer,
+  //                   name: layer.name || "",
+  //                   _naturalWidth: layer._naturalWidth,
+  //                   _naturalHeight: layer._naturalHeight,
+  //                   hasImage: !!layer.hasImage,
+  //                   imageSrc: layer.imageSrc || null,
+  //                   fit: layer.fit || "cover",
+  //                   border: layer.border !== false,
+  //                   perspective: layer.perspective || 0,
+  //                   rotateX: layer.rotateX || 0,
+  //                   rotateY: layer.rotateY || 0,
+  //                   rotateZ: layer.rotateZ || 0,
+  //                   skewX: layer.skewX || 0,
+  //                   skewY: layer.skewY || 0,
+  //                   transformOrigin: layer.transformOrigin || "center center",
+  //                   enablePerspective: !!layer.enablePerspective,
+  //                   corners: layer.corners || [
+  //                     { x: 0, y: 0 },
+  //                     { x: layer.width || 0, y: 0 },
+  //                     { x: layer.width || 0, y: layer.height || 0 },
+  //                     { x: 0, y: layer.height || 0 }
+  //                   ]
+  //                 };
+
+  //               case "image":
+  //                 return {
+  //                   ...baseLayer,
+  //                   src: layer.src,
+  //                   _naturalWidth: layer._naturalWidth,
+  //                   _naturalHeight: layer._naturalHeight,
+  //                   fit: layer.fit || "contain",
+  //                   perspective: layer.perspective || 0,
+  //                   rotateX: layer.rotateX || 0,
+  //                   rotateY: layer.rotateY || 0,
+  //                   rotateZ: layer.rotateZ || 0,
+  //                   skewX: layer.skewX || 0,
+  //                   skewY: layer.skewY || 0,
+  //                   transformOrigin: layer.transformOrigin || "center center",
+  //                   enablePerspective: !!layer.enablePerspective,
+  //                   corners: layer.corners || [
+  //                     { x: 0, y: 0 },
+  //                     { x: layer.width || 0, y: 0 },
+  //                     { x: layer.width || 0, y: layer.height || 0 },
+  //                     { x: 0, y: layer.height || 0 }
+  //                   ]
+  //                 };
+
+  //               default:
+  //                 return baseLayer;
+  //             }
+  //           });
+
+  //           setLayers(formattedLayers);
+
+  //           // Select last layer if available
+  //           if (formattedLayers.length > 0) {
+  //             setSelectedLayerId(formattedLayers[formattedLayers.length - 1].id);
+  //           }
+
+  //           return; // Exit early if we have saved layers
+  //         }
+  //       } catch (error) {
+  //         console.error("Failed to load saved layers:", error);
+  //       }
+  //     }
+
+  //     // 3. Fallback: Create background from mockup
+  //     if (savedMockup) {
+  //       const parsed = JSON.parse(savedMockup);
+  //       const img = new Image();
+  //       img.onload = function () {
+  //         const naturalWidth = this.naturalWidth;
+  //         const naturalHeight = this.naturalHeight;
+
+  //         // const MAX_DISPLAY_SIZE = 1000;
+  //         // let displayWidth = naturalWidth;
+  //         // let displayHeight = naturalHeight;
+
+  //         // if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+  //         //   const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+  //         //   const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+  //         //   const minRatio = Math.min(widthRatio, heightRatio);
+
+  //         //   displayWidth = Math.floor(naturalWidth * minRatio);
+  //         //   displayHeight = Math.floor(naturalHeight * minRatio);
+  //         // }
+
+  //         // DON'T UPSCALE: use original natural dimensions, but scale DOWN if larger than viewport
+  //         let displayWidth = naturalWidth;
+  //         let displayHeight = naturalHeight;
+
+  //         // compute available space (90% of viewport)
+  //         const maxViewportWidth = window.innerWidth * 0.9;
+  //         const maxViewportHeight = window.innerHeight * 0.9;
+
+  //         // compute ratio to scale down if needed; the `1` prevents upscaling
+  //         const widthRatio = maxViewportWidth / naturalWidth;
+  //         const heightRatio = maxViewportHeight / naturalHeight;
+  //         const scaleDownRatio = Math.min(widthRatio, heightRatio, 1); // <= 1
+
+  //         displayWidth = Math.floor(naturalWidth * scaleDownRatio);
+  //         displayHeight = Math.floor(naturalHeight * scaleDownRatio);
+
+
+  //         setLayersWithHistory([
+  //           {
+  //             id: "layer-bg",
+  //             type: "background",
+  //             src: parsed.url,
+  //             x: 0,
+  //             y: 0,
+  //             width: displayWidth,
+  //             height: displayHeight,
+  //             _naturalWidth: naturalWidth,
+  //             _naturalHeight: naturalHeight,
+  //             rotation: 0,
+  //             opacity: 1,
+  //             locked: true,
+  //             visible: true,
+  //           }
+  //         ], { recordHistory: false });
+
+  //         setSelectedLayerId("layer-bg");
+  //       };
+  //       img.src = parsed.url;
+  //     }
+  //   };
+
+  //   loadEditorData();
+  // }, [editId]);
+  // ============================== above working
   useEffect(() => {
     const loadEditorData = async () => {
       // 1. First load mockup
@@ -448,23 +710,47 @@ function Editor() {
           const response = await getLayersByProductId(editId);
 
           if (response.success && response.data && response.data.length > 0) {
-            // Format and set layers
+            // Pehle canvas size calculate karo (background image ke through)
+            const bgLayer = response.data.find(l => l.type === "background");
+            let canvasWidth = bgLayer?._naturalWidth || 800;
+            let canvasHeight = bgLayer?._naturalHeight || 800;
+
+            if (bgLayer && bgLayer._naturalWidth && bgLayer._naturalHeight) {
+              canvasWidth = bgLayer._naturalWidth;
+              canvasHeight = bgLayer._naturalHeight;
+            } else if (savedMockup) {
+              // Agar background layer nahi hai to mockup se size lo
+              const img = new Promise((resolve) => {
+                const image = new Image();
+                image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+                image.src = JSON.parse(savedMockup).url;
+              });
+              const dimensions = await img;
+              canvasWidth = dimensions.width;
+              canvasHeight = dimensions.height;
+            }
+
+            // Format and set layers with PERCENTAGE to ABSOLUTE conversion
             const formattedLayers = response.data.map(layer => {
+              // Convert percentage to absolute values
+              const x = layer.x_percent !== undefined ? (layer.x_percent / 100) * canvasWidth : layer.x || 0;
+              const y = layer.y_percent !== undefined ? (layer.y_percent / 100) * canvasHeight : layer.y || 0;
+              const width = layer.width_percent !== undefined ? (layer.width_percent / 100) * canvasWidth : layer.width || 100;
+              const height = layer.height_percent !== undefined ? (layer.height_percent / 100) * canvasHeight : layer.height || 100;
+
               const baseLayer = {
                 id: layer.id || layer._id,
                 _id: layer._id,
                 type: layer.type,
-                x: layer.x,
-                y: layer.y,
-                width: layer.width,
-                height: layer.height,
+                x: x,
+                y: y,
+                width: width,
+                height: height,
                 rotation: layer.rotation || 0,
                 opacity: layer.opacity !== undefined ? layer.opacity : 1,
                 locked: !!layer.locked,
                 visible: layer.visible !== false,
                 name: layer.name || "",
-                // Add other common fields if they exist
-                ...(layer.productId && { productId: layer.productId }),
               };
 
               // Add type-specific fields
@@ -474,13 +760,17 @@ function Editor() {
                     ...baseLayer,
                     src: layer.src,
                     _naturalWidth: layer._naturalWidth,
-                    _naturalHeight: layer._naturalHeight
+                    _naturalHeight: layer._naturalHeight,
+                    x: 0,
+                    y: 0,
+                    width: canvasWidth,
+                    height: canvasHeight,
                   };
 
                 case "text":
                   return {
                     ...baseLayer,
-                    text: layer.name || "New Text", // Ensure text field is included
+                    text: layer.name || "New Text",
                     fontSize: layer.fontSize || 22,
                     color: layer.color || "#000000",
                   };
@@ -505,9 +795,9 @@ function Editor() {
                     enablePerspective: !!layer.enablePerspective,
                     corners: layer.corners || [
                       { x: 0, y: 0 },
-                      { x: layer.width || 0, y: 0 },
-                      { x: layer.width || 0, y: layer.height || 0 },
-                      { x: 0, y: layer.height || 0 }
+                      { x: width, y: 0 },
+                      { x: width, y: height },
+                      { x: 0, y: height }
                     ]
                   };
 
@@ -528,9 +818,9 @@ function Editor() {
                     enablePerspective: !!layer.enablePerspective,
                     corners: layer.corners || [
                       { x: 0, y: 0 },
-                      { x: layer.width || 0, y: 0 },
-                      { x: layer.width || 0, y: layer.height || 0 },
-                      { x: 0, y: layer.height || 0 }
+                      { x: width, y: 0 },
+                      { x: width, y: height },
+                      { x: 0, y: height }
                     ]
                   };
 
@@ -554,6 +844,69 @@ function Editor() {
       }
 
       // 3. Fallback: Create background from mockup
+      // if (savedMockup) {
+      //   const parsed = JSON.parse(savedMockup);
+      //   const img = new Image();
+      //   img.onload = function () {
+      //     const naturalWidth = this.naturalWidth;
+      //     const naturalHeight = this.naturalHeight;
+
+      //     // const MAX_DISPLAY_SIZE = 1000;
+      //     // let displayWidth = naturalWidth;
+      //     // let displayHeight = naturalHeight;
+
+      //     // if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
+      //     //   const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
+      //     //   const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
+      //     //   const minRatio = Math.min(widthRatio, heightRatio);
+
+      //     //   displayWidth = Math.floor(naturalWidth * minRatio);
+      //     //   displayHeight = Math.floor(naturalHeight * minRatio);
+      //     // }
+
+      //     // DON'T UPSCALE: use original natural dimensions, but scale DOWN if larger than viewport
+      //     let displayWidth = naturalWidth;
+      //     let displayHeight = naturalHeight;
+
+      //     // compute available space (90% of viewport)
+      //     const maxViewportWidth = window.innerWidth * 0.9;
+      //     const maxViewportHeight = window.innerHeight * 0.9;
+
+      //     // compute ratio to scale down if needed; the `1` prevents upscaling
+      //     const widthRatio = maxViewportWidth / naturalWidth;
+      //     const heightRatio = maxViewportHeight / naturalHeight;
+      //     const scaleDownRatio = Math.min(widthRatio, heightRatio, 1); // <= 1
+
+      //     displayWidth = Math.floor(naturalWidth * scaleDownRatio);
+      //     displayHeight = Math.floor(naturalHeight * scaleDownRatio);
+
+
+      //     setLayersWithHistory([
+      //       {
+      //         id: "layer-bg",
+      //         type: "background",
+      //         src: parsed.url,
+      //         x: 0,
+      //         y: 0,
+      //         width: displayWidth,
+      //         height: displayHeight,
+      //         _naturalWidth: naturalWidth,
+      //         _naturalHeight: naturalHeight,
+      //         rotation: 0,
+      //         opacity: 1,
+      //         locked: true,
+      //         visible: true,
+      //       }
+      //     ], { recordHistory: false });
+
+      //     setSelectedLayerId("layer-bg");
+      //   };
+      //   img.src = parsed.url;
+      // }
+
+      // Editor.js - initial load mein (around line 280-300)
+
+      // Fallback: Create background from mockup
       if (savedMockup) {
         const parsed = JSON.parse(savedMockup);
         const img = new Image();
@@ -561,36 +914,7 @@ function Editor() {
           const naturalWidth = this.naturalWidth;
           const naturalHeight = this.naturalHeight;
 
-          // const MAX_DISPLAY_SIZE = 1000;
-          // let displayWidth = naturalWidth;
-          // let displayHeight = naturalHeight;
-
-          // if (naturalWidth > MAX_DISPLAY_SIZE || naturalHeight > MAX_DISPLAY_SIZE) {
-          //   const widthRatio = MAX_DISPLAY_SIZE / naturalWidth;
-          //   const heightRatio = MAX_DISPLAY_SIZE / naturalHeight;
-          //   const minRatio = Math.min(widthRatio, heightRatio);
-
-          //   displayWidth = Math.floor(naturalWidth * minRatio);
-          //   displayHeight = Math.floor(naturalHeight * minRatio);
-          // }
-
-          // DON'T UPSCALE: use original natural dimensions, but scale DOWN if larger than viewport
-          let displayWidth = naturalWidth;
-          let displayHeight = naturalHeight;
-
-          // compute available space (90% of viewport)
-          const maxViewportWidth = window.innerWidth * 0.9;
-          const maxViewportHeight = window.innerHeight * 0.9;
-
-          // compute ratio to scale down if needed; the `1` prevents upscaling
-          const widthRatio = maxViewportWidth / naturalWidth;
-          const heightRatio = maxViewportHeight / naturalHeight;
-          const scaleDownRatio = Math.min(widthRatio, heightRatio, 1); // <= 1
-
-          displayWidth = Math.floor(naturalWidth * scaleDownRatio);
-          displayHeight = Math.floor(naturalHeight * scaleDownRatio);
-
-
+          // ✅ DIRECTLY USE ORIGINAL SIZE - NO SCALING
           setLayersWithHistory([
             {
               id: "layer-bg",
@@ -598,8 +922,8 @@ function Editor() {
               src: parsed.url,
               x: 0,
               y: 0,
-              width: displayWidth,
-              height: displayHeight,
+              width: naturalWidth,        // ← Original width
+              height: naturalHeight,      // ← Original height
               _naturalWidth: naturalWidth,
               _naturalHeight: naturalHeight,
               rotation: 0,
@@ -618,7 +942,8 @@ function Editor() {
     loadEditorData();
   }, [editId]);
 
-  // ================= FRONTEND =================
+  // Editor.js - onSave function me
+
   const onSave = async () => {
     try {
       if (!editId) {
@@ -627,7 +952,33 @@ function Editor() {
       }
       setIsSaving(true);
 
-      // Collect ALL layers that have blob URLs (printarea/image/background)
+      const canvasSize = getCanvasSize();
+      // ✅ Use ORIGINAL dimensions for percentage calculation
+      const originalWidth = canvasSize.originalWidth || canvasSize.width;
+      const originalHeight = canvasSize.originalHeight || canvasSize.height;
+
+      // Convert ALL layers positions to PERCENTAGE before saving
+      const layersWithPercentage = layers.map(layer => {
+        const layerCopy = { ...layer };
+
+        if (layer.type === "background") {
+          layerCopy.x = 0;
+          layerCopy.y = 0;
+          layerCopy.width = originalWidth;
+          layerCopy.height = originalHeight;
+          return layerCopy;
+        }
+
+        // ✅ Use ORIGINAL dimensions for percentage calculation
+        layerCopy.x_percent = (layer.x / originalWidth) * 100;
+        layerCopy.y_percent = (layer.y / originalHeight) * 100;
+        layerCopy.width_percent = (layer.width / originalWidth) * 100;
+        layerCopy.height_percent = (layer.height / originalHeight) * 100;
+
+        return layerCopy;
+      });
+
+      // Collect ALL layers that have blob URLs
       const layersWithBlobs = layers.filter(layer => {
         if (layer.type === "printarea" && layer.hasImage && layer.imageSrc && layer.imageSrc.startsWith("blob:")) return true;
         if (layer.type === "image" && layer.src && layer.src.startsWith("blob:")) return true;
@@ -635,10 +986,8 @@ function Editor() {
         return false;
       });
 
-      console.log("layersWithBlobs:", layersWithBlobs.map(l => ({ id: l.id, type: l.type })));
-
       // Prepare serializable layers JSON (replace blobs with placeholder)
-      const serializable = layers.map(l => {
+      const serializable = layersWithPercentage.map(l => {
         const layerCopy = { ...l };
         layerCopy.productId = editId;
         delete layerCopy.__v;
@@ -646,9 +995,6 @@ function Editor() {
           delete layerCopy._id;
         }
         if (layerCopy._id && !/^[0-9a-fA-F]{24}$/.test(layerCopy._id.toString())) delete layerCopy._id;
-
-        // Convert numeric/boolean as before (optional, keep as you had)
-        // ...
 
         // Mark blob placeholders for all types
         if (layerCopy.type === "printarea" && layerCopy.imageSrc && layerCopy.imageSrc.startsWith("blob:")) {
@@ -668,10 +1014,8 @@ function Editor() {
       let savedData = null;
 
       if (layersWithBlobs.length > 0) {
-        // Use multipart upload
         savedData = await uploadLayersWithImages(editId, serializable, layersWithBlobs, "PUT");
       } else {
-        // No blobs, plain JSON update
         const updateResponse = await updateLayers(editId, serializable);
         if (!updateResponse.success) throw new Error(updateResponse.message || "Update failed");
         savedData = updateResponse.data || updateResponse.layers;
@@ -692,7 +1036,6 @@ function Editor() {
       setIsSaving(false);
     }
   };
-
 
   // ================= UPLOAD HELPER =================
   const uploadLayersWithImages = async (productId, layersData, layersWithBlobs, method = "PUT") => {
@@ -768,35 +1111,71 @@ function Editor() {
     }
   };
 
-
   const getCanvasSize = () => {
-    // 1. Pehle background layer dekho
     const bgLayer = layers.find(l => l.type === "background");
 
     if (bgLayer && bgLayer._naturalWidth && bgLayer._naturalHeight) {
-      // ✅ ALWAYS use original background size for canvas
       const originalWidth = bgLayer._naturalWidth;
       const originalHeight = bgLayer._naturalHeight;
 
-      // ✅ Calculate maximum available screen space (90% of viewport)
-      const maxViewportWidth = window.innerWidth * 0.9;
-      const maxViewportHeight = window.innerHeight * 0.9;
+      // Viewport ke hisaab se display size calculate karo
+      const maxViewportWidth = window.innerWidth * 0.6; // Panels ke liye space
+      const maxViewportHeight = window.innerHeight * 0.8;
 
-      // ✅ Calculate scaling to fit within viewport while maintaining aspect ratio
       const widthRatio = maxViewportWidth / originalWidth;
       const heightRatio = maxViewportHeight / originalHeight;
-      const minRatio = Math.min(widthRatio, heightRatio, 1); // Don't scale up beyond original
+      const displayScale = Math.min(widthRatio, heightRatio, 1);
 
       return {
-        width: Math.floor(originalWidth * minRatio),
-        height: Math.floor(originalHeight * minRatio),
-        scaleFactor: minRatio
+        // ✅ Display ke liye scaled size
+        displayWidth: Math.floor(originalWidth * displayScale),
+        displayHeight: Math.floor(originalHeight * displayScale),
+        // ✅ Original size (calculation ke liye)
+        originalWidth: originalWidth,
+        originalHeight: originalHeight,
+        // ✅ Scale factor
+        scaleFactor: displayScale
       };
     }
 
-    // Default - Agar background nahi hai
-    return { width: 800, height: 800, scaleFactor: 1 };
+    // Default
+    return {
+      displayWidth: 800,
+      displayHeight: 800,
+      originalWidth: 800,
+      originalHeight: 800,
+      scaleFactor: 1
+    };
   };
+
+  // const getCanvasSize = () => {
+  //   // 1. Pehle background layer dekho
+  //   const bgLayer = layers.find(l => l.type === "background");
+
+  //   if (bgLayer && bgLayer._naturalWidth && bgLayer._naturalHeight) {
+  //     // ✅ ALWAYS use original background size for canvas
+  //     const originalWidth = bgLayer._naturalWidth;
+  //     const originalHeight = bgLayer._naturalHeight;
+
+  //     // ✅ Calculate maximum available screen space (90% of viewport)
+  //     const maxViewportWidth = window.innerWidth * 0.9;
+  //     const maxViewportHeight = window.innerHeight * 0.9;
+
+  //     // ✅ Calculate scaling to fit within viewport while maintaining aspect ratio
+  //     const widthRatio = maxViewportWidth / originalWidth;
+  //     const heightRatio = maxViewportHeight / originalHeight;
+  //     const minRatio = Math.min(widthRatio, heightRatio, 1); // Don't scale up beyond original
+
+  //     return {
+  //       width: Math.floor(originalWidth * minRatio),
+  //       height: Math.floor(originalHeight * minRatio),
+  //       scaleFactor: minRatio
+  //     };
+  //   }
+
+  //   // Default - Agar background nahi hai
+  //   return { width: 800, height: 800, scaleFactor: 1 };
+  // };
 
   const duplicateLayer = () => {
     if (!selectedLayerId) return;
@@ -850,46 +1229,109 @@ function Editor() {
     window.addEventListener("mouseup", onUp);
   };
 
+  // const addPrintAreaToCanvas = (printArea) => {
+  //   const canvasSize = getCanvasSize();
+
+
+  //   // ✅ Pixels ko inches mein convert karo
+  //   const printAreaWidthInInches = printArea.width / PRINT_DPI;
+  //   const printAreaHeightInInches = printArea.height / PRINT_DPI;
+
+  //   // ✅ Canvas size bhi inches mein convert karo
+  //   const canvasWidthInInches = canvasSize.width / SCREEN_DPI;
+  //   const canvasHeightInInches = canvasSize.height / SCREEN_DPI;
+
+  //   // ✅ Photoshop ki tarah: Printarea ko canvas ke 70-80% tak scale karo
+  //   const maxWidthInInches = canvasWidthInInches * 0.8;
+  //   const maxHeightInInches = canvasHeightInInches * 0.8;
+
+  //   let finalWidthInInches = printAreaWidthInInches;
+  //   let finalHeightInInches = printAreaHeightInInches;
+
+  //   // Agar print area canvas se bara hai, scale down karo
+  //   if (printAreaWidthInInches > maxWidthInInches ||
+  //     printAreaHeightInInches > maxHeightInInches) {
+
+  //     const widthRatio = maxWidthInInches / printAreaWidthInInches;
+  //     const heightRatio = maxHeightInInches / printAreaHeightInInches;
+  //     const minRatio = Math.min(widthRatio, heightRatio);
+
+  //     finalWidthInInches = printAreaWidthInInches * minRatio;
+  //     finalHeightInInches = printAreaHeightInInches * minRatio;
+  //   }
+
+  //   // ✅ Inches ko wapas pixels mein convert (SCREEN DPI use karo)
+  //   // const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
+  //   // const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
+  //   const finalWidth = printArea.width;
+  //   const finalHeight = printArea.height;
+
+  //   // Center position calculate karo
+  //   const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
+  //   const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+
+  //   const newLayer = {
+  //     id: `printarea-${Date.now()}`,
+  //     type: "printarea",
+  //     name: printArea.displayName || "",
+  //     x: x,
+  //     y: y,
+  //     width: finalWidth,
+  //     height: finalHeight,
+  //     _naturalHeight: printArea.height,
+  //     _naturalWidth: printArea.width,
+  //     rotation: 0,
+  //     opacity: 1,
+  //     visible: true,
+  //     hasImage: false,
+  //     imageSrc: null,
+  //     fit: "cover",
+  //     border: true,
+  //     locked: false,
+  //     perspective: 0,
+  //     rotateX: 0,
+  //     rotateY: 0,
+  //     rotateZ: 0,
+  //     skewX: 0,
+  //     skewY: 0,
+  //     transformOrigin: "center center",
+  //     enablePerspective: false,
+  //     corners: [
+  //       { x: 0, y: 0 },
+  //       { x: finalWidth, y: 0 },
+  //       { x: finalWidth, y: finalHeight },
+  //       { x: 0, y: finalHeight }
+  //     ]
+  //   };
+
+  //   setLayersWithHistory((prev) => [...prev, newLayer]);
+  //   setSelectedLayerId(newLayer.id);
+  // };
+
   const addPrintAreaToCanvas = (printArea) => {
     const canvasSize = getCanvasSize();
+    const originalWidth = canvasSize.originalWidth;
+    const originalHeight = canvasSize.originalHeight;
 
+    // Print area ke original dimensions (in pixels)
+    let finalWidth = printArea.width;
+    let finalHeight = printArea.height;
 
-    // ✅ Pixels ko inches mein convert karo
-    const printAreaWidthInInches = printArea.width / PRINT_DPI;
-    const printAreaHeightInInches = printArea.height / PRINT_DPI;
+    // Optional: Scale down agar print area canvas se bada ho (80% tak)
+    const maxWidth = originalWidth * 0.8;
+    const maxHeight = originalHeight * 0.8;
 
-    // ✅ Canvas size bhi inches mein convert karo
-    const canvasWidthInInches = canvasSize.width / SCREEN_DPI;
-    const canvasHeightInInches = canvasSize.height / SCREEN_DPI;
-
-    // ✅ Photoshop ki tarah: Printarea ko canvas ke 70-80% tak scale karo
-    const maxWidthInInches = canvasWidthInInches * 0.8;
-    const maxHeightInInches = canvasHeightInInches * 0.8;
-
-    let finalWidthInInches = printAreaWidthInInches;
-    let finalHeightInInches = printAreaHeightInInches;
-
-    // Agar print area canvas se bara hai, scale down karo
-    if (printAreaWidthInInches > maxWidthInInches ||
-      printAreaHeightInInches > maxHeightInInches) {
-
-      const widthRatio = maxWidthInInches / printAreaWidthInInches;
-      const heightRatio = maxHeightInInches / printAreaHeightInInches;
-      const minRatio = Math.min(widthRatio, heightRatio);
-
-      finalWidthInInches = printAreaWidthInInches * minRatio;
-      finalHeightInInches = printAreaHeightInInches * minRatio;
+    if (finalWidth > maxWidth || finalHeight > maxHeight) {
+      const widthRatio = maxWidth / finalWidth;
+      const heightRatio = maxHeight / finalHeight;
+      const scaleRatio = Math.min(widthRatio, heightRatio);
+      finalWidth = Math.floor(finalWidth * scaleRatio);
+      finalHeight = Math.floor(finalHeight * scaleRatio);
     }
 
-    // ✅ Inches ko wapas pixels mein convert (SCREEN DPI use karo)
-    // const finalWidth = Math.round(finalWidthInInches * SCREEN_DPI);
-    // const finalHeight = Math.round(finalHeightInInches * SCREEN_DPI);
-    const finalWidth = printArea.width;
-    const finalHeight = printArea.height;
-
-    // Center position calculate karo
-    const x = Math.max(0, (canvasSize.width - finalWidth) / 2);
-    const y = Math.max(0, (canvasSize.height - finalHeight) / 2);
+    // Center position (original coordinates)
+    const x = Math.max(0, (originalWidth - finalWidth) / 2);
+    const y = Math.max(0, (originalHeight - finalHeight) / 2);
 
     const newLayer = {
       id: `printarea-${Date.now()}`,
@@ -973,6 +1415,52 @@ function Editor() {
     }
   };
 
+  // const startCornerDrag = (e, layerId, cornerIndex) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  //   const layer = layers.find((l) => l.id === layerId);
+  //   if (!layer) return;
+
+  //   const canvasEl = innerCanvasRef.current;
+  //   if (!canvasEl) return;
+
+  //   const canvasRect = canvasEl.getBoundingClientRect();
+  //   const startX = e.clientX;
+  //   const startY = e.clientY;
+
+  //   // ✅ Use existing corners or create default
+  //   const startCorners = layer.corners || [
+  //     { x: 0, y: 0 },
+  //     { x: layer.width, y: 0 },
+  //     { x: layer.width, y: layer.height },
+  //     { x: 0, y: layer.height }
+  //   ];
+
+  //   const onMove = (ev) => {
+  //     const deltaX = (ev.clientX - startX) / scale;
+  //     const deltaY = (ev.clientY - startY) / scale;
+
+  //     const newCorners = [...startCorners];
+  //     newCorners[cornerIndex] = {
+  //       x: Math.max(0, Math.min(layer.width, startCorners[cornerIndex].x + deltaX)),
+  //       y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
+  //     };
+
+  //     // ✅ DIRECT UPDATE - No transform calculations
+  //     updateLayer(layerId, { corners: newCorners });
+  //   };
+
+  //   const onUp = () => {
+  //     window.removeEventListener("mousemove", onMove);
+  //     window.removeEventListener("mouseup", onUp);
+  //     setDraggingCorner(null);
+  //   };
+
+  //   window.addEventListener("mousemove", onMove);
+  //   window.addEventListener("mouseup", onUp);
+  //   setDraggingCorner({ layerId, cornerIndex });
+  // };
+
   const startCornerDrag = (e, layerId, cornerIndex) => {
     e.stopPropagation();
     e.preventDefault();
@@ -982,11 +1470,13 @@ function Editor() {
     const canvasEl = innerCanvasRef.current;
     if (!canvasEl) return;
 
+    const canvasSize = getCanvasSize();
+    const scaleFactor = canvasSize.displayWidth / canvasSize.originalWidth; // same as before
+
     const canvasRect = canvasEl.getBoundingClientRect();
     const startX = e.clientX;
     const startY = e.clientY;
 
-    // ✅ Use existing corners or create default
     const startCorners = layer.corners || [
       { x: 0, y: 0 },
       { x: layer.width, y: 0 },
@@ -995,8 +1485,9 @@ function Editor() {
     ];
 
     const onMove = (ev) => {
-      const deltaX = (ev.clientX - startX) / scale;
-      const deltaY = (ev.clientY - startY) / scale;
+      // Mouse movement ko original coordinates mein convert karo
+      const deltaX = (ev.clientX - startX) / scale / scaleFactor;
+      const deltaY = (ev.clientY - startY) / scale / scaleFactor;
 
       const newCorners = [...startCorners];
       newCorners[cornerIndex] = {
@@ -1004,7 +1495,6 @@ function Editor() {
         y: Math.max(0, Math.min(layer.height, startCorners[cornerIndex].y + deltaY))
       };
 
-      // ✅ DIRECT UPDATE - No transform calculations
       updateLayer(layerId, { corners: newCorners });
     };
 
@@ -1059,25 +1549,32 @@ function Editor() {
     setLayersWithHistory((prev) => prev.map((l) => (l.id === id ? { ...l, locked: !l.locked } : l)));
   };
 
-  // const handleZoomIn = () => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)));
   const handleZoomIn = () => {
-    setScale((s) => {
-      const newScale = Math.min(4, +(s * 1.2).toFixed(2)); // 20% increment
-      return newScale;
-    });
+    setScale((prev) => Math.min(3, prev + 0.1));
   };
-  // const handleZoomOut = () => setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(2)));
+  // const handleZoomIn = () => {
+  //   setScale((s) => {
+  //     const newScale = Math.min(4, +(s * 1.2).toFixed(2)); // 20% increment
+  //     return newScale;
+  //   });
+  // };
   const handleZoomOut = () => {
-    setScale((s) => {
-      const newScale = Math.max(0.1, +(s / 1.2).toFixed(2)); // 20% decrement
-      return newScale;
-    });
+    setScale((prev) => Math.max(0.3, prev - 0.1));
   };
-  // const handleZoomReset = () => setScale(1);
+  // const handleZoomOut = () => {
+  //   setScale((s) => {
+  //     const newScale = Math.max(0.1, +(s / 1.2).toFixed(2)); // 20% decrement
+  //     return newScale;
+  //   });
+  // };
   const handleZoomReset = () => {
     setScale(1);
-    setCanvasOffset({ x: 0, y: 0 }); // Reset panning bhi
+    setCanvasOffset({ x: 0, y: 0 });
   };
+  // const handleZoomReset = () => {
+  //   setScale(1);
+  //   setCanvasOffset({ x: 0, y: 0 }); // Reset panning bhi
+  // };
 
   // Zoom to fit function add karo (Photoshop ki tarah)
   const handleZoomToFit = () => {
@@ -1088,8 +1585,8 @@ function Editor() {
     const containerHeight = canvasContainer.clientHeight;
     const canvasSize = getCanvasSize();
 
-    const widthRatio = containerWidth / canvasSize.width;
-    const heightRatio = containerHeight / canvasSize.height;
+    const widthRatio = containerWidth / canvasSize.displayWidth;
+    const heightRatio = containerHeight / canvasSize.displayHeight;
     const minRatio = Math.min(widthRatio, heightRatio) * 0.95; // 95% tak
 
     setScale(minRatio);
