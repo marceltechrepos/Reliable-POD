@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; // 1. Navigate import kiya
+import { useNavigate, useParams } from "react-router-dom"; // 1. Navigate import kiya
 import { PRODUCTS } from "../components/Products/productData";
 import { LayoutGrid, List } from "lucide-react";
 
 export default function MyProducts() {
   const navigate = useNavigate(); // 2. Hook initialize kiya
+  const { ProductId } = useParams();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [filterName, setFilterName] = useState("");
@@ -24,7 +25,7 @@ export default function MyProducts() {
     if (filterName) arr = arr.filter(p => p.title === filterName);
     if (productType) arr = arr.filter(p => p.type.toLowerCase().includes(productType.toLowerCase()));
     if (discountOnly) arr = arr.filter(p => p.discount);
-    
+
     if (sort === "newest") arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     if (sort === "oldest") arr.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     return arr;
@@ -49,7 +50,7 @@ export default function MyProducts() {
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-8 px-4 md:py-12 md:px-8" style={{ fontFamily: fontStack }}>
       <div className="max-w-7xl mx-auto">
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -57,13 +58,13 @@ export default function MyProducts() {
           </div>
 
           <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
-            <button 
+            <button
               onClick={() => setView("card")}
               className={`p-2 rounded-lg transition-all ${view === "card" ? "bg-white shadow-sm text-[#f05a28]" : "text-gray-400"}`}
             >
               <LayoutGrid size={20} />
             </button>
-            <button 
+            <button
               onClick={() => setView("list")}
               className={`p-2 rounded-lg transition-all ${view === "list" ? "bg-white shadow-sm text-[#f05a28]" : "text-gray-400"}`}
             >
@@ -79,7 +80,7 @@ export default function MyProducts() {
               const isSelected = selectedProducts.includes(p.id);
               return (
                 <div key={p.id} className="group relative font-sans">
-                  
+
                   <div
                     onClick={() => navigate("/user/single-catalogue")} // 3. SIMPLE URL BAGAIR ID KE
                     className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
@@ -95,7 +96,7 @@ export default function MyProducts() {
                       </div>
                       <div className="flex items-end justify-between">
                         <span className="text-sm font-black text-gray-900">${p.price || '0.00'}</span>
-                        <button 
+                        <button
                           onClick={(e) => toggleSelect(p.id, e)} // Select logic
                           className={`p-1.5 rounded-md transition-all ${isSelected ? "bg-[#f05a28] text-white" : "bg-gray-100 text-gray-400"}`}
                         >
@@ -110,20 +111,20 @@ export default function MyProducts() {
           </div>
         ) : (
           <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden p-4">
-             {/* List View logic */}
-             <table className="w-full">
-                <tbody>
-                  {filtered.map(p => (
-                    <tr key={p.id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
-                      <ProductListRow 
-                        product={p} 
-                        selected={selectedProducts.includes(p.id)} 
-                        toggleSelect={(e) => toggleSelect(p.id, e)} 
-                      />
-                    </tr>
-                  ))}
-                </tbody>
-             </table>
+            {/* List View logic */}
+            <table className="w-full">
+              <tbody>
+                {filtered.map(p => (
+                  <tr key={p.id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
+                    <ProductListRow
+                      product={p}
+                      selected={selectedProducts.includes(p.id)}
+                      toggleSelect={(e) => toggleSelect(p.id, e)}
+                    />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
