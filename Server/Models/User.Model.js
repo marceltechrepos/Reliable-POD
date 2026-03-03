@@ -23,12 +23,13 @@ const UserSchema = new Schema({
     public_id: { type: String, default: "" },
     alt: { type: String, default: "Profile picture" },
   },
-  
+
   NotificationEmail: { type: Boolean, default: false },
   UpdatedEmail: { type: Boolean, default: false },
   PendingOrderEmail: { type: Boolean, default: false },
   OOSEmail: { type: Boolean, default: false },
   AccountOpen: { type: Boolean, default: true },
+  Verified: { type: Boolean, default: false },
 });
 
 const User = model("User", UserSchema);

@@ -16,7 +16,7 @@ import StoreDetail from "./pages/StoreDetail.jsx";
 import Subcatalogue from "./pages/Subcatalogue.jsx";
 import SingleProduct from "./pages/Singleproduct.jsx";
 import DynamicDesignTool from "./pages/DynamicDesignTool.jsx";
-import Productcatloge from "./pages/productcatloge";
+import Productcatalogue from "./pages/Productcatalogue";
 import Singlecatalogue from "./pages/Singlecatalogue.jsx";
 
 
@@ -29,23 +29,23 @@ function App() {
       <Routes>
 
         {/* ADMIN ROUTES */}
-        {/* <Route element={<ProtectedRoute adminOnly={true} />}> */}
+        {/* <Route element={<ProtectedRoute adminOnly={true}fs />}> */}
         <Route path="/user" element={<UserLayout />}>
-          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="dashboard" element={< UserDashboard />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="products" element={<MyProducts />} />
+          <Route path="products/:ProductId" element={<MyProducts />} />
           <Route path="catalogue" element={<Catalogue />} />
           <Route path="prices" element={<PriceList />} />
           <Route path="stores" element={<Stores />} />
           <Route path="stores/:id" element={<StoreDetail />} />
           <Route path="settings" element={<Settings />} />
           <Route path="contact" element={<ContactUs />} />
-          <Route path="sub-catalogue" element={<Subcatalogue />} />
+          <Route path="sub-catalogue/:subCategoryId" element={<Subcatalogue />} />
           <Route path="/user/detail-product/" element={<SingleProduct />} />
-           <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
-            <Route path="Product-catloge" element={<Productcatloge />} />
+          <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
+          <Route path="Productcatalogue" element={<Productcatalogue />} />
 
-          <Route path="single-catalogue" element={<Singlecatalogue />} />  
+          <Route path="single-catalogue" element={<Singlecatalogue />} />
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}

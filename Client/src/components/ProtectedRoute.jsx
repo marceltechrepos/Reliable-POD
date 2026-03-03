@@ -60,7 +60,7 @@ const ProtectedRoute = ({ adminOnly = false, redirectPath = "/admin/login" }) =>
 
         checkAuth();
     }, []);
- 
+
     if (isAuthenticated === null) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -70,11 +70,14 @@ const ProtectedRoute = ({ adminOnly = false, redirectPath = "/admin/login" }) =>
     }
 
     if (!isAuthenticated) {
-        return <Navigate to={redirectPath}  replace />;
+        return <Navigate to={redirectPath} replace />;
     }
 
     // Check admin access
     if (adminOnly && !isAdmin) {
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         toast.error("Access denied. Admin privileges required.");
         return <Navigate to={redirectPath} replace />;
     }

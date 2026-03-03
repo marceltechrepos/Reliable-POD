@@ -13,7 +13,7 @@ import {
   getCategoryChildren,
   getRootCategoriesDropdown,
 } from "../Controllers/Category.Controller.js";
-import { isAdmin } from "../Middlewares/Authentication/Auth.middleware.js";
+import { isAdmin, isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const CategoryRouter = Router();
 
@@ -28,7 +28,7 @@ CategoryRouter.post(
 
 CategoryRouter.get(
   "/Category/get-all-category",
-  isAdmin,
+  isLogin,
   getAllCategories
 );
 
@@ -40,7 +40,7 @@ CategoryRouter.get(
 
 CategoryRouter.get(
   "/Category/get-category-children",
-  isAdmin,
+  isLogin,
   getCategoryChildren
 );
 
