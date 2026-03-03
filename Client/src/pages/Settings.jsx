@@ -15,7 +15,7 @@ import {
     updateProvider, deleteProvider
 } from "../api/provider.api.js"
 import {
-    getAllCategory, createCategory, updateCategory, deleteCategory
+    getAllCategory,
 } from "../api/category.api.js"
 import {
     BRAND, FIELDS_CONFIG, buildDefaultUser, userInfoSample, providersSample, categoriesSample
@@ -64,8 +64,7 @@ export default function Settings() {
 
 
     // Categories state & editing
-    const [categories, setCategories] = useState();
-    const [editingCategoryId, setEditingCategoryId] = useState(null);
+    const [categories, setCategories] = useState(); 
     const [editCategoryData, setEditCategoryData] = useState({
         name: "",
         color: "#3b6d92",
