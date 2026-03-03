@@ -1,16 +1,23 @@
 import mongoose from "mongoose";
 
 const baseLayerSchema = new mongoose.Schema({
-  id: { type: String, required: true},
+  id: { type: String, required: true },
   type: { type: String, }, // background / printarea / text
   width: Number,
   height: Number,
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
+
+  // ✅ Add these percentage fields in base schema
+  x_percent: { type: Number, default: 0 },
+  y_percent: { type: Number, default: 0 },
+  width_percent: { type: Number, default: 0 },
+  height_percent: { type: Number, default: 0 },
+
   rotation: { type: Number, default: 0 },
   opacity: { type: Number, default: 1 },
   locked: { type: Boolean, default: false },
-  productId: { type: String,  },
+  productId: { type: String, },
   visible: { type: Boolean, default: true },
 }, { timestamps: true, discriminatorKey: "type" });
 
