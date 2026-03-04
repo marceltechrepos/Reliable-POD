@@ -16,10 +16,10 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
       loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
       loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
       loadedTexture.generateMipmaps = false;
-      
+
       // ✅ IMPORTANT: Texture ko flip mat karo
       loadedTexture.flipY = false; // <-- ADD THIS LINE
-      
+
       setTexture(loadedTexture);
     });
   }, [src]);
@@ -33,7 +33,7 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     camera.position.z = 1;
 
-    const renderer = new THREE.WebGLRenderer({ 
+    const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
       antialias: false,
@@ -49,50 +49,43 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
         uTexture: { value: texture },
         uCorners: {
           value: [
-            new THREE.Vector2(0, 0),  // top-left UV
-            new THREE.Vector2(1, 0),  // top-right UV  
-            new THREE.Vector2(1, 1),  // bottom-right UV
-            new THREE.Vector2(0, 1),  // bottom-left UV
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(1, 0),
+            new THREE.Vector2(1, 1),
+            new THREE.Vector2(0, 1),
           ]
         },
-        uTargetCorners: { 
-          value: corners.map(c => 
-            new THREE.Vector2(c.x / width, c.y / height) // ✅ NO 1 - (y/height)
+        uTargetCorners: {
+          value: corners.map(c =>
+            new THREE.Vector2(c.x / width, c.y / height)
           )
         }
       },
       vertexShader: `
-        varying vec2 vUv;
-        uniform vec2 uCorners[4];
-        uniform vec2 uTargetCorners[4];
-        
-        vec2 bilinearInterpolation(vec2 uv, vec2[4] corners) {
-          vec2 p0 = mix(corners[0], corners[1], uv.x);
-          vec2 p1 = mix(corners[3], corners[2], uv.x);
-          return mix(p0, p1, uv.y);
-        }
-        
-        void main() {
-          vUv = uv;
-          
-          // Get position from UV using bilinear interpolation
-          vec2 pos = bilinearInterpolation(uv, uTargetCorners);
-          
-          // Convert from [0,1] to [-1,1]
-          pos = pos * 2.0 - 1.0;
-          
-          // ✅ Only flip Y in shader (not in corners)
-          gl_Position = vec4(pos.x, -pos.y, 0.0, 1.0);
-        }
-      `,
+  varying vec2 vUv;
+  uniform vec2 uTargetCorners[4];
+  
+  vec2 bilinearInterpolation(vec2 uv, vec2[4] corners) {
+    vec2 p0 = mix(corners[0], corners[1], uv.x);
+    vec2 p1 = mix(corners[3], corners[2], uv.x);
+    return mix(p0, p1, uv.y);
+  }
+  
+  void main() {
+    vUv = uv;
+    vec2 pos = bilinearInterpolation(uv, uTargetCorners);
+    pos = pos * 2.0 - 1.0;
+    gl_Position = vec4(pos.x, -pos.y, 0.0, 1.0);
+  }
+`,
       fragmentShader: `
-        varying vec2 vUv;
-        uniform sampler2D uTexture;
-        
-        void main() {
-          gl_FragColor = texture2D(uTexture, vUv);
-        }
-      `,
+  varying vec2 vUv;
+  uniform sampler2D uTexture;
+  
+  void main() {
+    gl_FragColor = texture2D(uTexture, vUv);
+  }
+`,
       side: THREE.DoubleSide,
       transparent: true
     });
@@ -124,16 +117,16 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
     const canvas = canvasRef.current;
     const renderer = canvas.__threeRenderer;
     const scene = canvas.__threeScene;
-    
+
     if (!renderer || !scene) return;
 
     // Find the mesh and update corners
     scene.traverse((child) => {
       if (child.isMesh && child.material.uniforms?.uTargetCorners) {
-        child.material.uniforms.uTargetCorners.value = 
+        child.material.uniforms.uTargetCorners.value =
           corners.map(c => new THREE.Vector2(c.x / width, c.y / height)); // ✅ NO 1 - 
         child.material.uniformsNeedUpdate = true;
-        
+
         // Re-render
         const camera = canvas.__threeCamera;
         if (camera) {

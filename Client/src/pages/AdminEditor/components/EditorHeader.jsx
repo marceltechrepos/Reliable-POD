@@ -29,7 +29,7 @@ const EditorHeader = ({
       operations.onSave();
       alert("Mockup created successfully");
     } catch (error) {
-      console.log(err, "<<<< error");
+      console.log(error, "<<<< error");
     }
   }
   return (
@@ -63,7 +63,7 @@ const EditorHeader = ({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={operations.handleFileInputChange} className="hidden" />
 
           <button
-            className={`bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium shadow-md transition ${operations?.isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium shadow-md transition ${operations?.isSaving ? "opacity-50 cursor-not-allowed" : ""} cursor-pointer`}
             // onClick={operations.onSave}
             onClick={mockupCreate}
             disabled={operations?.isSaving}
