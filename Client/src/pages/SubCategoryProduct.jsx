@@ -140,7 +140,7 @@ const SubCategoryProduct = () => {
               <div className="h-80 bg-gray-200">
                 {p?.category && p?.category?.thumbnail && p?.category?.thumbnail?.url ? (
                   <img
-                    src={p?.mockupImage || p?.category?.thumbnail.url}
+                    src={p?.mockupImage || p?.thumbnail?.url || p?.category?.thumbnail.url}
                     alt={p?.category?.name || "category thumbnail"}
                     className="w-full h-full object-cover"
                   />
@@ -214,7 +214,7 @@ const SubCategoryProduct = () => {
               <div className="lg:w-1/2">
                 <div className="rounded-xl w-full h-64 overflow-hidden bg-gray-100">
                   {selected.category?.thumbnail?.url ? (
-                    <img src={selected?.mockupImage || selected.category.thumbnail.url} alt={selected.category?.category || "category"} className="w-full h-full object-cover" />
+                    <img src={selected?.mockupImage || selected?.thumbnail?.url || selected.category.thumbnail.url} alt={selected.category?.category || "category"} className="w-full h-full object-cover" />
                   ) : (
                     <PlaceholderImage className="h-64" />
                   )}

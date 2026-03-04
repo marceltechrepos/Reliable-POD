@@ -20,6 +20,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getAllProvider, createProvider } from '../api/provider.api';
 import { createProduct, getProductById, updateProduct } from '../api/product.api';
 import { getAllCategory, createCategory, getCategoryDropdown } from '../api/category.api';
+import { addMockupsToProduct } from '../api/product.api';
 
 import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
@@ -401,10 +402,36 @@ function ProductBase() {
     overflow: 'hidden',
   });
 
-  const handleMockupSelect = (selectedData) => {
-    const updatedMockups = [...selectedMockups, ...selectedData];
-    setSelectedMockups(updatedMockups);
-    saveMockupsToStorage(updatedMockups);
+  // const handleMockupSelect = (selectedData) => {
+  //   const updatedMockups = [...selectedMockups, ...selectedData];
+  //   setSelectedMockups(updatedMockups);
+  //   saveMockupsToStorage(updatedMockups);
+  // };
+
+  const handleMockupSelect = async (selectedData) => {
+    try {
+      const updatedMockups = [...selectedMockups, ...selectedData];
+      setSelectedMockups(updatedMockups);
+      saveMockupsToStorage(updatedMockups);
+
+      // 👇 IDs nikal lo
+      const ids = selectedData.map(item => item.id);
+
+      if (productId && ids.length > 0) {
+        const res = await addMockupsToProduct(productId, ids);
+
+        if (!res?.success) {
+          alert(res?.message || "Failed to save mockups to product");
+        } else {
+          console.log("Mockups saved to product DB");
+          fetchProductByProductId(productId); // refresh product
+        }
+      }
+
+    } catch (error) {
+      console.error("Mockup save error:", error);
+      alert("Failed to save mockups");
+    }
   };
 
   const removeMockup = async (id) => {
@@ -762,7 +789,7 @@ function ProductBase() {
                   )}
 
                   {/* 2. Additional selectedMockups (from localStorage) */}
-                  {selectedMockups.length > 0 ? (
+                  {/* {selectedMockups.length > 0 ? (
                     selectedMockups.map((mockup) => (
                       <Box key={mockup.id}>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
@@ -829,6 +856,99 @@ function ProductBase() {
                     ))
                   ) : (
                     // Agar koi additional mockup nahi hai
+                    !editProductById?.mockupImage && (
+                      <Box sx={{
+                        mt: 3,
+                        textAlign: 'center',
+                        py: 4,
+                        border: '1px dashed #ddd',
+                        borderRadius: 2,
+                        bgcolor: '#fafafa'
+                      }}>
+                        <Typography color="text.secondary">
+                          No mockups available. Click "Upload Mockup" to add.
+                        </Typography>
+                      </Box>
+                    )
+                  )} */}
+
+                  {/* 2. Mockups from Database */}
+                  {editProductById?.mockupIds?.length > 0 ? (
+                    editProductById.mockupIds.map((mockup) => (
+                      <Box key={mockup._id}>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
+
+                          <img
+                            src={mockup?.mockupImage?.url}
+                            alt={mockup?.name}
+                            className="w-full sm:w-24 h-44 sm:h-24 object-cover rounded-xl"
+                            style={{ borderRadius: 10 }}
+                          />
+
+                          <div className='flex-1 w-full'>
+                            <Typography sx={{ marginBottom: 0, lineHeight: "1.1", fontWeight: 500 }}>
+                              {mockup?.name}
+                            </Typography>
+
+                            {mockup?.size && (
+                              <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                                Size: {mockup.size}
+                              </Typography>
+                            )}
+
+                            {mockup?.category && (
+                              <Typography
+                                variant="caption"
+                                sx={{ display: 'block', color: 'primary.main', mt: 0.5 }}
+                              >
+                                Category: {mockup.category}
+                              </Typography>
+                            )}
+
+                            <div className='flex items-center gap-2 mt-3'>
+                              {/* EDIT */}
+                              <Button
+                                variant="contained"
+                                sx={{
+                                  display: "inline-flex",
+                                  minWidth: "auto",
+                                  bgcolor: '#3b6d92',
+                                  padding: "8px",
+                                  fontSize: "12px",
+                                  textTransform: "none",
+                                }}
+                                onClick={() => editMockup(mockup)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-pencil-square" viewBox="0 0 16 16">
+                                  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                  <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                </svg>
+                              </Button>
+
+                              {/* DELETE */}
+                              <Button
+                                variant="contained"
+                                sx={{
+                                  display: "inline-flex",
+                                  minWidth: "auto",
+                                  bgcolor: 'error.main',
+                                  padding: "8px",
+                                  fontSize: "12px",
+                                  textTransform: "none",
+                                }}
+                                onClick={() => removeMockup(mockup._id)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Box>
+                    ))
+                  ) : (
                     !editProductById?.mockupImage && (
                       <Box sx={{
                         mt: 3,
@@ -913,6 +1033,7 @@ function ProductBase() {
         onClose={() => setOpenMockupModal(false)}
         Mockupdata={mockupImages}
         onSelect={handleMockupSelect}
+        productId={productId}
       />
 
       <AddProviderModal

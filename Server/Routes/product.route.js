@@ -20,6 +20,7 @@ import {
   removeVariant,
   createMockup,
   getProductsById,
+  addMockupsToProduct,
 } from "../Controllers/product.controller.js";
 import {
   isLogin, isAdmin,
@@ -124,5 +125,10 @@ productRouter.delete(
 
   removeVariant
 );
+
+
+// ================== mockupid add 
+
+productRouter.post("/add-mockups", addMockupsToProduct);
 
 export default productRouter;
