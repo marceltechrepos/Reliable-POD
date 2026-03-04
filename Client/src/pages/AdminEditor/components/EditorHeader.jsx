@@ -1,6 +1,7 @@
 import React from "react";
 import { createMockup } from "../../../api/product.api";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const EditorHeader = ({
   showPrintareaSelect,
@@ -21,14 +22,21 @@ const EditorHeader = ({
 
 
   const mockupImage = JSON.parse(localStorage.getItem("mockupToEdit"));
+  const navigate = useNavigate();
+
   const mockupCreate = async () => {
     try {
       localStorage.removeItem("selectedMockups");
       sessionStorage.removeItem("reloaded")
       const response = await createMockup(productId, { mockupImage: mockupImage.url });
-      operations.onSave();
-      alert("Mockup created successfully");
+       operations.onSave();
+
+      // toast.success("Mockup created successfully");
+
+      // Explicitly navigate
+      // navigate(`/admin/product/${productId}`);
     } catch (error) {
+      toast.error("Failed to create mockup")
       console.log(error, "<<<< error");
     }
   }
@@ -156,4 +164,3 @@ const EditorHeader = ({
 };
 
 export default EditorHeader;
- 
