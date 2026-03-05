@@ -163,6 +163,18 @@ const addMockupsToProduct = async (productId, mockupIds = []) => {
     }
 };
 
+const removeMockupFromProduct = async (productId, mockupId) => {
+    const res = await fetch(`${BASE_URL}/api/product/remove-mockup/${productId}/${mockupId}`, {
+        method: "DELETE",
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to remove mockup");
+    }
+
+    return res.json();
+};
+
 
 const authFetch = async (url, options = {}) => {
     const token = localStorage.getItem("token");
@@ -185,5 +197,6 @@ export {
     createMockup,
     authFetch,
     updateProduct,
-    addMockupsToProduct
+    addMockupsToProduct,
+    removeMockupFromProduct
 };

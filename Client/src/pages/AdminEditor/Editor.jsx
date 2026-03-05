@@ -31,13 +31,15 @@ function Editor() {
   const [activePanel, setActivePanel] = useState('canvas');
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [isSaving, setIsSaving] = useState(false);
+  const [productMockups, setProductMockups] = useState([]);
+  const [selectedMockup, setSelectedMockup] = useState(null);
 
 
   const fileInputRef = useRef(null);
   const printAreaFileInputRef = useRef(null);
   const canvasRef = useRef(null);
   const innerCanvasRef = useRef(null);
-  const { editId } = useParams();
+  const { editId, mockupId } = useParams();
 
   const SCREEN_DPI = 96;
   const PRINT_DPI = 300;
@@ -69,13 +71,58 @@ function Editor() {
     setLayers(newLayers);
   };
 
+  useEffect(() => {
+    if (!productMockups.length || !mockupId) return;
+
+    const mockup = productMockups.find((m) => m._id === mockupId);
+
+    if (!mockup) return;
+
+    const img = new Image();
+
+    img.onload = function () {
+      const naturalWidth = this.naturalWidth;
+      const naturalHeight = this.naturalHeight;
+
+      setLayersWithHistory(
+        [
+          {
+            id: "layer-bg",
+            type: "background",
+            src: mockup.mockupImage.url,
+            x: 0,
+            y: 0,
+            width: naturalWidth,
+            height: naturalHeight,
+            _naturalWidth: naturalWidth,
+            _naturalHeight: naturalHeight,
+            rotation: 0,
+            opacity: 1,
+            visible: true,
+          },
+        ],
+        { recordHistory: false }
+      );
+
+      setSelectedLayerId("layer-bg");
+    };
+
+    img.src = mockup.mockupImage.url;
+    setSelectedMockup(mockup);
+  }, [productMockups, mockupId]);
+
   // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       if (!editId) return;
       const product = await getProductById(editId);
+
       if (product) {
         setPrintAreas(product.Printareas || []);
+      }
+      // 👇 new code
+      if (product.mockupIds?.length) {
+        setProductMockups(product.mockupIds);
       }
     };
     fetchProduct();
@@ -352,7 +399,7 @@ function Editor() {
     if (!editId) return;
 
     try {
-      const response = getLayersByProductId(editId);
+      const response = await getLayersByProductId(editId, selectedMockup?._id);
       console.log("Saved layers response:", response);
 
       if (response.success && response.data && response.data.length > 0) {
@@ -467,6 +514,7 @@ function Editor() {
 
   useEffect(() => {
     const loadEditorData = async () => {
+      if (!editId || !selectedMockup?._id) return;
       // 1. First load mockup
       const savedMockup = localStorage.getItem("mockupToEdit");
       if (savedMockup) {
@@ -477,7 +525,7 @@ function Editor() {
       // 2. Try to load saved layers from API
       if (editId) {
         try {
-          const response = await getLayersByProductId(editId);
+          const response = await getLayersByProductId(editId, selectedMockup?._id);
 
           if (response.success && response.data && response.data.length > 0) {
             // Pehle canvas size calculate karo (background image ke through)
@@ -647,7 +695,7 @@ function Editor() {
     };
 
     loadEditorData();
-  }, [editId]);
+  }, [editId, selectedMockup]);
 
 
   const onSave = async () => {
@@ -736,7 +784,7 @@ function Editor() {
       if (layersWithBlobs.length > 0) {
         savedData = await uploadLayersWithImages(editId, serializable, layersWithBlobs, "PUT");
       } else {
-        const updateResponse = await updateLayers(editId, serializable);
+        const updateResponse = await updateLayers(editId, selectedMockup?._id, serializable);
         if (!updateResponse.success) throw new Error(updateResponse.message || "Update failed");
         savedData = updateResponse.data || updateResponse.layers;
       }
@@ -821,7 +869,7 @@ function Editor() {
       }
 
       // const token = localStorage.getItem("token");
-      const endpoint = method === "PUT" ? `${BaseUrl}/api/layers/${productId}` : `${BaseUrl}/api/layers`;
+      const endpoint = method === "PUT" ? `${BaseUrl}/api/layers/${productId}/${selectedMockup?._id}` : `${BaseUrl}/api/layers`;
 
       const response = await fetch(endpoint, {
         method,

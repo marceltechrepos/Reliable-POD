@@ -194,7 +194,7 @@ function App() {
         {/* <Route path="/admin/signup" element={<Signup />} /> */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/per" element={<PerspectiveWarp />} />
-        <Route path="/admin/editor/:editId?" element={<Editor />} />
+        <Route path="/admin/editor/:editId?/:mockupId?" element={<Editor />} />
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/admin/login" replace />} />
