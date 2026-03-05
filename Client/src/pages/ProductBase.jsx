@@ -28,6 +28,8 @@ import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
 import { deleteMockupImage } from '../api/mockupApi';
 import RichTextEditor from '../components/RichTextEditor';
+import { toast } from 'react-toastify';
+import { showConfirmationToast } from './AdminEditor/helper/confirmation';
 
 // Local storage se data load karne ka function
 const loadMockupsFromStorage = () => {
@@ -421,7 +423,10 @@ function ProductBase() {
         const res = await addMockupsToProduct(productId, ids);
 
         if (!res?.success) {
-          alert(res?.message || "Failed to save mockups to product");
+          toast.success("Selected Mockup Added...");
+          setTimeout(() => {
+            fetchProductByProductId(productId);
+          }, 500);
         } else {
           console.log("Mockups saved to product DB");
           fetchProductByProductId(productId); // refresh product
@@ -430,38 +435,62 @@ function ProductBase() {
 
     } catch (error) {
       console.error("Mockup save error:", error);
-      alert("Failed to save mockups");
+      toast.error("Failed to save mockups");
     }
   };
+
+
+
+  // const removeMockup = async (mockupId) => {
+  //   try {
+
+
+  //     // 1️⃣ remove mockup from product
+  //     const res = await removeMockupFromProduct(productId, mockupId);
+
+  //     if (!res.success) {
+  //       toast.error(res.message);
+  //       return;
+  //     }
+
+  //     // 2️⃣ delete mockup image
+  //     await deleteMockupImage(mockupId);
+
+  //     // 3️⃣ refresh product
+  //     fetchProductByProductId(productId);
+
+  //     toast.success("Mockup removed successfully!");
+
+  //   } catch (error) {
+  //     console.error("Error removing mockup:", error);
+  //     toast.error("Failed to remove mockup");
+  //   }
+  // };
 
   const removeMockup = async (mockupId) => {
     try {
+      showConfirmationToast(
+        "Are you sure you want to delete this mockup?",
+        async () => {
+          // Confirmation ke baad wala code
+          const res = await removeMockupFromProduct(productId, mockupId);
 
-      if (!window.confirm("Are you sure you want to delete this mockup?")) {
-        return;
-      }
+          if (!res.success) {
+            toast.error(res.message);
+            return;
+          }
 
-      // 1️⃣ remove mockup from product
-      const res = await removeMockupFromProduct(productId, mockupId);
-
-      if (!res.success) {
-        alert(res.message);
-        return;
-      }
-
-      // 2️⃣ delete mockup image
-      await deleteMockupImage(mockupId);
-
-      // 3️⃣ refresh product
-      fetchProductByProductId(productId);
-
-      alert("Mockup removed successfully!");
-
+          await deleteMockupImage(mockupId);
+          fetchProductByProductId(productId);
+          toast.success("Mockup removed successfully!");
+        }
+      );
     } catch (error) {
       console.error("Error removing mockup:", error);
-      alert("Failed to remove mockup");
+      toast.error("Failed to remove mockup");
     }
   };
+
 
   const clearAllMockups = () => {
     setSelectedMockups([]);

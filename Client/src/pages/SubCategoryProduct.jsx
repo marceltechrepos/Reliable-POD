@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getProductsByCategory, deleteProductById } from "../api/product.api";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { showConfirmationToast } from "./AdminEditor/helper/confirmation";
 
 /** Small placeholder when image is missing */
 const PlaceholderImage = ({ className = "" }) => (
@@ -21,6 +22,7 @@ const SubCategoryProduct = () => {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
 
   console.log(products, " <<<< product");
 
@@ -91,25 +93,56 @@ const SubCategoryProduct = () => {
     setFilteredProducts(filtered);
   }, [searchQuery, products]);
 
+  // const handleDeleteProduct = async (productId) => {
+  //   if (!productId) return;
+
+  //   const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+  //   if (!confirmDelete) return;
+
+  //   try {
+  //     await deleteProductById(productId);
+
+  //     // modal band
+  //     setSelected(null);
+
+  //     // UI se product remove (no refetch needed)
+  //     setProducts((prev) => prev.filter((p) => p._id !== productId));
+  //   } catch (err) {
+  //     console.error("Delete product error:", err);
+  //     toast.error("Failed to delete product");
+  //   }
+  // };
+
   const handleDeleteProduct = async (productId) => {
     if (!productId) return;
 
-    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
-    if (!confirmDelete) return;
+    showConfirmationToast(
+      "Are you sure you want to delete this product?",
+      async () => {
+        const loadingToast = toast.loading("Deleting product...");
 
-    try {
-      await deleteProductById(productId);
+        try {
+          await deleteProductById(productId);
 
-      // modal band
-      setSelected(null);
+          toast.dismiss(loadingToast);
 
-      // UI se product remove (no refetch needed)
-      setProducts((prev) => prev.filter((p) => p._id !== productId));
-    } catch (err) {
-      console.error("Delete product error:", err);
-      toast.error("Failed to delete product");
-    }
+          // modal band
+          setSelected(null);
+
+          // UI se product remove
+          setProducts((prev) => prev.filter((p) => p._id !== productId));
+
+          toast.success("Product deleted successfully!");
+        } catch (err) {
+          toast.dismiss(loadingToast);
+
+          console.error("Delete product error:", err);
+          toast.error("Failed to delete product");
+        }
+      }
+    );
   };
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
