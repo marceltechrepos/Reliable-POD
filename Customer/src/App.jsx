@@ -45,7 +45,7 @@ function App() {
           <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
           <Route path="Productcatalogue" element={<Productcatalogue />} />
 
-          <Route path="single-catalogue" element={<Singlecatalogue />} />
+          <Route path="single-catalogue/:productId" element={<Singlecatalogue />} />
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}
