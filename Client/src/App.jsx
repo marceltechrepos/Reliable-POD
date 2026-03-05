@@ -18,6 +18,7 @@ import PerspectiveWarp from "./pages/PerspectiveImage";
 import SubCategory from "./pages/SubCategory";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Signup from "./components/Signup.jsx";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, true = authed, false = not authed
@@ -49,8 +50,8 @@ function App() {
             originalRequest._retry = true;
 
             // Clear invalid token
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
+            // localStorage.removeItem("token");
+            // localStorage.removeItem("user");
             setIsAuthenticated(false);
 
             // Show notification
@@ -190,9 +191,10 @@ function App() {
           </Route>
         </Route>
 
+        {/* <Route path="/admin/signup" element={<Signup />} /> */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/per" element={<PerspectiveWarp />} />
-        <Route path="/admin/editor/:editId?" element={<Editor />} />
+        <Route path="/admin/editor/:editId?/:mockupId?" element={<Editor />} />
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/admin/login" replace />} />

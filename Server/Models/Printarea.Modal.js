@@ -18,6 +18,7 @@ const baseLayerSchema = new mongoose.Schema({
   opacity: { type: Number, default: 1 },
   locked: { type: Boolean, default: false },
   productId: { type: String, },
+  mockupId: { type: String, required: true },
   visible: { type: Boolean, default: true },
 }, { timestamps: true, discriminatorKey: "type" });
 

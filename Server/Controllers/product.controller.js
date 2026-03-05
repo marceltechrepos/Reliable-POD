@@ -15,21 +15,71 @@ export const getProducts = async (req, res) => {
 };
 
 
+// export const getProductsById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     if (!id) {
+//       return res.status(400).json({ success: false, message: "Product ID is required" });
+//     }
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ success: false, message: "Invalid Product ID" });
+//     }
+//     // Fetch product
+//     const product = await productModel.findById(id).lean();
+//     if (!product) {
+//       return res.status(404).json({ success: false, message: "Product not found" });
+//     }
+
+//     // Fetch category and its parent
+//     const category = await Category.findById(product.category)
+//       .populate({ path: "parent", select: "name slug" }) // populate parent category
+//       .lean();
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         ...product,
+//         category: category || null,
+//       },
+//       status: 200,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const getProductsById = async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!id) {
       return res.status(400).json({ success: false, message: "Product ID is required" });
-    } 
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid Product ID" });
+    }
+
     // Fetch product
     const product = await productModel.findById(id).lean();
+
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Fetch category and its parent
+    // 🔥 NEW: Fetch mockups separately and populate them
+    let populatedMockups = [];
+    if (product.mockupIds && product.mockupIds.length > 0) {
+      populatedMockups = await mongoose
+        .model("MockupImage")
+        .find({ _id: { $in: product.mockupIds } })
+        .lean();
+    }
+
+    // Fetch category and its parent (same as your logic)
     const category = await Category.findById(product.category)
-      .populate({ path: "parent", select: "name slug" }) // populate parent category
+      .populate({ path: "parent", select: "name slug" })
       .lean();
 
     res.status(200).json({
@@ -37,9 +87,11 @@ export const getProductsById = async (req, res) => {
       data: {
         ...product,
         category: category || null,
+        mockupIds: populatedMockups, // 🔥 overwrite ids with full objects
       },
       status: 200,
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
@@ -150,6 +202,7 @@ export const createProduct = async (req, res) => {
     const newProduct = new productModel({
       ...productData,
       thumbnail: null,
+      mockupId: null,
       Printareas: [], // Empty initially
       Variants: [], // Empty initially
     });
@@ -203,7 +256,8 @@ export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const thumbnail = req.file
+    const thumbnail = req.file;
+    const mockupId = req.body.mockupId;
 
     // Check if product exists
     const product = await productModel.findById(id);
@@ -1120,6 +1174,78 @@ export const removeProductThumbnail = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+
+// =================== addMockupsIDsToProduct
+
+export const addMockupsToProduct = async (req, res) => {
+  try {
+    const { productId } = req.query;
+    const { mockupIds } = req.body; // expect array of strings
+
+    if (!productId) return res.status(400).json({ success: false, message: "productId required" });
+    if (!Array.isArray(mockupIds) || mockupIds.length === 0) {
+      return res.status(400).json({ success: false, message: "mockupIds (array) required" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: "Invalid productId" });
+    }
+
+    // Optional: filter only valid ObjectId strings (prevents bad values)
+    const onlyValidStrings = mockupIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    if (onlyValidStrings.length === 0) {
+      return res.status(400).json({ success: false, message: "No valid mockup ids provided" });
+    }
+
+    // Add to set to avoid duplicates (no manual new ObjectId conversion needed)
+    const updated = await productModel.findByIdAndUpdate(
+      productId,
+      { $addToSet: { mockupIds: { $each: onlyValidStrings } } },
+      { new: true }
+    ).populate("mockupIds");
+
+    if (!updated) return res.status(404).json({ success: false, message: "Product not found" });
+
+    return res.status(200).json({ success: true, data: updated, message: "Mockups added" });
+  } catch (error) {
+    console.error("addMockupsToProduct error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// REMOVE MOCKUP FROM PRODUCT
+export const removeMockupFromProduct = async (req, res) => {
+  try {
+    const { productId, mockupId } = req.params;
+
+    const product = await productModel.findByIdAndUpdate(
+      productId,
+      { $pull: { mockupIds: mockupId } },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Mockup removed from product",
+      data: product,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

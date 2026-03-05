@@ -16,6 +16,12 @@ const productSchema = new Schema(
       public_id: String,
     },
     mockupImage: String,
+    mockupIds: [
+      {
+        type: Types.ObjectId,
+        ref: "MockupImage",
+      },
+    ],
     category: {
       type: Types.ObjectId,
       ref: "Category",

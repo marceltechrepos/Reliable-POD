@@ -143,6 +143,39 @@ const updateProduct = async (productId, payload) => {
     }
 };
 
+const addMockupsToProduct = async (productId, mockupIds = []) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${BASE_URL}/api/add-mockups?productId=${productId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ mockupIds }),
+        });
+
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error("addMockupsToProduct error", error);
+        return { success: false, message: error.message };
+    }
+};
+
+const removeMockupFromProduct = async (productId, mockupId) => {
+    const res = await fetch(`${BASE_URL}/api/product/remove-mockup/${productId}/${mockupId}`, {
+        method: "DELETE",
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to remove mockup");
+    }
+
+    return res.json();
+};
+
+
 const authFetch = async (url, options = {}) => {
     const token = localStorage.getItem("token");
 
@@ -163,5 +196,7 @@ export {
     deleteProductById,
     createMockup,
     authFetch,
-    updateProduct
+    updateProduct,
+    addMockupsToProduct,
+    removeMockupFromProduct
 };

@@ -12,10 +12,12 @@ import {
 } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import {toast} from "react-toastify"
 
 import { getMockups, uploadMockupImage } from '../../api/mockupApi';
+import { addMockupsToProduct } from '../../api/product.api';
 
-export default function AddMockup({ open, onClose, onSelect }) {
+export default function AddMockup({ open, onClose, onSelect, productId }) {
     const fileInputRef = useRef(null);
     const [mockups, setMockups] = useState([]);
     const [uploadedPreviews, setUploadedPreviews] = useState([]);
@@ -69,7 +71,7 @@ export default function AddMockup({ open, onClose, onSelect }) {
             setUploadedPreviews(prev => [...prev, tempPreview]);
 
             const response = await uploadMockupImage(file, categoryObjectId);
-            
+
             if (response?.success) {
                 const uploadedItem = {
                     id: response.data._id,
@@ -110,7 +112,31 @@ export default function AddMockup({ open, onClose, onSelect }) {
         setSelectedMockups(prev => prev.some(i => i.id === item.id) ? prev.filter(i => i.id !== item.id) : [...prev, item]);
     };
 
-    const handleSelect = () => {
+    const handleSelect = async () => {
+
+        const selected = selectedMockups.map(item => item.id);
+
+        // if productId provided, save to product
+        if (productId) {
+            const res = await addMockupsToProduct(productId, selected);
+            if (res?.success) {
+                onSelect?.(selected); // or onSelect?.(res.data)
+                onClose();
+                return;
+            } else {
+                // handle error (toast / alert)
+                toast.error("Failed to add mockups to product")
+                console.error("Failed to add mockups", res);
+                // still close or keep modal open based on UX
+                return;
+            }
+        }
+
+        // fallback: just return selection to parent
+        onSelect?.(selectedMockups);
+        onClose();
+
+
         onSelect?.(selectedMockups.map(item => ({
             id: item.id,
             url: item.url,
