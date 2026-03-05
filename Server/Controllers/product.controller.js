@@ -1181,7 +1181,6 @@ export const removeProductThumbnail = async (req, res) => {
 
 // =================== addMockupsIDsToProduct
 
-// controllers/product.controller.js  (replace your existing addMockupsToProduct)
 export const addMockupsToProduct = async (req, res) => {
   try {
     const { productId } = req.query;
@@ -1214,5 +1213,39 @@ export const addMockupsToProduct = async (req, res) => {
   } catch (error) {
     console.error("addMockupsToProduct error:", error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// REMOVE MOCKUP FROM PRODUCT
+export const removeMockupFromProduct = async (req, res) => {
+  try {
+    const { productId, mockupId } = req.params;
+
+    const product = await productModel.findByIdAndUpdate(
+      productId,
+      { $pull: { mockupIds: mockupId } },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Mockup removed from product",
+      data: product,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

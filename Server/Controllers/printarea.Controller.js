@@ -43,14 +43,14 @@ const deleteImageFromCloudinary = async (publicId) => {
 export const saveLayers = async (req, res) => {
   try {
     console.log("=== SAVE LAYERS REQUEST ===");
-    const { productId } = req.body;
+    const { productId, mockupId } = req.body;
     // layers and layerIds can be stringified JSON (from multipart) OR already parsed objects (application/json)
     const rawLayers = req.body.layers;
     const rawLayerIds = req.body.layerIds;
     const files = req.files || [];
 
-    if (!productId) {
-      return res.status(400).json({ success: false, message: "productId is required" });
+    if (!productId || !mockupId) {
+      return res.status(400).json({ success: false, message: "productId and mockupId are required" });
     }
 
     // Parse layers (accept string or array)
@@ -90,7 +90,7 @@ export const saveLayers = async (req, res) => {
     }
 
     // Remove old layers (existing behavior)
-    await Layer.deleteMany({ productId });
+    await Layer.deleteMany({ productId, mockupId });
 
     // Map files -> layerId by order. Frontend MUST append files in same order as layerIdsArray.
     const fileMap = {};
@@ -105,6 +105,7 @@ export const saveLayers = async (req, res) => {
         // clone to be safe
         const layer = { ...rawLayer };
         layer.productId = productId;
+        layer.mockupId = mockupId;
         delete layer._id;
         delete layer.__v;
 
@@ -216,12 +217,12 @@ export const saveLayers = async (req, res) => {
 export const updateLayers = async (req, res) => {
   try {
     console.log("=== UPDATE LAYERS REQUEST ===");
-    const { productId } = req.params;
+    const { productId, mockupId } = req.params;
     const rawLayers = req.body.layers;
     const rawLayerIds = req.body.layerIds;
     const files = req.files || [];
 
-    if (!productId) return res.status(400).json({ success: false, message: "productId is required" });
+    if (!productId || !mockupId) return res.status(400).json({ success: false, message: "productId and mockupId are required" });
 
     // Parse layers (string or array)
     let layersArray = [];
@@ -266,7 +267,7 @@ export const updateLayers = async (req, res) => {
 
     // If you want to preserve existing layers and update in-place
     // we will delete old layers and recreate (same as before)
-    await Layer.deleteMany({ productId });
+    await Layer.deleteMany({ productId, mockupId });
 
     const savedLayers = [];
 
@@ -274,6 +275,7 @@ export const updateLayers = async (req, res) => {
       try {
         const layer = { ...rawLayer };
         layer.productId = productId;
+        layer.mockupId = mockupId;
         delete layer._id;
         delete layer.__v;
 
@@ -350,16 +352,16 @@ export const updateLayers = async (req, res) => {
 // ✅ GET LAYERS BY PRODUCT ID
 export const getLayersByProductId = async (req, res) => {
   try {
-    const { productId } = req.params;
+    const { productId, mockupId } = req.params;
 
-    if (!productId) {
+    if (!productId || !mockupId) {
       return res.status(400).json({
         success: false,
-        message: "productId is required"
+        message: "productId and mockupId are required"
       });
     }
 
-    const layers = await Layer.find({ productId }).sort({ createdAt: 1 });
+    const layers = await Layer.find({ productId, mockupId }).sort({ createdAt: 1 });
 
     return res.status(200).json({
       success: true,

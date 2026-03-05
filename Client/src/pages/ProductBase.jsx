@@ -18,7 +18,7 @@ import ThumbnailModal from '../components/Admin/ThumbnailModal';
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getAllProvider, createProvider } from '../api/provider.api';
-import { createProduct, getProductById, updateProduct } from '../api/product.api';
+import { createProduct, getProductById, removeMockupFromProduct, updateProduct } from '../api/product.api';
 import { getAllCategory, createCategory, getCategoryDropdown } from '../api/category.api';
 import { addMockupsToProduct } from '../api/product.api';
 
@@ -221,7 +221,7 @@ function ProductBase() {
   const editMockup = (mockup) => {
     localStorage.setItem('mockupToEdit', JSON.stringify(mockup));
     // Use navigate instead of window.location.href
-    navigate(`/admin/editor${editId ? `/${editId}` : ''}`);
+    navigate(`/admin/editor${editId ? `/${editId}/${mockup._id}` : ''}`);
   };
 
   // Replace the existing useEffect that only depends on productId with this:
@@ -434,23 +434,33 @@ function ProductBase() {
     }
   };
 
-  const removeMockup = async (id) => {
+  const removeMockup = async (mockupId) => {
     try {
-      const res = await deleteMockupImage(id)
-      if (!res.success) {
-        alert(res.message)
-        return
-      }
-      const updatedMockups = selectedMockups.filter(mockup => mockup.id !== id);
-      setSelectedMockups(updatedMockups);
-      saveMockupsToStorage(updatedMockups);
 
-      alert("Mockup removed successfully!")
+      if (!window.confirm("Are you sure you want to delete this mockup?")) {
+        return;
+      }
+
+      // 1️⃣ remove mockup from product
+      const res = await removeMockupFromProduct(productId, mockupId);
+
+      if (!res.success) {
+        alert(res.message);
+        return;
+      }
+
+      // 2️⃣ delete mockup image
+      await deleteMockupImage(mockupId);
+
+      // 3️⃣ refresh product
+      fetchProductByProductId(productId);
+
+      alert("Mockup removed successfully!");
+
     } catch (error) {
       console.error("Error removing mockup:", error);
       alert("Failed to remove mockup");
     }
-
   };
 
   const clearAllMockups = () => {

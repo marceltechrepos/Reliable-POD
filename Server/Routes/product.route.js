@@ -21,6 +21,7 @@ import {
   createMockup,
   getProductsById,
   addMockupsToProduct,
+  removeMockupFromProduct,
 } from "../Controllers/product.controller.js";
 import {
   isLogin, isAdmin,
@@ -130,5 +131,6 @@ productRouter.delete(
 // ================== mockupid add 
 
 productRouter.post("/add-mockups", addMockupsToProduct);
+productRouter.delete("/product/remove-mockup/:productId/:mockupId", removeMockupFromProduct);
 
 export default productRouter;

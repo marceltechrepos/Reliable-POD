@@ -117,10 +117,10 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // ==================== READ OPERATIONS ====================
 // Get layers by product ID
-export const getLayersByProductId = async (productId) => {
+export const getLayersByProductId = async (productId, mockupId) => {
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/api/layers/${productId}`, {
+    const res = await fetch(`${BASE_URL}/api/layers/${productId}/${mockupId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -144,10 +144,10 @@ export const getLayersByProductId = async (productId) => {
 
 // ==================== UPDATE OPERATIONS ====================
 // Update layers (PUT) - Full replacement
-export const updateLayers = async (productId, layers) => {
+export const updateLayers = async (productId, mockupId, layers) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${BASE_URL}/api/layers/${productId}`, {
+    const response = await fetch(`${BASE_URL}/api/layers/${productId}/${mockupId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
