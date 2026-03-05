@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom"; // 1. Navigate import kiya
 import { PRODUCTS } from "../components/Products/productData";
 import { LayoutGrid, List } from "lucide-react";
+import { getProductsByCategory } from "../api/category.api";
 
 export default function MyProducts() {
   const navigate = useNavigate(); // 2. Hook initialize kiya
   const { ProductId } = useParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [filterName, setFilterName] = useState("");
@@ -17,10 +20,28 @@ export default function MyProducts() {
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"';
 
-  const productNames = useMemo(() => [...new Set(PRODUCTS.map(p => p.title))], []);
+  useEffect(() => {
+    const fetchProductsByCategoryId = async () => {
+      try {
+        setLoading(true);
+        if (ProductId) {
+          const data = await getProductsByCategory(ProductId);
+          setProducts(data);
+        }
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.log(error)
+      }
+    }
+
+    fetchProductsByCategoryId();
+  }, [ProductId])
+
+  const productNames = useMemo(() => [...new Set(products.map(p => p.title))], [products]);
 
   const filtered = useMemo(() => {
-    let arr = [...PRODUCTS];
+    let arr = [...products];
     if (search) arr = arr.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
     if (filterName) arr = arr.filter(p => p.title === filterName);
     if (productType) arr = arr.filter(p => p.type.toLowerCase().includes(productType.toLowerCase()));
@@ -29,7 +50,13 @@ export default function MyProducts() {
     if (sort === "newest") arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     if (sort === "oldest") arr.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     return arr;
-  }, [search, filterName, sort, discountOnly, productType]);
+  }, [search, filterName, sort, discountOnly, productType, products]);
+
+  // Add loading state in JSX
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Loading products...</div>;
+  }
+
 
   const toggleSelect = (id, e) => {
     e.stopPropagation(); // Click ko card tak jane se rokega
@@ -77,25 +104,27 @@ export default function MyProducts() {
         {view === "card" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map((p) => {
-              const isSelected = selectedProducts.includes(p.id);
+              const isSelected = selectedProducts.includes(p._id);
               return (
-                <div key={p.id} className="group relative font-sans">
+                <div key={p._id} className="group relative font-sans">
 
                   <div
-                    onClick={() => navigate("/user/single-catalogue")} // 3. SIMPLE URL BAGAIR ID KE
+                    onClick={() => navigate(`/user/single-catalogue/${p._id}`, {
+                      state: { product: p }
+                    })} 
                     className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
                     ${isSelected ? "border-[#f05a28] ring-1 ring-[#f05a28]" : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1"}`}
                   >
                     <div className="relative h-[65%] overflow-hidden bg-[#f3f4f6]">
-                      <img src={p.image || "https://via.placeholder.com/400"} alt={p.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                      <img src={p?.thumbnail?.url || "https://via.placeholder.com"} alt={p.productTitle} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                     </div>
 
                     <div className="h-[38%] p-3 flex flex-col justify-between bg-white border-t border-gray-50">
                       <div>
-                        <h3 className="text-[13px] font-bold text-gray-900 leading-tight">{p.title}</h3>
+                        <h3 className="text-[13px] font-bold text-gray-900 leading-tight">{p?.productTitle}</h3>
                       </div>
                       <div className="flex items-end justify-between">
-                        <span className="text-sm font-black text-gray-900">${p.price || '0.00'}</span>
+                        <span className="text-sm font-black text-gray-900">${p?.Variants[0]?.basePrice || '0.00'}</span>
                         <button
                           onClick={(e) => toggleSelect(p.id, e)} // Select logic
                           className={`p-1.5 rounded-md transition-all ${isSelected ? "bg-[#f05a28] text-white" : "bg-gray-100 text-gray-400"}`}
@@ -115,7 +144,7 @@ export default function MyProducts() {
             <table className="w-full">
               <tbody>
                 {filtered.map(p => (
-                  <tr key={p.id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
+                  <tr key={p_id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
                     <ProductListRow
                       product={p}
                       selected={selectedProducts.includes(p.id)}
