@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import TabButton from "../components/Admin/TabButton";
 import IconUser from "../components/Admin/IconUser";
 import IconProvider from "../components/Admin/IconProvider";
-import IconCategory from "../components/Admin/IconCategory";
-import Thumb from "../components/Admin/Thumb";
-import Accordion from "../components/Admin/Accordion";
-import ProviderAccordion from "../components/Admin/ProviderAccordion";
-import CloseIcon from '@mui/icons-material/Close';
 import { userInfoApi, getUserDetail } from "../api/auth.api";
-import { Link } from "react-router-dom"
 import {
     getAllProvider,
     createProvider,
@@ -41,7 +35,6 @@ export default function Settings() {
     const [profileImageFile, setProfileImageFile] = useState(null); // file object
     const [profileImagePreview, setProfileImagePreview] = useState(null); // url
 
-
     // Change password inputs
     const [passwords, setPasswords] = useState({
         currentPassword: "",
@@ -49,7 +42,6 @@ export default function Settings() {
         confirmPassword: "",
     });
     const [passwordMessage, setPasswordMessage] = useState(null);
-
 
     // Providers state & editing
     const [providers, setProviders] = useState(providersSample);
@@ -62,9 +54,8 @@ export default function Settings() {
         description: "",
     });
 
-
     // Categories state & editing
-    const [categories, setCategories] = useState(); 
+    const [categories, setCategories] = useState();
     const [editCategoryData, setEditCategoryData] = useState({
         name: "",
         color: "#3b6d92",
@@ -105,8 +96,6 @@ export default function Settings() {
         fetchProvider();
     }, [])
 
-
-
     // --- Effects for profile preview cleanup ---
     useEffect(() => {
         return () => {
@@ -122,7 +111,6 @@ export default function Settings() {
                 }
             });
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------- USER: image handlers ----------------
@@ -162,7 +150,6 @@ export default function Settings() {
             alert("Provider Added");
         }
     };
-
 
     const handleSaveUserInfo = async () => {
         if (!userInfo) return;
@@ -210,12 +197,6 @@ export default function Settings() {
                     setIsEditing(false);
                     setPasswordMessage(null);
                 }
-
-                // if (updatedUser) {
-                //     setUserInfo((prev) => ({ ...buildDefaultUser(), ...updatedUser }));
-                //     setIsEditing(false);
-                //     setPasswordMessage(null);
-                // }
             }
         } catch (err) {
             console.error(err);
@@ -223,8 +204,6 @@ export default function Settings() {
             setLoading(false);
         }
     };
-
-
 
     // ------------- PASSWORD: simple validation handler --------------
     const handleChangePassword = () => {
@@ -299,7 +278,6 @@ export default function Settings() {
             setLoading(false);
             if (!res) return;
 
-            // API returns { success, message, user } or just user - normalize
             const u = res.user || res;
 
             // merge with default so missing keys still appear in UI
@@ -317,7 +295,6 @@ export default function Settings() {
         };
 
         loadUser();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
@@ -342,12 +319,6 @@ export default function Settings() {
                             label="Provider"
                             icon={<IconProvider color={BRAND.secondary} />}
                         />
-                        {/* <TabButton
-                            active={activeTab === "category"}
-                            onClick={() => setActiveTab("category")}
-                            label="Category"
-                            icon={<IconCategory color={BRAND.dark} />}
-                        /> */}
                     </nav>
                 </aside>
 
@@ -361,7 +332,6 @@ export default function Settings() {
 
                                 {/* Grid: image field + other fields together */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* IMAGE field placed as a field in the grid (not separate column) */}
                                     <div className="p-4 rounded-lg border flex items-center gap-4" style={{ borderColor: "#eee" }}>
                                         <div className="flex items-center gap-3 w-full">
                                             <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border">
@@ -378,10 +348,6 @@ export default function Settings() {
                                             </div>
 
                                             <div className="flex-1">
-                                                {/* <div className="flex items-center justify-between">
-                                                    <div className="text-xs text-gray-400 uppercase">Profile</div>
-                                                    <button style={{ borderRadius: "5px" }} className="bg-blue-600 py-2 px-3 cursor-pointer text-white" onClick={() => setIsImageEditing((pre) => !pre)}>{isImageEditing ? "Cancel" : "Change Profile"}</button>
-                                                </div> */}
 
                                                 <div className="flex items-center justify-between">
                                                     <div className="text-xs text-gray-400 uppercase">Profile</div>
@@ -429,18 +395,6 @@ export default function Settings() {
                                                             >
                                                                 Update
                                                             </button>
-                                                            {/* <CloseIcon
-                                                                className="cursor-pointer"
-                                                                onClick={() => {
-                                                                    if (profileImagePreview && profileImagePreview.startsWith("blob:")) {
-                                                                        try {
-                                                                            URL.revokeObjectURL(profileImagePreview);
-                                                                        } catch { }
-                                                                    }
-                                                                    setProfileImagePreview(null);
-                                                                    setProfileImageFile(null);
-                                                                }}
-                                                            /> */}
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -655,9 +609,6 @@ export default function Settings() {
                                                     className="px-4 py-2 rounded-md text-white cursor-pointer"
                                                     style={{ background: BRAND.primary }}
                                                     onClick={() => {
-                                                        // yahan tum OTP verify wali API hit karna
-                                                        // success pe:
-                                                        // setUserInfo(u => ({ ...u, AccountOpen: false }))
                                                         setShowOtpModal(false)
                                                     }}
                                                 >
@@ -688,9 +639,6 @@ export default function Settings() {
                                     setNewProvider={setNewProvider}
                                     onAdd={addProviderHandler}
                                 />
-
-
-
                                 <div className="space-y-4">
                                     {providers.map((p) => (
                                         <div key={p?._id} className="bg-white border-gray-100 rounded-lg shadow p-4 border flex flex-col md:flex-row md:items-center justify-between">
@@ -711,7 +659,6 @@ export default function Settings() {
                                                 ) : (
                                                     <>
                                                         <h3 className="font-medium text-gray-800">{p?.provider}</h3>
-                                                        {/* <p className="text-sm text-gray-600">{p.description || "No description"}</p> */}
                                                     </>
                                                 )}
                                             </div>

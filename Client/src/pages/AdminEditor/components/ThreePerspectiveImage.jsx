@@ -49,7 +49,7 @@ const CornerHandle = forwardRef(({ position, index, onDrag, size = 0.5 }, ref) =
   return (
     <mesh
       ref={actualRef}
-      position={[position.x, position.y, 10]} // HIGHER Z-index for Three.js
+      position={[position.x, position.y, 10]}
       scale={[size, size, size]}
       onPointerDown={(e) => {
         e.stopPropagation();
@@ -154,7 +154,6 @@ function PerspectiveImage3D({
   );
 }
 
-// Canvas Wrapper with PROPER event handling
 export function ThreePerspectiveCanvas({ 
   src, 
   corners, 

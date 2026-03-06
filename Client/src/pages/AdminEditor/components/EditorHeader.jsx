@@ -1,4 +1,3 @@
-import React from "react";
 import { createMockup } from "../../../api/product.api";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -19,11 +18,7 @@ const EditorHeader = ({
 }) => {
 
   const { editId: productId } = useParams();
-
-
   const mockupImage = JSON.parse(localStorage.getItem("mockupToEdit"));
-  const navigate = useNavigate();
-
   const mockupCreate = async () => {
     try {
       localStorage.removeItem("selectedMockups");
@@ -31,10 +26,6 @@ const EditorHeader = ({
       const response = await createMockup(productId, { mockupImage: mockupImage.url });
        operations.onSave();
 
-      // toast.success("Mockup created successfully");
-
-      // Explicitly navigate
-      // navigate(`/admin/product/${productId}`);
     } catch (error) {
       toast.error("Failed to create mockup")
       console.log(error, "<<<< error");
@@ -72,25 +63,15 @@ const EditorHeader = ({
 
           <button
             className={`bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium shadow-md transition ${operations?.isSaving ? "opacity-50 cursor-not-allowed" : ""} cursor-pointer`}
-            // onClick={operations.onSave}
             onClick={mockupCreate}
             disabled={operations?.isSaving}
           >
             {operations?.isSaving ? "Saving..." : "Save Changes"}
           </button>
-
-          {/* <button 
-  onClick={operations.zoomToFitAllImages}
-  className="px-3 py-2 rounded bg-teal-600 hover:bg-teal-700"
-  title="Fit All Images to Screen"
->
-  Fit All
-</button> */}
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            // onClick={operations.onSave}
             onClick={mockupCreate}
             className="lg:hidden p-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
             title="Save"

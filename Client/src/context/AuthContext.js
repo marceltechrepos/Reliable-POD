@@ -6,7 +6,7 @@
     export const useAuth = () => useContext(AuthContext);
 
     export const AuthProvider = ({ children }) => {
-        const [isAuthenticated, setIsAuthenticated] = useState(null); // null = loading, true = authenticated, false = not authenticated
+        const [isAuthenticated, setIsAuthenticated] = useState(null);
         const [user, setUser] = useState(null);
 
         const verifyToken = async () => {
