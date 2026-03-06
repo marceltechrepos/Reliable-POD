@@ -1,4 +1,3 @@
-import React from "react";
 
 const EditorPropertiesPanel = ({
   selectedLayer,
@@ -69,16 +68,6 @@ const EditorPropertiesPanel = ({
                 onChange={(e) => operations.updateLayer(selectedLayer.id, { height: parseInt(e.target.value) || 1 })} />
             </div>
 
-            {/* ✅ ACTUAL/NATURAL SIZE DISPLAY (New) */}
-            {/* {(selectedLayer.type === "printarea" || selectedLayer.type === "image") && (
-              <div className="mt-2 text-xs text-gray-500">
-                <span className="block">Actual: {selectedLayer.naturalWidth || selectedLayer.width} × {selectedLayer.naturalHeight || selectedLayer.height}</span>
-                <span className="block">Display: {Math.round(selectedLayer.width)} × {Math.round(selectedLayer.height)}</span>
-              </div>
-            )}
-          </div> */}
-
-            {/* ✅ EXACT/NATURAL SIZE DISPLAY - Update yeh karo */}
             {(selectedLayer.type === "printarea" || selectedLayer.type === "image") && (
               <div className="mt-2 text-xs text-gray-500">
                 <span className="block">
@@ -146,7 +135,6 @@ const EditorPropertiesPanel = ({
                   }
                   const url = URL.createObjectURL(file);
 
-                  // ✅ New image ka size maintain karo
                   const img = new Image();
                   img.onload = function () {
                     operations.updateLayer(selectedLayer.id, {
@@ -159,7 +147,6 @@ const EditorPropertiesPanel = ({
                 }} className="w-full mt-1 p-2 bg-gray-700 rounded" />
               </div>
 
-              {/* ✅ IMAGE SIZE DISPLAY - Add this */}
               <div className="text-xs text-gray-500 mt-2">
                 <span className="block">
                   <strong>Original Size:</strong> {selectedLayer._naturalWidth || selectedLayer.width} × {selectedLayer._naturalHeight || selectedLayer.height}
@@ -208,10 +195,10 @@ const EditorPropertiesPanel = ({
                       skewY: 0,
                       transformOrigin: "center center",
                       corners: selectedLayer.corners || [
-                        { x: 0, y: 0 },                                  // top-left
-                        { x: selectedLayer.width, y: 0 },                // top-right
-                        { x: selectedLayer.width, y: selectedLayer.height }, // bottom-right
-                        { x: 0, y: selectedLayer.height }                // bottom-left
+                        { x: 0, y: 0 },   
+                        { x: selectedLayer.width, y: 0 }, 
+                        { x: selectedLayer.width, y: selectedLayer.height },
+                        { x: 0, y: selectedLayer.height }
                       ]
                     })} className="w-full mt-3 py-2 bg-gray-600 hover:bg-gray-500 rounded transition">
                       Reset Perspective
@@ -221,9 +208,7 @@ const EditorPropertiesPanel = ({
               </div>
             </>
           )}
-
-          {/* Print Area Properties */}
-          
+ 
           {selectedLayer.type === "printarea" && (
             <>
               <div className="pt-2 border-t border-gray-700">

@@ -76,7 +76,6 @@ const SubCategoryPage = () => {
     }
   };
 
-
   return (
     <div className="w-full bg-slate-100 min-h-screen p-10">
       {/* Header */}

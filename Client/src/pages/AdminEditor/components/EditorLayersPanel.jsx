@@ -1,4 +1,3 @@
-import React from "react";
 import { ReactSortable } from "react-sortablejs";
 import EditorLayerItem from "./EditorLayerItem";
 
@@ -10,9 +9,8 @@ const EditorLayersPanel = ({
   setActivePanel,
   operations,
 }) => {
-  // ✅ DIRECT FUNCTION FOR DRAG-DROP
+  
   const handleSortableChange = (newLayers) => {
-    // Direct state update for drag-drop
     operations.setLayers(newLayers, { recordHistory: false });
   };
 

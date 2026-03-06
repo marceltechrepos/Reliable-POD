@@ -16,9 +16,9 @@ const EditorCanvas = ({
   innerCanvasRef,
   draggingCorner,
   operations,
-  activePanel, // ADDED BACK
-  canvasOffset, // ✅ ADD THIS LINE
-  setCanvasOffset, // ✅ ADD THIS LINE
+  activePanel, 
+  canvasOffset, 
+  setCanvasOffset, 
 }) => {
 
   const [resizeData, setResizeData] = useState({
@@ -29,13 +29,11 @@ const EditorCanvas = ({
     isCtrlPressed: false
   });
 
-  // EditorCanvas component ke top par yeh state variables add karo
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
-  // Mouse events for panning
   const handleMouseDown = (e) => {
-    if (isPanning && e.button === 0) { // Left mouse button + Alt key
+    if (isPanning && e.button === 0) { 
       e.preventDefault();
       setPanStart({
         x: e.clientX - canvasOffset.x,
@@ -64,7 +62,6 @@ const EditorCanvas = ({
     }
   };
 
-  // Mouse events for tracking Ctrl and Shift
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Shift') {
@@ -106,7 +103,6 @@ const EditorCanvas = ({
       zIndex: 999,
     };
 
-    // ✅ ADD BACK THE RESPONSIVE CHECK
     const isMobile = window.innerWidth < 1024;
     const shouldShowCanvas = !isMobile || (isMobile && activePanel === 'canvas');
 
@@ -142,7 +138,6 @@ const EditorCanvas = ({
     );
   };
 
-  // ✅ ADD RESPONSIVE CHECK FOR ENTIRE COMPONENT
   const isMobile = window.innerWidth < 1024;
   const shouldShowCanvas = !isMobile || (isMobile && activePanel === 'canvas');
 
@@ -179,7 +174,6 @@ const EditorCanvas = ({
               height: getCanvasSize().displayHeight,
               display: "inline-block",
               position: "relative",
-              // transform: `scale(${1}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
               transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
               transformOrigin: "0 0",
               border: "1px solid rgba(255,255,255,0.1)", // Canvas border for visibility
@@ -192,11 +186,7 @@ const EditorCanvas = ({
               if (layer.visible === false) return null;
               const zIndex = index + 1;
               const isSelected = selectedLayerId === layer.id;
-
-              // Allow pointer events only for selected layer or when no layer is selected
               const shouldHandlePointerEvents = isSelected || selectedLayerId === null;
-
-
               if (layer.type === "background") {
                 return (
                   <div
@@ -233,7 +223,6 @@ const EditorCanvas = ({
               return (
                 <Rnd
                   key={layer.id}
-                  // ✅ Original size ke hisaab se dimensions do
                   size={{
                     width: layer.width * (getCanvasSize().displayWidth / getCanvasSize().originalWidth),
                     height: layer.height * (getCanvasSize().displayHeight / getCanvasSize().originalHeight)
@@ -243,13 +232,11 @@ const EditorCanvas = ({
                     y: layer.y * (getCanvasSize().displayHeight / getCanvasSize().originalHeight)
                   }}
                   onDragStop={(e, d) => {
-                    // ✅ Wapas original size mein convert karo
                     const originalX = d.x / (getCanvasSize().displayWidth / getCanvasSize().originalWidth);
                     const originalY = d.y / (getCanvasSize().displayHeight / getCanvasSize().originalHeight);
                     operations.updateLayer(layer.id, { x: originalX, y: originalY });
                   }}
 
-                  // Naya onResizeStart handler
                   onResizeStart={(e, direction, ref, delta) => {
                     setResizeData({
                       startWidth: layer.width,
@@ -260,18 +247,15 @@ const EditorCanvas = ({
                     });
                   }}
 
-                  // Naya onResize handler with aspect ratio locking
                   onResize={(e, direction, ref, delta, position) => {
                     let newWidth = parseInt(ref.style.width, 10);
                     let newHeight = parseInt(ref.style.height, 10);
                     let newX = position.x;
                     let newY = position.y;
 
-                    // Shift key pressed - maintain aspect ratio
                     if (resizeData.isShiftPressed) {
                       const aspect = resizeData.aspectRatio;
 
-                      // Determine which direction we're resizing
                       if (direction.includes('right') || direction.includes('left')) {
                         // Horizontal resize - adjust height based on width
                         newHeight = newWidth / aspect;
@@ -326,8 +310,6 @@ const EditorCanvas = ({
                     });
                   }}
 
-
-                  // Naya prop add karo for better control
                   lockAspectRatio={resizeData.isShiftPressed} // This will lock aspect when Shift is pressed
 
                   onClick={() => setSelectedLayerId(layer.id)}
@@ -389,11 +371,6 @@ const EditorCanvas = ({
                           width: "100%",
                           height: "100%",
                           position: "relative",
-                          // transform: `scaleY(1)`,
-                          // transform: `rotate(${layer.rotation || 0}deg)`,
-                          // transformOrigin: "center center"
-                          //  transform: `scale(${getCanvasSize().scaleFactor})`,
-                          // transformOrigin: "0 0"
                         }}>
                           <div style={{
                             width: layer.width,
@@ -442,19 +419,12 @@ const EditorCanvas = ({
                       )
                     )}
 
-
-                    {/* // Printarea section (~line 250) UPDATE karo: */}
                     {layer.type === "printarea" && (
                       layer.enablePerspective && layer.corners && layer.hasImage ? (
                         <div style={{
                           width: "100%",
                           height: "100%",
                           position: "relative",
-                          // transform: `scaleY(1)`,
-                          // transform: `scale(${getCanvasSize().scaleFactor})`,
-                          // transform: `rotate(${layer.rotation || 0}deg)`,
-                          // transformOrigin: "center center"
-                          // transformOrigin: "0 0"
                         }}>
                           <div style={{
                             width: layer.width,
@@ -476,7 +446,6 @@ const EditorCanvas = ({
                       )
                         :
                         (
-                          // Normal rendering (no perspective or no image)
                           <div
                             style={{
                               width: "100%",
@@ -546,7 +515,6 @@ const EditorCanvas = ({
                     {showPerspectiveHandles && layer.corners && (
                       <>
                         {layer.corners.slice(0, 4).map((corner, index) => {
-                          // ✅ Display size ke hisaab se coordinates scale karo
                           const scaleFactor = getCanvasSize().displayWidth / getCanvasSize().originalWidth;
                           const displayX = corner.x * scaleFactor;
                           const displayY = corner.y * scaleFactor;
@@ -557,8 +525,8 @@ const EditorCanvas = ({
                               onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
                               style={{
                                 position: "absolute",
-                                left: displayX - 6,  // ← scaled coordinates
-                                top: displayY - 6,   // ← scaled coordinates
+                                left: displayX - 6,  
+                                top: displayY - 6,
                                 width: 12,
                                 height: 12,
                                 backgroundColor: "#f59e0b",
@@ -572,31 +540,6 @@ const EditorCanvas = ({
                         })}
                       </>
                     )}
-                    {/* {showPerspectiveHandles && layer.corners && (
-                      <>
-                        {layer.corners.slice(0, 4).map((corner, index) => ( // ✅ Only 4 points
-                          <div
-                            key={`corner-${index}`}
-                            onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
-                            style={{
-                              position: "absolute",
-                              left: corner.x - 6,  // ✅ Bigger handle
-                              top: corner.y - 6,
-                              width: 12,
-                              height: 12,
-                              backgroundColor: "#f59e0b",
-                              borderRadius: "50%",
-                              border: "2px solid white",
-                              cursor: "move",
-                              zIndex: 9999,
-                              // boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-                            }}
-                            title={`Drag to adjust perspective (Point ${index + 1})`}
-                          />
-                        ))}
-                      </>
-                    )} */}
-
                     {/* Rotation Handle */}
                     {showRotationHandle && (
                       <div

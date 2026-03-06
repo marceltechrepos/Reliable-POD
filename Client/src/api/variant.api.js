@@ -1,5 +1,3 @@
-// variant.api.js
-// All variant-related API calls
 
 import { authFetch } from "./product.api";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
