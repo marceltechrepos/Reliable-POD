@@ -89,8 +89,6 @@ function ProductVariant() {
       return;
     }
 
-    // Here you would typically save the print area data
-    // For example: send to API, update state, etc.
     const newPrintArea = {
       id: Date.now(), // You might want to use UUID here
       tib: printAreaData.tib || generateTIB(),
@@ -104,9 +102,6 @@ function ProductVariant() {
 
     // Show success message
     toast.success('Print area added successfully!');
-
-    // You can add logic here to update your print areas list
-    // For example: setPrintAreas([...printAreas, newPrintArea]);
 
     handleModalClose();
   };

@@ -14,7 +14,6 @@ import Settings from "./pages/Settings";
 import AdminLogin from "./components/Admin/AdminLogin";
 import Editor from "./pages/AdminEditor/Editor";
 import ProtectedRoute from "./components/ProtectedRoute.jsx"
-import PerspectiveWarp from "./pages/PerspectiveImage";
 import SubCategory from "./pages/SubCategory";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -49,9 +48,6 @@ function App() {
           if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            // Clear invalid token
-            // localStorage.removeItem("token");
-            // localStorage.removeItem("user");
             setIsAuthenticated(false);
 
             // Show notification
@@ -193,7 +189,6 @@ function App() {
 
         {/* <Route path="/admin/signup" element={<Signup />} /> */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/per" element={<PerspectiveWarp />} />
         <Route path="/admin/editor/:editId?/:mockupId?" element={<Editor />} />
 
         {/* Default redirect */}

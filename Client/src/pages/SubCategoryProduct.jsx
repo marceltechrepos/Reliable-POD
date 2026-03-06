@@ -93,26 +93,6 @@ const SubCategoryProduct = () => {
     setFilteredProducts(filtered);
   }, [searchQuery, products]);
 
-  // const handleDeleteProduct = async (productId) => {
-  //   if (!productId) return;
-
-  //   const confirmDelete = window.confirm("Are you sure you want to delete this product?");
-  //   if (!confirmDelete) return;
-
-  //   try {
-  //     await deleteProductById(productId);
-
-  //     // modal band
-  //     setSelected(null);
-
-  //     // UI se product remove (no refetch needed)
-  //     setProducts((prev) => prev.filter((p) => p._id !== productId));
-  //   } catch (err) {
-  //     console.error("Delete product error:", err);
-  //     toast.error("Failed to delete product");
-  //   }
-  // };
-
   const handleDeleteProduct = async (productId) => {
     if (!productId) return;
 
@@ -142,7 +122,6 @@ const SubCategoryProduct = () => {
       }
     );
   };
-
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">

@@ -419,12 +419,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
               }, gap: 2
             }}>
               <TextField label="Variant SKU" name="sku" value={formData.sku} onChange={handleInputChange} fullWidth size="small" required InputLabelProps={{ required: false }} />
-              {/* <TextField label="Color *" name="color" value={formData.color} onChange={handleInputChange} fullWidth size="small" required /> */}
-              {/* <TextField label="Size *" name="size" value={formData.size} onChange={handleInputChange} fullWidth size="small" required /> */}
-              {/* <TextField label="Color Hex" name="colorHex" value={formData.colorHex} onChange={handleInputChange} fullWidth size="small" type="color" InputProps={{ style: { height: '40px' } }} /> */}
-              {/* <TextField label="Weight" name="weight" value={formData.weight} onChange={handleInputChange} fullWidth size="small" /> */}
               <TextField label="Your Selling Price" name="price" value={formData.price} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} required InputLabelProps={{ required: false }} />
-              {/* <TextField label="Compare Price" name="comparePrice" value={formData.comparePrice} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} /> */}
               <TextField label="Your Cost Price" name="baseCost" value={formData.baseCost} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} InputLabelProps={{ required: false }} />
               <FormControl fullWidth size="small">
                 <InputLabel>Available</InputLabel>
@@ -432,10 +427,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                   {availableOptions.map(option => (<MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>))}
                 </Select>
               </FormControl>
-              {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Checkbox name="addToCampaigns" checked={formData.addToCampaigns} onChange={handleInputChange} />
-                <Typography>Add to Campaigns</Typography>
-              </Box> */}
               <TextField label="Variant ID" value="Auto-generated on save" fullWidth size="small" disabled InputProps={{ readOnly: true }} helperText="Auto-generated unique ID" />
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
@@ -522,12 +513,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                   </TableCell>
                   <TableCell>TIB Variant ID</TableCell>
                   <TableCell>Fulfield SKU</TableCell>
-                  {/* <TableCell>Color</TableCell>
-                  <TableCell>Size</TableCell>
-                  <TableCell>Color Hex</TableCell>
-                  <TableCell>Weight</TableCell> */}
                   <TableCell>Your Selling Price</TableCell>
-                  {/* <TableCell>Compare Price</TableCell> */}
                   <TableCell>Your Cost Price</TableCell>
                   <TableCell>Available</TableCell>
                   <TableCell>Add to Campaigns</TableCell>
@@ -549,18 +535,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                         <TableCell>
                           <TextField name="sku" value={editFormData.sku} onChange={handleEditInputChange} size="small" fullWidth />
                         </TableCell>
-                        {/* <TableCell>
-                          <TextField name="color" value={editFormData.color} onChange={handleEditInputChange} size="small" fullWidth />
-                        </TableCell>
-                        <TableCell>
-                          <TextField name="size" value={editFormData.size} onChange={handleEditInputChange} size="small" fullWidth />
-                        </TableCell>
-                        <TableCell>
-                          <TextField name="colorHex" value={editFormData.colorHex} onChange={handleEditInputChange} size="small" type="color" />
-                        </TableCell>
-                        <TableCell>
-                          <TextField name="weight" value={editFormData.weight} onChange={handleEditInputChange} size="small" fullWidth />
-                        </TableCell> */}
                         <TableCell>
                           <TextField name="price" value={editFormData.price} onChange={handleEditInputChange} size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} fullWidth />
                         </TableCell>
@@ -593,17 +567,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                       <>
                         <TableCell>{row.id.substring(0, 8)}...</TableCell>
                         <TableCell>{row.sku}</TableCell>
-                        {/* <TableCell>{row.color}</TableCell> */}
-                        {/* <TableCell>{row.size}</TableCell> */}
-                        {/* <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Box sx={{ width: 20, height: 20, backgroundColor: row.colorHex, border: '1px solid #ccc', borderRadius: '50%' }} />
-                            {row.colorHex}
-                          </Box>
-                        </TableCell> */}
-                        {/* <TableCell>{row.weight}</TableCell> */}
                         <TableCell>£{(row.price ?? 0).toFixed(2)}</TableCell>
-                        {/* <TableCell>{row.comparePrice ? `£${row.comparePrice.toFixed(2)}` : '-'}</TableCell> */}
                         <TableCell>{row.baseCost ? `£${row.baseCost.toFixed(2)}` : '-'}</TableCell>
                         <TableCell sx={{ padding: '10px' }}>
                           <Box sx={{
