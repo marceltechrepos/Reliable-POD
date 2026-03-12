@@ -9,6 +9,8 @@ import CategoryRouter from "./Routes/Category.Route.js";
 import layerRoute from "./Routes/Printarea.Route.js";
 import ThumbnailRoute from "./Routes/Thumbnail.Route.js";
 import StoreRoute from "./Routes/Store.Route.js";
+import customerRoute from "./Routes/customerDesign.Routes.js";
+import userPrintAreaImage from "./Routes/User.PrintareaImage.Route.js";
 
 const app = express();
 
@@ -22,8 +24,11 @@ app.use(express.static("public"));
 ConnectDB();
 app.get("/", (req, res) => res.send("Hello World!"));
 
-const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter, layerRoute, ThumbnailRoute, StoreRoute];
-routes.forEach((route) => app.use("/api", route));
+const routes = [UserRouter, productRouter, mockupImageRouter, CategoryRouter, layerRoute, ThumbnailRoute, StoreRoute, userPrintAreaImage];
+routes.forEach((route) => {
+  app.use("/api", route)
+});
+app.use("/api/customer/designs", customerRoute)
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port http://localhost:${process.env.PORT}`);
