@@ -13,8 +13,6 @@ export default function Catalogue() {
     try {
       setLoading(true);
       const res = await getAllCategory();
-
-      console.log("API RESULT:", res); // confirm it's an array
       setCategories(res || []);
 
     } catch (error) {

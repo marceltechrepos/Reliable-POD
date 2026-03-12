@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom"; // 1. Navigate import kiya
 import { PRODUCTS } from "../components/Products/productData";
 import { LayoutGrid, List } from "lucide-react";
-import { getProductsByCategory } from "../api/category.api";
+import { getAllProducts, getProductsByCategory } from "../api/category.api";
 
 export default function MyProducts() {
   const navigate = useNavigate(); // 2. Hook initialize kiya
@@ -37,6 +37,22 @@ export default function MyProducts() {
 
     fetchProductsByCategoryId();
   }, [ProductId])
+
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllProducts();
+        setProducts(data)
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.log(error)
+      }
+    }
+
+    fetchAllProducts()
+  }, [])
 
   const productNames = useMemo(() => [...new Set(products.map(p => p.title))], [products]);
 
@@ -111,7 +127,7 @@ export default function MyProducts() {
                   <div
                     onClick={() => navigate(`/user/single-catalogue/${p._id}`, {
                       state: { product: p }
-                    })} 
+                    })}
                     className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
                     ${isSelected ? "border-[#f05a28] ring-1 ring-[#f05a28]" : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1"}`}
                   >

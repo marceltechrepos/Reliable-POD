@@ -18,6 +18,8 @@ import SingleProduct from "./pages/Singleproduct.jsx";
 import DynamicDesignTool from "./pages/DynamicDesignTool.jsx";
 import Productcatalogue from "./pages/Productcatalogue";
 import Singlecatalogue from "./pages/Singlecatalogue.jsx";
+import Editor from "./pages/Editor.jsx";
+import { ToastContainer } from 'react-toastify'
 
 
 
@@ -33,8 +35,9 @@ function App() {
         <Route path="/user" element={<UserLayout />}>
           <Route path="dashboard" element={< UserDashboard />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="products/:ProductId" element={<MyProducts />} />
+          <Route path="products/:ProductId?" element={<MyProducts />} />
           <Route path="catalogue" element={<Catalogue />} />
+          <Route path="edit/:productId" element={<Editor />} />
           <Route path="prices" element={<PriceList />} />
           <Route path="stores" element={<Stores />} />
           <Route path="stores/:id" element={<StoreDetail />} />
@@ -60,6 +63,7 @@ function App() {
         <Route path="/" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
+      <ToastContainer />
     </Router>
     // <Router>
     //   <Routes>

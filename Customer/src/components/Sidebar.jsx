@@ -25,7 +25,7 @@ function Sidebar({ isOpen, onClose }) {
           top-14 sm:top-16 md:top-0
           bottom-0
           left-0 z-40
-          w-[260px] lg:w-[280px] xl:w-[300px]
+          w-[240px] lg:w-[200px] xl:w-[218px]
           bg-white shadow-md
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
@@ -35,7 +35,6 @@ function Sidebar({ isOpen, onClose }) {
           <ul className="lg:mt-15">
             {/* 1. Yahan filter lagaya hai taaki 'My Products' sidebar mein na dikhe */}
             {menuItems
-              .filter((item) => item.path !== "/user/products") // Us page ka path hide karein
               .map((item, index) => (
                 <li key={index}>
                   <NavLink
