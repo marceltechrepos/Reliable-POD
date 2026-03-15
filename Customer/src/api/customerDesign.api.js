@@ -64,3 +64,26 @@ export const updateCustomerLayer = async (layerId, data) => {
 
   return await res.json();
 };
+
+
+export const getcustomerDesignByuserId = async (userId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/api/customer/designs/user/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const data = await res.json();
+
+     if (!res.ok) {
+            console.warn(data.message);
+            return [];
+        }
+
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.log(error, "<<< error");
+    return error;
+  }
+}
