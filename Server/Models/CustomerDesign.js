@@ -94,7 +94,7 @@ const customerDesignSchema = new mongoose.Schema(
 
     mockup: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Mockup",
+      ref: "MockupImage",
       required: true
     },
 

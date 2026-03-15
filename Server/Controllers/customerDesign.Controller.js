@@ -258,10 +258,33 @@ const deleteLayer = async (req, res) => {
     }
 };
 
+const getcustomerDesignByuserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const design = await CustomerDesign.find({ user: userId }).populate("user").populate("product").populate("mockup")
+
+        if (!design.length) {
+            return res.status(404).json({ success: false, message: "No Design Found" })
+        }
+
+        return res.status(200).json({ success: true, data: design })
+
+    } catch (error) {
+        console.log(error, "<<<< error")
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+
 export {
     uploadImage,
     saveDesign,
     getDesign,
     deleteLayer,
-    updateLayer
+    updateLayer,
+    getcustomerDesignByuserId
 }
