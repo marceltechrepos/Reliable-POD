@@ -1,6 +1,6 @@
 import React from "react";
 
-const ConfirmDesignModal = ({ open, onClose, onConfirm, handleSave }) => {
+const ConfirmDesignModal = ({ open, onClose, onConfirm, customerDesignId }) => {
     if (!open) return null;
 
     return (

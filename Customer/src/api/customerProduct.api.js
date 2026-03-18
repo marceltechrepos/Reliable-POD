@@ -29,13 +29,13 @@ export const createCustomProduct = async (payload) => {
 export const getCustomProducts = async (params = {}) => {
     try {
         const token = localStorage.getItem("token");
-        
+
         // Build query string
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.append("page", params.page);
         if (params.limit) queryParams.append("limit", params.limit);
         if (params.productId) queryParams.append("productId", params.productId);
-        
+
         const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
         const res = await fetch(`${BASE_URL}/api/custom-product/${queryString}`, {
@@ -74,6 +74,52 @@ export const getCustomProductById = async (id) => {
         return data;
     } catch (error) {
         console.error("getCustomProductById API error:", error);
+        return {
+            success: false,
+            message: "Network error",
+        };
+    }
+};
+
+// ============== GET BY USER ID ==============
+
+export const getCustomProductByUserId = async (userId) => {
+    try {
+        const token = localStorage.getItem("token");
+        if (!userId) {
+            return {
+                success: false,
+                message: "User ID is required",
+            };
+        }
+
+        const response = await fetch(
+            `${BASE_URL}/api/custom-product/user/${userId}`,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            return {
+                success: false,
+                message: data.message || "Something went wrong",
+            };
+        }
+
+        return {
+            success: true,
+            data: data.data,
+        };
+
+    } catch (error) {
+        console.error("getCustomProductByUserId API error:", error);
         return {
             success: false,
             message: "Network error",

@@ -180,6 +180,42 @@ const getCustomProductById = async (req, res) => {
   }
 };
 
+// Get Custom Product by User id
+const getCustomProductByUserId = async (req, res) => {
+
+  const { userId } = req.params;
+  try {
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Bad Request" });
+    }
+
+
+    const customProductsByUserId = await CustomProduct.find({ user: userId })
+      .populate("baseProduct")
+      .populate("customerDesign")
+      .populate("selectedMockup")
+      .populate("customerLayers.printArea");
+
+    if (!customProductsByUserId.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No custom products found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: customProductsByUserId
+    })
+  } catch (error) {
+    console.error("getCustomProductByUserId error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 // Update custom product
 const updateCustomProduct = async (req, res) => {
   try {
@@ -407,5 +443,6 @@ export {
   updateCustomProduct,
   deleteCustomProduct,
   bulkDeleteCustomProducts,
-  createCustomProduct
+  createCustomProduct,
+  getCustomProductByUserId
 };
