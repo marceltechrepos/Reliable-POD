@@ -5,7 +5,8 @@ import {
     getCustomProductById,
     updateCustomProduct,
     deleteCustomProduct,
-    bulkDeleteCustomProducts
+    bulkDeleteCustomProducts,
+    getCustomProductByUserId
 } from "../Controllers/customProduct.Controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
@@ -18,7 +19,8 @@ customerProductRoute.use(isLogin);
 customerProductRoute.post("/create", createCustomProduct);
 customerProductRoute.post("/bulk-delete", bulkDeleteCustomProducts); 
 
-customerProductRoute.get("/", getCustomProducts);                  
+customerProductRoute.get("/", getCustomProducts); 
+customerProductRoute.get("/user/:userId", getCustomProductByUserId)                 
 customerProductRoute.get("/:id", getCustomProductById);             
 customerProductRoute.put("/:id", updateCustomProduct);            
 customerProductRoute.delete("/:id", deleteCustomProduct);         

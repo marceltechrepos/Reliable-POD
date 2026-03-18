@@ -45,7 +45,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="contact" element={<ContactUs />} />
           <Route path="sub-catalogue/:subCategoryId" element={<Subcatalogue />} />
-          <Route path="/user/detail-product/" element={<SingleProduct />} />
+          <Route path="/user/detail-product/:customProductId" element={<SingleProduct />} />
           <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
           <Route path="Productcatalogue" element={<Productcatalogue />} />
 
