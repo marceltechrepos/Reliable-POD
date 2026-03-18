@@ -11,6 +11,7 @@ import ThumbnailRoute from "./Routes/Thumbnail.Route.js";
 import StoreRoute from "./Routes/Store.Route.js";
 import customerRoute from "./Routes/customerDesign.Routes.js";
 import userPrintAreaImage from "./Routes/User.PrintareaImage.Route.js";
+import customerProductRoute from "./Routes/customProduct.routes.js";
 
 const app = express();
 
@@ -29,6 +30,7 @@ routes.forEach((route) => {
   app.use("/api", route)
 });
 app.use("/api/customer/designs", customerRoute)
+app.use("/api/custom-product", customerProductRoute);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port http://localhost:${process.env.PORT}`);

@@ -20,6 +20,7 @@ import Productcatalogue from "./pages/Productcatalogue";
 import Singlecatalogue from "./pages/Singlecatalogue.jsx";
 import Editor from "./pages/Editor.jsx";
 import { ToastContainer } from 'react-toastify'
+import DesignVariants from "./components/Admin/DesignVariants.jsx";
 
 
 
@@ -49,6 +50,7 @@ function App() {
           <Route path="Productcatalogue" element={<Productcatalogue />} />
 
           <Route path="single-catalogue/:productId" element={<Singlecatalogue />} />
+          <Route path="design-variants/:productId" element={<DesignVariants />} />
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}
