@@ -76,10 +76,10 @@ export const getcustomerDesignByuserId = async (userId) => {
     })
     const data = await res.json();
 
-     if (!res.ok) {
-            console.warn(data.message);
-            return [];
-        }
+    if (!res.ok) {
+      console.warn(data.message);
+      return [];
+    }
 
     return data.success ? data.data : [];
   } catch (error) {

@@ -177,7 +177,7 @@ const getSubCategoriesByParent = async (parentId) => {
     }
 };
 
-export const getProductsByCategory = async (categoryId) => {
+const getProductsByCategory = async (categoryId) => {
     try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${BASE_URL}/api/get-product-by-category/${categoryId}`, {
@@ -200,7 +200,7 @@ export const getProductsByCategory = async (categoryId) => {
     }
 };
 
-export const getProductById = async (productId) => {
+const getProductById = async (productId) => {
     try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${BASE_URL}/api/get-product-By-Id/${productId}`, {
@@ -223,4 +223,4 @@ export const getProductById = async (productId) => {
     }
 };
 
-export { getAllCategory, getSubCategoriesByParent, getAllProducts };
+export { getAllCategory, getSubCategoriesByParent, getAllProducts, getProductsByCategory, getProductById };

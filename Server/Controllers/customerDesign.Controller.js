@@ -187,8 +187,7 @@ const getDesign = async (req, res) => {
             });
         }
 
-        const userId = req.user._id; // ✅ isLogin ne FULL user object set kiya hai
-        console.log("Fetching design for user:", userId);
+        const userId = req.user._id; 
 
         const query = {
             user: userId,
@@ -278,7 +277,6 @@ const getcustomerDesignByuserId = async (req, res) => {
         })
     }
 }
-
 
 export {
     uploadImage,
