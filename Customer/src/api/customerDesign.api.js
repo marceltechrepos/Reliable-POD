@@ -87,3 +87,22 @@ export const getcustomerDesignByuserId = async (userId) => {
     return error;
   }
 }
+
+// Update existing design
+export const updateCustomerDesign = async (designId, data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/customer/designs/${designId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("updateCustomerDesign error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

@@ -8,6 +8,7 @@ const createCustomProduct = async (req, res) => {
     const {
       productId,
       selectedDefaultVariants = [],
+      customVariants = [],
       customVariant = {},
       customerDesignId = null,
       selectedMockup = null,
@@ -28,6 +29,20 @@ const createCustomProduct = async (req, res) => {
       });
     }
 
+    // ✅ Process customVariants array
+    const normalizedCustomVariants = customVariants.map(variant => ({
+      enabled: Boolean(variant.enabled || variant.imageUrl),
+      imageUrl: variant.imageUrl || "",
+      publicId: variant.publicId || "",
+      fileName: variant.fileName || "",
+      name: variant.name || customVariant.name || "",
+      description: variant.description || customVariant.description || "",
+      tags: variant.tags?.length
+        ? variant.tags
+        : (customVariant.tags || []),
+    }));
+
+    // Normalize customVariant for backward compatibility
     const normalizedCustomVariant = {
       enabled: Boolean(customVariant.enabled || customVariant.imageUrl),
       imageUrl: customVariant.imageUrl || "",
@@ -47,6 +62,7 @@ const createCustomProduct = async (req, res) => {
       baseProduct: productId,
       selectedDefaultVariants,
       customVariant: normalizedCustomVariant,
+      customVariants: normalizedCustomVariants,
       customerDesign: customerDesignId,
       selectedMockup,
       customerLayers,
@@ -253,6 +269,7 @@ const updateCustomProduct = async (req, res) => {
     // Prepare update object with allowed fields
     const allowedUpdates = {
       selectedDefaultVariants: updateData.selectedDefaultVariants,
+      customVariants: updateData.customVariants,
       customVariant: updateData.customVariant,
       customerDesign: updateData.customerDesignId,
       selectedMockup: updateData.selectedMockup,
@@ -265,6 +282,25 @@ const updateCustomProduct = async (req, res) => {
         delete allowedUpdates[key];
       }
     });
+
+    // Normalize customVariants if provided
+    if (updateData.customVariants) {
+      allowedUpdates.customVariants = updateData.customVariants.map(variant => ({
+        enabled: Boolean(variant.enabled || variant.imageUrl),
+        imageUrl: variant.imageUrl || "",
+        publicId: variant.publicId || "",
+        fileName: variant.fileName || "",
+        name: variant.name || "",
+        description: variant.description || "",
+        tags: Array.isArray(variant.tags)
+          ? variant.tags
+          : String(variant.tags || "")
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+      }));
+    }
+
 
     // Normalize customVariant if provided
     if (updateData.customVariant) {

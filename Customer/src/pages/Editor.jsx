@@ -19,6 +19,7 @@ import { Pencil, Copy, Lock, Unlock, Trash2 } from "lucide-react";
 import * as layerHelpers from "../components/Admin/utils/layerHelpers";
 import { toast } from "react-toastify";
 import ConfirmDesignModal from "../components/Admin/ConfirmDesignModal";
+import { getCustomProductByUserId, updateCustomProduct } from "../api/customerProduct.api";
 
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 const toNumber = (v, fallback = 0) => {
@@ -72,6 +73,10 @@ const Editor = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [customerDesignId, setCustomerDesignId] = useState(null);
 
+    const [existingCustomProduct, setExistingCustomProduct] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isCheckingExisting, setIsCheckingExisting] = useState(false);
+
     const fileInputRef = useRef(null);
     const containerRefs = useRef({});
     const rndRefs = useRef({});
@@ -85,6 +90,54 @@ const Editor = () => {
         { name: "Light Blue", class: "bg-blue-400" },
         { name: "Azalea Pink", class: "bg-pink-400" }
     ];
+
+    // Ye naya useEffect add karo - Check if custom product exists
+    // Check if custom product exists
+    useEffect(() => {
+        const checkExistingDesign = async () => {
+            if (!productId || !selectedMockup?._id) return;
+
+            try {
+                setIsCheckingExisting(true);
+                const user = JSON.parse(localStorage.getItem("user"));
+                if (!user?._id) return;
+
+                // Get all custom products for this user
+                const res = await getCustomProductByUserId(user._id);
+
+                if (res.success && res.data) {
+                    // Find custom product with matching productId
+                    const existing = res.data.find(
+                        cp => cp.baseProduct?._id === productId
+                    );
+
+                    if (existing) {
+                        setExistingCustomProduct(existing);
+                        setIsEditing(true);
+                        console.log("Existing custom product found:", existing);
+
+                        // ✅ Load existing design layers
+                        const designRes = await getCustomerDesign(productId, selectedMockup._id);
+                        if (designRes.success && designRes.data) {
+                            console.log("Loading existing design layers:", designRes.data);
+                            setCustomerLayers(designRes.data.layers || []);
+                            setCustomerDesignId(designRes.data._id);
+                        }
+                    } else {
+                        setIsEditing(false);
+                        setExistingCustomProduct(null);
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking existing design:", error);
+                setIsEditing(false);
+            } finally {
+                setIsCheckingExisting(false);
+            }
+        };
+
+        checkExistingDesign();
+    }, [productId, selectedMockup]);
 
     // resize listener (cheap trigger)
     useEffect(() => {
@@ -291,35 +344,63 @@ const Editor = () => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            // normalize all layers before saving
             const normalized = customerLayers.map(l => normalizeLayer(l));
-            const res = await saveCustomerDesign({
-                productId: product._id,
-                mockupId: selectedMockup._id,
-                layers: normalized
-            });
 
-            if (res.success) {
-                setHasSavedDesign(true);
+            let res;
+            let designId = null;
 
-                let designId = null;
+            if (isEditing && existingCustomProduct?._id) {
+                // ✅ UPDATE existing custom product
+                console.log("Updating existing custom product:", existingCustomProduct._id);
 
-                // ✅ Get ID from response
-                if (res.data && res.data._id) {
-                    designId = res.data._id;
-                    setCustomerDesignId(designId);
-                    console.log("✅ Design ID saved from response:", designId);
+                const payload = {
+                    productId,
+                    mockupId: selectedMockup._id,
+                    layers: normalized,
+                    customVariant: existingCustomProduct.customVariant || {
+                        enabled: true,
+                        name: "",
+                        description: "",
+                        tags: []
+                    },
+                    selectedDefaultVariants: existingCustomProduct.selectedDefaultVariants || []
+                };
+
+                res = await updateCustomProduct(existingCustomProduct._id, payload);
+
+                if (res.success) {
+                    designId = existingCustomProduct._id;
+                    toast.success("Design updated successfully!");
                 }
+            } else {
+                // ✅ CREATE new custom product
+                console.log("Creating new custom product");
 
-                // refresh from server (optional)
+                res = await saveCustomerDesign({
+                    productId,
+                    mockupId: selectedMockup._id,
+                    layers: normalized
+                });
+
+                if (res.success) {
+                    if (res.data && res.data._id) {
+                        designId = res.data._id;
+                    }
+                    toast.success("Design saved successfully!");
+                }
+            }
+
+            if (res?.success) {
+                setHasSavedDesign(true);
+                setCustomerDesignId(designId);
+
+                // Refresh design from server
                 try {
-                    const fresh = await getCustomerDesign(product._id, selectedMockup._id);
+                    const fresh = await getCustomerDesign(productId, selectedMockup._id);
                     if (fresh.success && fresh.data) {
                         if (fresh.data._id) {
-                            designId = fresh.data._id;
-                            setCustomerDesignId(designId);
+                            setCustomerDesignId(fresh.data._id);
                         }
-
                         const loaded = (fresh.data.layers || []).map(l => normalizeLayer({
                             ...l,
                             horizontalAlign: l.horizontalAlign || 'center',
@@ -332,15 +413,14 @@ const Editor = () => {
                     console.error("fetch fresh after save", e);
                 }
 
-                toast.success("Design saved successfully!");
-                return designId; // ✅ Return ID for navigation
+                return designId;
             } else {
-                toast.error("Save failed");
+                toast.error(isEditing ? "Update failed" : "Save failed");
                 return null;
             }
         } catch (e) {
             console.error("save error", e);
-            toast.error("Save failed");
+            toast.error(isEditing ? "Update failed" : "Save failed");
             return null;
         } finally {
             setSaving(false);
@@ -357,63 +437,197 @@ const Editor = () => {
     //             mockupId: selectedMockup._id,
     //             layers: normalized
     //         });
-    //         if (res.success) {
-    //             setHasSavedDesign(true); // now subsequent changes call updateCustomerLayer
 
+    //         if (res.success) {
+    //             setHasSavedDesign(true);
+
+    //             let designId = null;
+
+    //             // ✅ Get ID from response
     //             if (res.data && res.data._id) {
-    //                 setCustomerDesignId(res.data._id);
-    //                 console.log("✅ Design ID saved from response:", res.data._id);
+    //                 designId = res.data._id;
+    //                 setCustomerDesignId(designId);
+    //                 console.log("✅ Design ID saved from response:", designId);
     //             }
+
+    //             // refresh from server (optional)
     //             try {
     //                 const fresh = await getCustomerDesign(product._id, selectedMockup._id);
-    //                 console.log(fresh, "<<<<<< fresh")
     //                 if (fresh.success && fresh.data) {
-
     //                     if (fresh.data._id) {
-    //                         setCustomerDesignId(fresh.data._id);
-    //                         console.log("✅ Design ID saved from fresh data:", fresh.data._id);
+    //                         designId = fresh.data._id;
+    //                         setCustomerDesignId(designId);
     //                     }
+
     //                     const loaded = (fresh.data.layers || []).map(l => normalizeLayer({
     //                         ...l,
     //                         horizontalAlign: l.horizontalAlign || 'center',
     //                         verticalAlign: l.verticalAlign || 'middle'
     //                     }));
-
     //                     setCustomerLayers(loaded);
     //                     setRenderKey(k => k + 1);
     //                 }
     //             } catch (e) {
     //                 console.error("fetch fresh after save", e);
     //             }
+
     //             toast.success("Design saved successfully!");
+    //             return designId; // ✅ Return ID for navigation
     //         } else {
     //             toast.error("Save failed");
+    //             return null;
     //         }
     //     } catch (e) {
     //         console.error("save error", e);
     //         toast.error("Save failed");
+    //         return null;
     //     } finally {
     //         setSaving(false);
     //     }
     // };
 
     const handleConfirm = async () => {
-        const savedDesignId = await handleSave(); // ensure design is saved first
-        console.log("Navigating with customerDesignId:", savedDesignId); // ✅ Check this
+        const savedDesignId = await handleSave();
 
-        navigate(`/user/design-variants/${productId}`, {
-            state: {
-                product,
-                selectedMockup,
-                customerLayers,
-                adminLayers,
-                customerDesignId: savedDesignId, // ✅ This will now have the ID
+        if (savedDesignId) {
+            if (isEditing) {
+                // Agar update hai to variants page pe bina extra data ke jao
+                navigate(`/user/design-variants/${productId}`, {
+                    state: {
+                        product,
+                        selectedMockup,
+                        customerLayers,
+                        adminLayers,
+                        customerDesignId: savedDesignId,
+                        isEditing: true, // ✅ Flag for variants page
+                        existingCustomProduct // ✅ Pass existing data
+                    }
+                });
+            } else {
+                // New create
+                navigate(`/user/design-variants/${productId}`, {
+                    state: {
+                        product,
+                        selectedMockup,
+                        customerLayers,
+                        adminLayers,
+                        customerDesignId: savedDesignId,
+                        isEditing: false
+                    }
+                });
             }
-        });
+        }
     };
 
-    const handleNext = () => {
+    // const handleConfirm = async () => {
+    //     const savedDesignId = await handleSave(); // ensure design is saved first
+    //     console.log("Navigating with customerDesignId:", savedDesignId); // ✅ Check this
+
+    //     navigate(`/user/design-variants/${productId}`, {
+    //         state: {
+    //             product,
+    //             selectedMockup,
+    //             customerLayers,
+    //             adminLayers,
+    //             customerDesignId: savedDesignId, // ✅ This will now have the ID
+    //         }
+    //     });
+    // };
+
+
+    const handleOpenModal = () => {
         setShowConfirmModal(true);
+    };
+
+    const handleNext = async () => {
+        try {
+            setSaving(true);
+            const normalized = customerLayers.map(l => normalizeLayer(l));
+
+            let designId = null;
+
+            if (isEditing && existingCustomProduct?._id) {
+                // ✅ UPDATE existing design (layers update karo)
+                console.log("Updating existing design layers");
+
+                // Pehle check karo ke design ID kya hai
+                // existingCustomProduct mein design ID kahan store hai?
+                const designRes = await getCustomerDesign(productId, selectedMockup._id);
+
+                if (designRes.success && designRes.data) {
+                    // Design mil gaya, ab update karo
+                    // Note: saveCustomerDesign UPSERT karta hai (agar exist karta hai to update, nahi to create)
+                    const updateRes = await saveCustomerDesign({
+                        productId,
+                        mockupId: selectedMockup._id,
+                        layers: normalized
+                    });
+
+                    if (updateRes.success) {
+                        designId = designRes.data._id;
+                        toast.success("Design updated successfully!");
+                    } else {
+                        toast.error("Design update failed");
+                        setSaving(false);
+                        return;
+                    }
+                } else {
+                    // Design exist nahi karta - create karo
+                    const createRes = await saveCustomerDesign({
+                        productId,
+                        mockupId: selectedMockup._id,
+                        layers: normalized
+                    });
+
+                    if (createRes.success) {
+                        designId = createRes.data?._id;
+                        toast.success("Design saved successfully!");
+                    } else {
+                        toast.error("Save failed");
+                        setSaving(false);
+                        return;
+                    }
+                }
+            } else {
+                // ✅ CREATE new design
+                console.log("Creating new design");
+
+                const res = await saveCustomerDesign({
+                    productId,
+                    mockupId: selectedMockup._id,
+                    layers: normalized
+                });
+
+                if (res.success) {
+                    designId = res.data?._id || null;
+                    toast.success("Design saved successfully!");
+                } else {
+                    toast.error("Save failed");
+                    setSaving(false);
+                    return;
+                }
+            }
+
+            // Navigate to variants page
+            if (designId) {
+                navigate(`/user/design-variants/${productId}`, {
+                    state: {
+                        product,
+                        selectedMockup,
+                        customerLayers,
+                        adminLayers,
+                        customerDesignId: designId,
+                        isEditing: isEditing,
+                        existingCustomProduct: isEditing ? existingCustomProduct : null
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error in handleNext:", error);
+            toast.error("Something went wrong");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleAlignHorizontal = (align) => {
@@ -556,20 +770,27 @@ const Editor = () => {
 
                     {startDesigning && (
                         <div className="flex items-center gap-2">
-                            <button
+                            {/* <button
                                 onClick={handleNext}
                                 className="px-5 py-2 border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition cursor-pointer"
                             >
                                 Next
-                            </button>
-
-                            {/* <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="px-5 py-2 bg-[#146e3a] text-white text-sm font-semibold hover:bg-[#0f5a2f] transition disabled:opacity-50 cursor-pointer"
-                            >
-                                {saving ? 'Saving...' : 'Save Design'}
                             </button> */}
+
+                            {/* Right side buttons - SIRF NEXT BUTTON */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleOpenModal}
+                                    disabled={saving || isCheckingExisting}
+                                    className={`px-5 py-2 text-white text-sm font-semibold transition disabled:opacity-50 cursor-pointer ${isEditing ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#f05a28] hover:bg-[#d94d24]'
+                                        }`}
+                                >
+                                    {saving
+                                        ? (isEditing ? 'Updating...' : 'Saving...')
+                                        : (isEditing ? 'Update & Next' : 'Save & Next')
+                                    }
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -881,7 +1102,7 @@ const Editor = () => {
                     //         }
                     //     });
                     // }}
-                    onConfirm={handleConfirm}
+                    onConfirm={handleNext}
                 />
             </div>
         </div>

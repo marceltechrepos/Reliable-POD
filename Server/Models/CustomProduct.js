@@ -49,6 +49,41 @@ const customProductSchema = new mongoose.Schema(
       ],
     },
 
+    customVariants: [
+      {
+        enabled: {
+          type: Boolean,
+          default: true,
+        },
+        imageUrl: {
+          type: String,
+          required: true,
+        },
+        publicId: {
+          type: String,
+          default: "",
+        },
+        fileName: {
+          type: String,
+          default: "",
+        },
+        // Common fields - same for all variants
+        name: {
+          type: String,
+          default: "",
+        },
+        description: {
+          type: String,
+          default: "",
+        },
+        tags: [
+          {
+            type: String,
+          },
+        ],
+      },
+    ],
+
     customerDesign: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CustomerDesign",
