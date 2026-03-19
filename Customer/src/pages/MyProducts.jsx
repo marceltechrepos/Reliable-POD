@@ -102,6 +102,14 @@ export default function MyProducts() {
         </div>
 
         {/* Content Area */}
+
+        {
+          filtered?.length === 0 && (
+            <div className="flex justify-center items-center h-64">
+              No Product Found
+              </div>
+          )
+        }
         {view === "card" ? (
           // <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           //   {filtered?.map((item) => {
@@ -174,7 +182,7 @@ export default function MyProducts() {
                   {/* Main Card */}
                   <div
                     onClick={() => navigate(`/user/detail-product/${item._id}`, {
-                      state: { product: item }
+                      state: { product: item, fromProducts: true }
                     })}
                     className={`relative bg-white rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer
             ${isSelected
