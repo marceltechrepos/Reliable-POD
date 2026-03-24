@@ -91,6 +91,52 @@ const Editor = () => {
         { name: "Azalea Pink", class: "bg-pink-400" }
     ];
 
+    const activeProduct = existingCustomProduct?.baseProduct || product;
+
+    // Variants se unique colors nikalain
+    const productColors = activeProduct?.Variants?.reduce((acc, variant) => {
+        if (!variant.color || variant.color === "") return acc;
+
+        const existingColor = acc.find(c => c.name === variant.color);
+
+        if (!existingColor) {
+            acc.push({
+                name: variant.color,
+                hex: variant.colorHex || '#ffffff',
+                variants: [variant]
+            });
+        } else {
+            existingColor.variants.push(variant);
+        }
+
+        return acc;
+    }, []) || [];
+
+    // Variants se unique sizes nikalain
+    const productSizes = activeProduct?.Variants?.reduce((acc, variant) => {
+        if (!variant.size || variant.size === "") return acc;
+
+        if (!acc.includes(variant.size)) {
+            acc.push(variant.size);
+        }
+
+        return acc;
+    }, []) || [];
+
+    // Sort sizes properly
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+    const sortedSizes = [...productSizes].sort((a, b) => {
+        const indexA = sizeOrder.indexOf(a);
+        const indexB = sizeOrder.indexOf(b);
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
+    const displayColors = productColors.length > 0 ? productColors : [];
+    const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
+
     // Ye naya useEffect add karo - Check if custom product exists
     // Check if custom product exists
     useEffect(() => {
@@ -219,6 +265,8 @@ const Editor = () => {
         };
         fetchCustomerDesign();
     }, [productId, selectedMockup]);
+
+
 
     // convert percent -> pixels relative to printArea DOM
     const getPixelValues = (printAreaId, layer) => {
@@ -929,17 +977,46 @@ const Editor = () => {
                                             </button>
                                         </div>
 
+                                        {/* Available Colors & Sizes Section - DYNAMIC FROM VARIANTS */}
                                         <div className="border border-gray-200 p-4">
                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
-                                                Available Colors
+                                                Available Colors ({displayColors.length})
                                             </h4>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {colors.map((c, i) => (
+                                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                                {displayColors.map((c, i) => (
                                                     <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-2 py-2">
-                                                        <div className={`w-5 h-5 ${c.class}`}></div>
-                                                        <span className="truncate">{c.name}</span>
+                                                        <div
+                                                            className="w-5 h-5 rounded border border-gray-200"
+                                                            style={{ backgroundColor: c.hex }}
+                                                        ></div>
+                                                        <span className="truncate capitalize">{c.name}</span>
                                                     </div>
                                                 ))}
+                                                {displayColors.length === 0 && (
+                                                    <div className="col-span-2 text-center text-gray-400 text-xs py-2">
+                                                        No colors available
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Available Sizes Section */}
+                                            <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
+                                                Available Sizes ({displaySizes.length})
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {displaySizes.map((size, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded"
+                                                    >
+                                                        {size}
+                                                    </div>
+                                                ))}
+                                                {displaySizes.length === 0 && (
+                                                    <div className="text-center text-gray-400 text-xs py-2 w-full">
+                                                        No sizes available
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </>

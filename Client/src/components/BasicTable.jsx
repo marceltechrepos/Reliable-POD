@@ -30,8 +30,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { useParams } from 'react-router-dom';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { getVariants, createVariant, updateVariant, deleteVariant } from '../api/variant.api';
+import { getVariants, createVariant, updateVariant, deleteVariant, getVariantAttributes, saveVariantAttributes } from '../api/variant.api';
 import { toast } from 'react-toastify';
+import { Chip, FormControlLabel } from '@mui/material';
 
 // Helper function to create data (local usage)
 function createData(id, sku, color, size, colorHex, weight, price, comparePrice, baseCost, available, addToCampaigns, createdAt, updatedAt) {
@@ -71,6 +72,81 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     available: 'available',
     addToCampaigns: false,
   });
+
+  // Add these states with your existing states
+  const [variantAttributes, setVariantAttributes] = useState({
+    sizes: ['L', 'XS', 'S', 'M'], // default sizes
+    colors: {
+      white: '#ffffff',
+      black: '#000000',
+      // more colors can be added
+    },
+    customFields: [] // array of custom fields
+  });
+  const [attributesModalOpen, setAttributesModalOpen] = useState(false);
+  const [newSize, setNewSize] = useState('');
+  const [newColor, setNewColor] = useState({ name: '', hex: '#ffffff' });
+  const [newCustomField, setNewCustomField] = useState({ name: '', type: 'text', options: [] });
+
+
+
+  // Size handlers
+  const handleAddSize = () => {
+    if (newSize && !variantAttributes.sizes.includes(newSize)) {
+      setVariantAttributes(prev => ({
+        ...prev,
+        sizes: [...prev.sizes, newSize]
+      }));
+      setNewSize('');
+    }
+  };
+
+  const handleDeleteSize = (sizeToDelete) => {
+    setVariantAttributes(prev => ({
+      ...prev,
+      sizes: prev.sizes.filter(s => s !== sizeToDelete)
+    }));
+  };
+
+  // Color handlers
+  const handleAddColor = () => {
+    if (newColor.name && newColor.hex) {
+      setVariantAttributes(prev => ({
+        ...prev,
+        colors: {
+          ...prev.colors,
+          [newColor.name]: newColor.hex
+        }
+      }));
+      setNewColor({ name: '', hex: '#ffffff' });
+    }
+  };
+
+  const handleDeleteColor = (colorName) => {
+    setVariantAttributes(prev => {
+      const newColors = { ...prev.colors };
+      delete newColors[colorName];
+      return { ...prev, colors: newColors };
+    });
+  };
+
+  // Custom Field handlers
+  const handleAddCustomField = () => {
+    if (newCustomField.name) {
+      setVariantAttributes(prev => ({
+        ...prev,
+        customFields: [...prev.customFields, { ...newCustomField }]
+      }));
+      setNewCustomField({ name: '', type: 'text', options: [] });
+    }
+  };
+
+  const handleDeleteCustomField = (index) => {
+    setVariantAttributes(prev => ({
+      ...prev,
+      customFields: prev.customFields.filter((_, i) => i !== index)
+    }));
+  };
 
   // Form data for editing
   const [editFormData, setEditFormData] = useState({
@@ -112,6 +188,31 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteSelectedTrigger]);
 
+  // In your component, replace the useEffect that loads from localStorage
+  useEffect(() => {
+    // Load saved attributes from API
+    const loadAttributes = async () => {
+      if (!id) return;
+
+      const response = await getVariantAttributes(id);
+      if (response?.success && response.data) {
+        setVariantAttributes(response.data);
+      } else {
+        // Fallback to default if no attributes in DB
+        setVariantAttributes({
+          sizes: ['L', 'XS', 'S', 'M'],
+          colors: {
+            white: '#ffffff',
+            black: '#000000',
+          },
+          customFields: []
+        });
+      }
+    };
+
+    loadAttributes();
+  }, [id]);
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -150,15 +251,41 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     fetchVariantsData();
   }, [id]);
 
+  // Update save button handler to save to database
+  const handleSaveAttributes = async () => {
+    try {
+      const response = await saveVariantAttributes(id, variantAttributes);
+
+      if (response?.success) {
+        toast.success('Attributes saved Successfull');
+        setAttributesModalOpen(false);
+      } else {
+        toast.error(response?.message || 'Failed to save attributes');
+      }
+    } catch (error) {
+      console.error('Error saving attributes:', error);
+      toast.error('Failed to save attributes');
+    }
+  };
+
 
   // form changes
+
+  // form changes - UPDATED VERSION
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'addToCampaigns' ? e.target.checked : value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: name === 'addToCampaigns' ? e.target.checked : value
+  //   }));
+  // };
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
@@ -170,21 +297,49 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
 
   // ---------- CREATE (POST) ----------
   const handleSubmit = async () => {
-    // if (!formData.sku|| !formData.price) {
-    //   toast('Please fill all required fields!');
-    //   return;
-    // }
+    // Validation
+    if (!formData.sku?.trim()) {
+      toast.warn('SKU is required');
+      return;
+    }
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      toast.warn('Valid selling price is required');
+      return;
+    }
+    if (!formData.color) {
+      toast.warn('Please select a color');
+      return;
+    }
+    if (!formData.size) {
+      toast.warn('Please select a size');
+      return;
+    }
+
+    // Collect custom fields data
+    const customAttributes = {};
+    variantAttributes.customFields.forEach(field => {
+      const fieldValue = formData[`custom_${field.name}`];
+      if (fieldValue !== undefined && fieldValue !== '') {
+        customAttributes[field.name] = fieldValue;
+      }
+    });
+
+    // 🔥 IMPORTANT: Get colorHex from selected color
+    const selectedColorHex = variantAttributes.colors[formData.color] || '#ffffff';
 
     const payload = {
       sku: formData.sku,
-      size: isNaN(Number(formData.size)) ? formData.size : Number(formData.size),
-      weight: isNaN(Number(formData.weight)) ? formData.weight : Number(formData.weight),
+      size: formData.size,  // Don't convert to number if it's string
+      weight: formData.weight ? parseFloat(formData.weight) : 0,
       color: formData.color,
-      colorHex: formData.colorHex,
+      colorHex: selectedColorHex,  // ✅ Dynamic color hex from selected color
       basePrice: parseFloat(formData.price),
       available: formData.available.toLowerCase().trim(),
       addToCampaigns: formData.addToCampaigns,
+      customAttributes: customAttributes
     };
+
+    console.log("Sending payload:", payload); // Debug log
 
     const json = await createVariant(id, payload);
 
@@ -195,20 +350,33 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         sku: item.sku,
         color: item.color,
         size: item.size,
-        colorHex: item.colorHex || '#ffffff',
+        colorHex: item.colorHex || selectedColorHex,
         weight: item.weight,
         price: item.basePrice ?? parseFloat(formData.price),
         comparePrice: null,
         baseCost: null,
         available: formData.available.toLowerCase().trim(),
         addToCampaigns: formData.addToCampaigns,
+        customAttributes: item.customAttributes || customAttributes,
         createdAt: item.createdAt || new Date().toISOString(),
         updatedAt: item.updatedAt || new Date().toISOString(),
       };
       setRows(prev => [...prev, newRow]);
       setInternalShowForm(false);
       if (onFormClose) onFormClose();
-      setFormData({ sku: '', color: '', size: '', colorHex: '#ffffff', weight: '', price: '', comparePrice: '', baseCost: '', available: 'available', addToCampaigns: false });
+      setFormData({
+        sku: '',
+        color: '',
+        size: '',
+        colorHex: '#ffffff',
+        weight: '',
+        price: '',
+        comparePrice: '',
+        baseCost: '',
+        available: 'available',
+        addToCampaigns: false
+      });
+      toast.success('Variant added successfully!');
     } else {
       toast.error(json?.message || 'Failed to create variant');
     }
@@ -361,7 +529,8 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     setInternalShowForm(false);
     if (onFormClose) onFormClose();
 
-    setEditFormData({
+    // Base edit form data
+    const editData = {
       sku: row.sku,
       color: row.color,
       size: row.size,
@@ -372,7 +541,28 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       baseCost: row.baseCost ? String(row.baseCost) : '',
       available: row.available || 'available',
       addToCampaigns: row.addToCampaigns || false,
-    });
+    };
+
+    if (row.customAttributes) {
+      Object.entries(row.customAttributes).forEach(([key, value]) => {
+        editData[`custom_${key}`] = value;
+      });
+    } F
+
+    // setEditFormData({
+    //   sku: row.sku,
+    //   color: row.color,
+    //   size: row.size,
+    //   colorHex: row.colorHex,
+    //   weight: row.weight,
+    //   price: row.price ? String(row.price) : '',
+    //   comparePrice: row.comparePrice ? String(row.comparePrice) : '',
+    //   baseCost: row.baseCost ? String(row.baseCost) : '',
+    //   available: row.available || 'available',
+    //   addToCampaigns: row.addToCampaigns || false,
+    // });
+
+    setEditFormData(editData);
   };
 
   const availableOptions = [
@@ -411,27 +601,191 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
             <Typography variant="h6" gutterBottom>
               Add New Variant
             </Typography>
+
+            {/* Main Grid with ALL fields including custom fields */}
             <Box sx={{
-              display: 'grid', gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',   // small
-                md: 'repeat(2, 1fr)',   // medium
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                md: 'repeat(2, 1fr)',
                 lg: 'repeat(auto-fill, minmax(250px, 1fr))'
-              }, gap: 2
+              },
+              gap: 2
             }}>
-              <TextField label="Variant SKU" name="sku" value={formData.sku} onChange={handleInputChange} fullWidth size="small" required InputLabelProps={{ required: false }} />
-              <TextField label="Your Selling Price" name="price" value={formData.price} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} required InputLabelProps={{ required: false }} />
-              <TextField label="Your Cost Price" name="baseCost" value={formData.baseCost} onChange={handleInputChange} fullWidth size="small" type="number" InputProps={{ inputProps: { step: 0.01 } }} InputLabelProps={{ required: false }} />
+              {/* Basic Fields */}
+              <TextField
+                label="Variant SKU"
+                name="sku"
+                value={formData.sku}
+                onChange={handleInputChange}
+                fullWidth
+                size="small"
+                required
+                InputLabelProps={{ required: false }}
+              />
+
+              {/* Size Dropdown */}
+              <TextField
+                label="Size"
+                name="size"
+                value={formData.size}
+                onChange={handleInputChange}
+                fullWidth
+                size="small"
+                select
+                SelectProps={{ native: true }}
+              >
+                <option value="">Select Size</option>
+                {variantAttributes.sizes.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </TextField>
+
+              {/* Color Dropdown */}
+              <TextField
+                label="Color"
+                name="color"
+                value={formData.color}
+                onChange={handleInputChange}
+                fullWidth
+                size="small"
+                select
+                SelectProps={{ native: true }}
+              >
+                <option value="">Select Color</option>
+                {Object.keys(variantAttributes.colors).map(color => (
+                  <option key={color} value={color}>{color}</option>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Your Selling Price"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                fullWidth
+                size="small"
+                type="number"
+                InputProps={{ inputProps: { step: 0.01 } }}
+                required
+                InputLabelProps={{ required: false }}
+              />
+
+              <TextField
+                label="Your Cost Price"
+                name="baseCost"
+                value={formData.baseCost}
+                onChange={handleInputChange}
+                fullWidth
+                size="small"
+                type="number"
+                InputProps={{ inputProps: { step: 0.01 } }}
+                InputLabelProps={{ required: false }}
+              />
+
               <FormControl fullWidth size="small">
                 <InputLabel>Available</InputLabel>
-                <Select name="available" value={formData.available} onChange={handleInputChange} label="Available">
-                  {availableOptions.map(option => (<MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>))}
+                <Select
+                  name="available"
+                  value={formData.available}
+                  onChange={handleInputChange}
+                  label="Available"
+                >
+                  {availableOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
-              <TextField label="Variant ID" value="Auto-generated on save" fullWidth size="small" disabled InputProps={{ readOnly: true }} helperText="Auto-generated unique ID" />
+
+              {/* Custom Fields - Mixed in the same grid */}
+              {variantAttributes.customFields.map((field, index) => (
+                field.type === 'select' ? (
+                  <FormControl key={index} fullWidth size="small">
+                    <InputLabel>{field.name}</InputLabel>
+                    <Select
+                      name={`custom_${field.name}`}
+                      value={formData[`custom_${field.name}`] || ''}
+                      onChange={(e) => {
+                        const { name, value } = e.target;
+                        setFormData(prev => ({
+                          ...prev,
+                          [name]: value
+                        }));
+                      }}
+                      label={field.name}
+                    >
+                      <MenuItem value="">Select {field.name}</MenuItem>
+                      {field.options.map(option => (
+                        <MenuItem key={option} value={option}>{option}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : field.type === 'checkbox' ? (
+                  <FormControlLabel
+                    key={index}
+                    control={
+                      <Checkbox
+                        name={`custom_${field.name}`}
+                        checked={formData[`custom_${field.name}`] || false}
+                        onChange={(e) => {
+                          const { name, checked } = e.target;
+                          setFormData(prev => ({
+                            ...prev,
+                            [name]: checked
+                          }));
+                        }}
+                      />
+                    }
+                    label={field.name}
+                    sx={{
+                      gridColumn: {
+                        xs: 'span 2',
+                        sm: 'span 1'
+                      }
+                    }}
+                  />
+                ) : (
+                  <TextField
+                    key={index}
+                    label={field.name}
+                    name={`custom_${field.name}`}
+                    value={formData[`custom_${field.name}`] || ''}
+                    onChange={handleInputChange}
+                    fullWidth
+                    size="small"
+                    type={field.type}
+                  />
+                )
+              ))}
+
+              {/* Plus Icon Button - LAST ITEM (after all custom fields) */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setAttributesModalOpen(true)}
+                  startIcon={<AddIcon />}
+                  sx={{
+                    width: '100%',
+                    py: 1,
+                    borderStyle: 'dashed',
+                    textTransform: 'none'
+                  }}
+                >
+                  Manage Attributes
+                </Button>
+              </Box>
             </Box>
+
+            {/* Buttons */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
               <Button variant="outlined" onClick={handleCancelForm}>Cancel</Button>
-              <Button variant="contained text-white" onClick={handleSubmit}>Add Variant</Button>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                sx={{ border: "1px solid skyblue" }}
+              >
+                Add Variant
+              </Button>
             </Box>
           </CardContent>
         </Card>
@@ -456,6 +810,48 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                     <TextField name="color" value={editFormData.color} onChange={handleEditInputChange} size="small" label="Color" fullWidth />
                     <TextField name="size" value={editFormData.size} onChange={handleEditInputChange} size="small" label="Size" fullWidth />
                     <TextField name="price" value={editFormData.price} onChange={handleEditInputChange} size="small" type="number" label="Price" fullWidth />
+                    {/* Add custom fields in edit mode */}
+                    {variantAttributes.customFields.map((field, idx) => (
+                      field.type === 'select' ? (
+                        <FormControl key={idx} fullWidth size="small">
+                          <InputLabel>{field.name}</InputLabel>
+                          <Select
+                            name={`custom_${field.name}`}
+                            value={editFormData[`custom_${field.name}`] || ''}
+                            onChange={handleEditInputChange}
+                            label={field.name}
+                          >
+                            <MenuItem value="">Select {field.name}</MenuItem>
+                            {field.options.map(option => (
+                              <MenuItem key={option} value={option}>{option}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : field.type === 'checkbox' ? (
+                        <FormControlLabel
+                          key={idx}
+                          control={
+                            <Checkbox
+                              name={`custom_${field.name}`}
+                              checked={editFormData[`custom_${field.name}`] || false}
+                              onChange={handleEditInputChange}
+                            />
+                          }
+                          label={field.name}
+                        />
+                      ) : (
+                        <TextField
+                          key={idx}
+                          label={field.name}
+                          name={`custom_${field.name}`}
+                          value={editFormData[`custom_${field.name}`] || ''}
+                          onChange={handleEditInputChange}
+                          size="small"
+                          fullWidth
+                          type={field.type}
+                        />
+                      )
+                    ))}
                     <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                       <Button variant="contained" size="small" onClick={handleSaveEdit} startIcon={<SaveIcon />}>Save</Button>
                       <Button variant="outlined" size="small" onClick={handleCancelEdit} startIcon={<CancelIcon />}>Cancel</Button>
@@ -514,7 +910,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                   <TableCell>TIB Variant ID</TableCell>
                   <TableCell>Fulfield SKU</TableCell>
                   <TableCell>Your Selling Price</TableCell>
-                  <TableCell>Your Cost Price</TableCell>
+                  {/* <TableCell>Your Cost Price</TableCell> */}
                   <TableCell>Available</TableCell>
                   <TableCell>Add to Campaigns</TableCell>
                   <TableCell>Create at</TableCell>
@@ -531,7 +927,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
 
                     {editingId === row.id ? (
                       <>
-                        <TableCell>{row.id.substring(0, 8)}...</TableCell>
+                        <TableCell>{row.id.substring(0, 8)}</TableCell>
                         <TableCell>
                           <TextField name="sku" value={editFormData.sku} onChange={handleEditInputChange} size="small" fullWidth />
                         </TableCell>
@@ -568,7 +964,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
                         <TableCell>{row.id.substring(0, 8)}...</TableCell>
                         <TableCell>{row.sku}</TableCell>
                         <TableCell>£{(row.price ?? 0).toFixed(2)}</TableCell>
-                        <TableCell>{row.baseCost ? `£${row.baseCost.toFixed(2)}` : '-'}</TableCell>
+                        {/* <TableCell>{row.baseCost ? `£${row.baseCost.toFixed(2)}` : '-'}</TableCell> */}
                         <TableCell sx={{ padding: '10px' }}>
                           <Box sx={{
                             px: 1, py: 0.5, borderRadius: 1, display: 'inline-block', textAlign: 'center', width: '100px', padding: '10px',
@@ -617,6 +1013,494 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         <DialogActions>
           <Button onClick={handleModalClose} color='secondary'>Cancel</Button>
           <Button onClick={handlePrintAreaSubmit} variant='contained' sx={{ backgroundColor: '#3b6d92', '&:hover': { backgroundColor: '#2a4d6e' } }}>Add Print Area</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* modal for custom feild */}
+      {/* <Dialog
+        open={attributesModalOpen}
+        onClose={() => setAttributesModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Manage Variant Attributes</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+
+          
+            <Typography variant="h6" gutterBottom>📏 Sizes</Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+              {variantAttributes.sizes.map((size, index) => (
+                <Chip
+                  key={index}
+                  label={size}
+                  onDelete={() => handleDeleteSize(size)}
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+              <TextField
+                size="small"
+                label="Add Size"
+                value={newSize}
+                onChange={(e) => setNewSize(e.target.value.toUpperCase())}
+                placeholder="e.g., XL"
+              />
+              <Button
+                variant="contained"
+                onClick={handleAddSize}
+                disabled={!newSize}
+              >
+                Add Size
+              </Button>
+            </Box>
+
+     
+            <Typography variant="h6" gutterBottom>🎨 Colors</Typography>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+              {Object.entries(variantAttributes.colors).map(([colorName, colorHex]) => (
+                <Box key={colorName} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 1,
+                      backgroundColor: colorHex,
+                      border: '1px solid #ddd'
+                    }}
+                  />
+                  <Typography>{colorName}</Typography>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDeleteColor(colorName)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+              <TextField
+                size="small"
+                label="Color Name"
+                value={newColor.name}
+                onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+                placeholder="e.g., Red"
+              />
+              <TextField
+                size="small"
+                label="Hex Code"
+                value={newColor.hex}
+                onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                placeholder="#ff0000"
+                type="color"
+                sx={{ width: 100 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleAddColor}
+                disabled={!newColor.name || !newColor.hex}
+              >
+                Add Color
+              </Button>
+            </Box>
+
+          
+            <Typography variant="h6" gutterBottom>⚙️ Custom Fields</Typography>
+            <Box sx={{ mb: 2 }}>
+              {variantAttributes.customFields.map((field, index) => (
+                <Card key={index} sx={{ mb: 1, p: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="subtitle2">{field.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Type: {field.type}
+                        {field.options.length > 0 && ` | Options: ${field.options.join(', ')}`}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteCustomField(index)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Card>
+              ))}
+            </Box>
+
+            
+            <Paper sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+              <Typography variant="subtitle2" gutterBottom>Add New Custom Field</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <TextField
+                  size="small"
+                  label="Field Name"
+                  value={newCustomField.name}
+                  onChange={(e) => setNewCustomField({ ...newCustomField, name: e.target.value })}
+                  sx={{ flex: 1 }}
+                />
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Field Type</InputLabel>
+                  <Select
+                    value={newCustomField.type}
+                    onChange={(e) => setNewCustomField({ ...newCustomField, type: e.target.value, options: [] })}
+                    label="Field Type"
+                  >
+                    <MenuItem value="text">Text</MenuItem>
+                    <MenuItem value="number">Number</MenuItem>
+                    <MenuItem value="select">Select</MenuItem>
+                    <MenuItem value="checkbox">Checkbox</MenuItem>
+                  </Select>
+                </FormControl>
+                {newCustomField.type === 'select' && (
+                  <TextField
+                    size="small"
+                    label="Options (comma separated)"
+                    placeholder="Option1, Option2, Option3"
+                    onChange={(e) => setNewCustomField({
+                      ...newCustomField,
+                      options: e.target.value.split(',').map(opt => opt.trim())
+                    })}
+                    sx={{ flex: 1 }}
+                  />
+                )}
+                <Button
+                  variant="contained"
+                  onClick={handleAddCustomField}
+                  disabled={!newCustomField.name}
+                >
+                  Add Field
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAttributesModalOpen(false)}>Close</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              // Save attributes to localStorage or API
+              localStorage.setItem('variantAttributes', JSON.stringify(variantAttributes));
+              setAttributesModalOpen(false);
+              toast.success('Attributes saved successfully!');
+            }}
+          >
+            Save All Changes
+          </Button>
+        </DialogActions>
+      </Dialog> */}
+
+      {/* Attributes Management Modal - Simple Professional Design */}
+      <Dialog
+        open={attributesModalOpen}
+        onClose={() => setAttributesModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          borderBottom: '1px solid #e0e0e0',
+          pb: 2,
+          bgcolor: '#fafafa'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Manage Variant Attributes
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: '#666', mt: 0.5 }}>
+            Configure sizes, colors, and custom fields for variants
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3 }}>
+          <Box>
+
+            {/* Sizes Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                Sizes
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                {variantAttributes.sizes.map((size, index) => (
+                  <Chip
+                    key={index}
+                    label={size}
+                    onDelete={() => handleDeleteSize(size)}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        bgcolor: '#f5f5f5'
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  size="small"
+                  label="Add Size"
+                  value={newSize}
+                  onChange={(e) => setNewSize(e.target.value.toUpperCase())}
+                  placeholder="e.g., XL"
+                  fullWidth
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleAddSize}
+                  disabled={!newSize}
+                  sx={{
+                    textTransform: 'none',
+                    px: 3,
+                    boxShadow: 'none',
+                    '&:hover': {
+                      boxShadow: 'none'
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Colors Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                Colors
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                {Object.entries(variantAttributes.colors).map(([colorName, colorHex]) => (
+                  <Box
+                    key={colorName}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      bgcolor: '#f8f9fa',
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 1.5,
+                      border: '1px solid #e0e0e0'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 1,
+                        backgroundColor: colorHex,
+                        border: '1px solid #ddd'
+                      }}
+                    />
+                    <Typography sx={{ fontSize: '0.9rem' }}>{colorName}</Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteColor(colorName)}
+                      sx={{
+                        p: 0.5,
+                        color: '#999',
+                        '&:hover': { color: '#d32f2f' }
+                      }}
+                    >
+                      <DeleteIcon sx={{ fontSize: '1rem' }} />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+                <TextField
+                  size="small"
+                  label="Color Name"
+                  value={newColor.name}
+                  onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+                  placeholder="e.g., Red"
+                  sx={{ flex: 2 }}
+                />
+                <TextField
+                  size="small"
+                  label="Hex Code"
+                  value={newColor.hex}
+                  onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                  type="color"
+                  sx={{ width: 100 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleAddColor}
+                  disabled={!newColor.name || !newColor.hex}
+                  sx={{
+                    textTransform: 'none',
+                    px: 3,
+                    boxShadow: 'none',
+                    '&:hover': { boxShadow: 'none' }
+                  }}
+                >
+                  Add
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Custom Fields Section */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                Custom Fields
+              </Typography>
+
+              <Box sx={{ mb: 3, maxHeight: 280, overflowY: 'auto' }}>
+                {variantAttributes.customFields.length === 0 ? (
+                  <Box sx={{
+                    textAlign: 'center',
+                    py: 4,
+                    bgcolor: '#fafafa',
+                    borderRadius: 1.5,
+                    border: '1px solid #e0e0e0'
+                  }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No custom fields added
+                    </Typography>
+                  </Box>
+                ) : (
+                  variantAttributes.customFields.map((field, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 1.5,
+                        mb: 1,
+                        bgcolor: '#fafafa',
+                        borderRadius: 1.5,
+                        border: '1px solid #e0e0e0'
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {field.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {field.type}
+                          {field.options.length > 0 && ` • ${field.options.join(', ')}`}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteCustomField(index)}
+                        sx={{ color: '#999' }}
+                      >
+                        <DeleteIcon sx={{ fontSize: '1rem' }} />
+                      </IconButton>
+                    </Box>
+                  ))
+                )}
+              </Box>
+
+              {/* Add Custom Field Form */}
+              <Box sx={{
+                p: 2,
+                bgcolor: '#fafafa',
+                borderRadius: 1.5,
+                border: '1px solid #e0e0e0'
+              }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 2 }}>
+                  Add New Field
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <TextField
+                    size="small"
+                    label="Field Name"
+                    value={newCustomField.name}
+                    onChange={(e) => setNewCustomField({ ...newCustomField, name: e.target.value })}
+                    placeholder="e.g., Material"
+                    sx={{ flex: 2 }}
+                  />
+                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                    <InputLabel>Field Type</InputLabel>
+                    <Select
+                      value={newCustomField.type}
+                      onChange={(e) => setNewCustomField({ ...newCustomField, type: e.target.value, options: [] })}
+                      label="Field Type"
+                    >
+                      <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="number">Number</MenuItem>
+                      <MenuItem value="select">Select</MenuItem>
+                      <MenuItem value="checkbox">Checkbox</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {newCustomField.type === 'select' && (
+                    <TextField
+                      size="small"
+                      label="Options (comma separated)"
+                      placeholder="Option1, Option2, Option3"
+                      onChange={(e) => setNewCustomField({
+                        ...newCustomField,
+                        options: e.target.value.split(',').map(opt => opt.trim())
+                      })}
+                      sx={{ flex: 2 }}
+                    />
+                  )}
+                  <Button
+                    variant="contained"
+                    onClick={handleAddCustomField}
+                    disabled={!newCustomField.name}
+                    sx={{
+                      textTransform: 'none',
+                      px: 3,
+                      boxShadow: 'none',
+                      '&:hover': { boxShadow: 'none' }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{
+          p: 2.5,
+          borderTop: '1px solid #e0e0e0',
+          bgcolor: '#fafafa'
+        }}>
+          <Button
+            onClick={() => setAttributesModalOpen(false)}
+            sx={{
+              textTransform: 'none',
+              color: '#666'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveAttributes}
+            sx={{
+              textTransform: 'none',
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' }
+            }}
+          >
+            Save Changes
+          </Button>
         </DialogActions>
       </Dialog>
 

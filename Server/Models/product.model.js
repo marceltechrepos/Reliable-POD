@@ -1,4 +1,4 @@
-import { Schema, Types, model } from "mongoose";
+import { Schema ,Types, model} from "mongoose";
 
 const productSchema = new Schema(
   {
@@ -35,27 +35,44 @@ const productSchema = new Schema(
         height: Number,
       },
     ],
-
-    thumbnail: {
-      url: {
-        type: String,
+    
+    // 🔥 ADD THIS - Variant Attributes Configuration
+    variantAttributes: {
+      sizes: {
+        type: [String],
+        default: ['L', 'XS', 'S', 'M']
       },
-      public_id: {
-        type: String,
+      colors: {
+        type: Map,
+        of: String,
+        default: {
+          white: '#ffffff',
+          black: '#000000'
+        }
+      },
+      customFields: {
+        type: [{
+          name: String,
+          type: {
+            type: String,
+            enum: ['text', 'number', 'select', 'checkbox']
+          },
+          options: [String]
+        }],
+        default: []
       }
     },
 
     Variants: [
       {
         sku: String,
-        size: Number,
-        weight: Number,
-        color: String,
-        colorHex: String,
         basePrice: Number,
         comparePrice: Number,
-
-        // 🔥 ADD THESE
+        size: { type: String, default: '' },
+        color: { type: String, default: '' },
+        colorHex: { type: String, default: '#ffffff' },
+        weight: { type: Number, default: 0 },
+        customAttributes: { type: Object, default: {} },
         available: {
           type: String,
           enum: ['available', 'out of stock', 'coming soon', 'discontinued'],
@@ -65,12 +82,10 @@ const productSchema = new Schema(
           type: Boolean,
           default: false,
         },
-
         createdAt: String,
         updatedAt: String,
       },
     ],
-
   },
   { timestamps: true }
 );
