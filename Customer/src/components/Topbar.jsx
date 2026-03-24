@@ -10,7 +10,7 @@ function Topbar({ onMenuClick }) {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/admin/login")
+    navigate("/")
   };
 
   const profile = () => {

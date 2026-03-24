@@ -22,6 +22,8 @@ import {
   getProductsById,
   addMockupsToProduct,
   removeMockupFromProduct,
+  getVariantAttributes,
+  saveVariantAttributes,
 } from "../Controllers/product.controller.js";
 import {
   isLogin, isAdmin,
@@ -126,6 +128,11 @@ productRouter.delete(
 
   removeVariant
 );
+
+// ========================== custom variants
+
+productRouter.get('/:productId/variant-attributes', isLogin, getVariantAttributes);
+productRouter.post('/:productId/variant-attributes', isLogin, saveVariantAttributes);
 
 
 // ================== mockupid add 

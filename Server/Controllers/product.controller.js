@@ -673,6 +673,8 @@ export const addVariant = async (req, res) => {
     const { productId } = req.params;
     const variantData = req.body;
 
+    console.log("Received variant data:", variantData); // 🔥 Debug log
+
     if (!productId) {
       return res.status(400).json({
         status: 400,
@@ -690,73 +692,46 @@ export const addVariant = async (req, res) => {
     }
 
     // Validate required fields
-    const variantValidations = [
-      { field: "sku", required: true, errorMessage: "SKU is required" },
-      {
-        field: "basePrice",
-        required: true,
-        errorMessage: "Base Price is required",
-      },
-    ];
+    if (!variantData.sku) {
+      return res.status(400).json({
+        success: false,
+        message: "SKU is required",
+      });
+    }
 
-    for (const validation of variantValidations) {
-      const value = variantData[validation.field];
-      if (
-        validation.required &&
-        (value === undefined || value === null || value === "")
-      ) {
-        return res.status(400).json({
-          message: validation.errorMessage,
-          status: 400,
-          field: validation.field,
-          success: false,
-        });
-      }
+    if (!variantData.basePrice && variantData.basePrice !== 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Base Price is required",
+      });
     }
 
     // Convert numeric fields
-    // if (variantData.size !== undefined) {
-    //   variantData.size = Number(variantData.size);
-    //   if (isNaN(variantData.size)) {
-    //     return res.status(400).json({
-    //       status: 400,
-    //       success: false,
-    //       message: "Size must be a valid number",
-    //       field: "size",
-    //     });
-    //   }
-    // }
-
-    // if (variantData.weight !== undefined) {
-    //   variantData.weight = Number(variantData.weight);
-    //   if (isNaN(variantData.weight)) {
-    //     return res.status(400).json({
-    //       status: 400,
-    //       success: false,
-    //       message: "Weight must be a valid number",
-    //       field: "weight",
-    //     });
-    //   }
-    // }
-
     if (variantData.basePrice !== undefined) {
       variantData.basePrice = Number(variantData.basePrice);
-      if (isNaN(variantData.basePrice)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Base Price must be a valid number",
-          field: "basePrice",
-        });
-      }
     }
+
+    if (variantData.weight !== undefined) {
+      variantData.weight = Number(variantData.weight);
+    }
+
+    if (variantData.comparePrice !== undefined) {
+      variantData.comparePrice = Number(variantData.comparePrice);
+    }
+
+    // 🔥 IMPORTANT: Ensure customAttributes is an object
+    if (!variantData.customAttributes) {
+      variantData.customAttributes = {};
+    }
+
+    // Add timestamps
+    variantData.createdAt = new Date();
+    variantData.updatedAt = new Date();
 
     // Find product
     const product = await productModel.findById(productId);
-
     if (!product) {
       return res.status(404).json({
-        status: 404,
         success: false,
         message: "Product not found",
       });
@@ -766,41 +741,31 @@ export const addVariant = async (req, res) => {
     const skuExists = product.Variants.some(
       (variant) => variant.sku === variantData.sku
     );
+
     if (skuExists) {
       return res.status(400).json({
-        status: 400,
         success: false,
         message: "SKU already exists for this product",
-        field: "sku",
       });
     }
 
-    variantData.createdAt = new Date();
-    variantData.updatedAt = new Date();
-
-    // Add the new variant to the array
+    // 🔥 Add the new variant to the array
     product.Variants.push(variantData);
-
     await product.save();
+
+    const newVariant = product.Variants[product.Variants.length - 1];
+
+    console.log("Saved variant:", newVariant); // 🔥 Debug log
 
     res.status(201).json({
       success: true,
-      data: product.Variants[product.Variants.length - 1],
+      data: newVariant,
       status: 201,
       message: "Variant added successfully",
       totalVariants: product.Variants.length,
     });
   } catch (error) {
     console.error("Error adding variant:", error);
-
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        message: "Invalid product ID",
-        status: 400,
-        success: false,
-      });
-    }
-
     res.status(500).json({
       message: error.message || "Internal server error",
       status: 500,
@@ -809,10 +774,301 @@ export const addVariant = async (req, res) => {
   }
 };
 
+// export const addVariant = async (req, res) => {
+//   try {
+//     const { productId } = req.params;
+//     const variantData = req.body;
+
+//     if (!productId) {
+//       return res.status(400).json({
+//         status: 400,
+//         success: false,
+//         message: "Product ID is required",
+//       });
+//     }
+
+//     if (!variantData) {
+//       return res.status(400).json({
+//         status: 400,
+//         success: false,
+//         message: "Please provide variant data",
+//       });
+//     }
+
+//     // Validate required fields
+//     const variantValidations = [
+//       { field: "sku", required: true, errorMessage: "SKU is required" },
+//       {
+//         field: "basePrice",
+//         required: true,
+//         errorMessage: "Base Price is required",
+//       },
+//     ];
+
+//     for (const validation of variantValidations) {
+//       const value = variantData[validation.field];
+//       if (
+//         validation.required &&
+//         (value === undefined || value === null || value === "")
+//       ) {
+//         return res.status(400).json({
+//           message: validation.errorMessage,
+//           status: 400,
+//           field: validation.field,
+//           success: false,
+//         });
+//       }
+//     }
+
+//     // Convert numeric fields
+//     // if (variantData.size !== undefined) {
+//     //   variantData.size = Number(variantData.size);
+//     //   if (isNaN(variantData.size)) {
+//     //     return res.status(400).json({
+//     //       status: 400,
+//     //       success: false,
+//     //       message: "Size must be a valid number",
+//     //       field: "size",
+//     //     });
+//     //   }
+//     // }
+
+//     // if (variantData.weight !== undefined) {
+//     //   variantData.weight = Number(variantData.weight);
+//     //   if (isNaN(variantData.weight)) {
+//     //     return res.status(400).json({
+//     //       status: 400,
+//     //       success: false,
+//     //       message: "Weight must be a valid number",
+//     //       field: "weight",
+//     //     });
+//     //   }
+//     // }
+
+//     if (variantData.basePrice !== undefined) {
+//       variantData.basePrice = Number(variantData.basePrice);
+//       if (isNaN(variantData.basePrice)) {
+//         return res.status(400).json({
+//           status: 400,
+//           success: false,
+//           message: "Base Price must be a valid number",
+//           field: "basePrice",
+//         });
+//       }
+//     }
+
+//     // Find product
+//     const product = await productModel.findById(productId);
+
+//     if (!product) {
+//       return res.status(404).json({
+//         status: 404,
+//         success: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     // Check if SKU already exists
+//     const skuExists = product.Variants.some(
+//       (variant) => variant.sku === variantData.sku
+//     );
+//     if (skuExists) {
+//       return res.status(400).json({
+//         status: 400,
+//         success: false,
+//         message: "SKU already exists for this product",
+//         field: "sku",
+//       });
+//     }
+
+//     variantData.createdAt = new Date();
+//     variantData.updatedAt = new Date();
+
+//     // Add the new variant to the array
+//     product.Variants.push(variantData);
+
+//     await product.save();
+
+//     res.status(201).json({
+//       success: true,
+//       data: product.Variants[product.Variants.length - 1],
+//       status: 201,
+//       message: "Variant added successfully",
+//       totalVariants: product.Variants.length,
+//     });
+//   } catch (error) {
+//     console.error("Error adding variant:", error);
+
+//     if (error.name === "CastError") {
+//       return res.status(400).json({
+//         message: "Invalid product ID",
+//         status: 400,
+//         success: false,
+//       });
+//     }
+
+//     res.status(500).json({
+//       message: error.message || "Internal server error",
+//       status: 500,
+//       success: false,
+//     });
+//   }
+// };
+
+// export const updateVariant = async (req, res) => {
+//   try {
+//     const { productId, variantId } = req.params;
+//     const updateData = req.body;
+
+//     if (!productId || !variantId) {
+//       return res.status(400).json({
+//         status: 400,
+//         success: false,
+//         message: "Product ID and Variant ID are required",
+//       });
+//     }
+
+//     if (!updateData || Object.keys(updateData).length === 0) {
+//       return res.status(400).json({
+//         status: 400,
+//         success: false,
+//         message: "Please provide data to update",
+//       });
+//     }
+
+//     // Find the product
+//     const product = await productModel.findById(productId);
+
+//     if (!product) {
+//       return res.status(404).json({
+//         status: 404,
+//         success: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     // Find the variant index in the array
+//     const variantIndex = product.Variants.findIndex(
+//       (variant) => variant._id.toString() === variantId
+//     );
+
+//     if (variantIndex === -1) {
+//       return res.status(404).json({
+//         status: 404,
+//         success: false,
+//         message: "Variant not found",
+//       });
+//     }
+
+//     // Get the current variant
+//     const currentVariant = product.Variants[variantIndex];
+
+//     // Check if SKU is being updated and if it already exists (excluding current variant)
+//     if (updateData.sku && updateData.sku !== currentVariant.sku) {
+//       const skuExists = product.Variants.some(
+//         (variant, index) =>
+//           index !== variantIndex && variant.sku === updateData.sku
+//       );
+
+//       if (skuExists) {
+//         return res.status(400).json({
+//           status: 400,
+//           success: false,
+//           message: "SKU already exists for another variant",
+//           field: "sku",
+//         });
+//       }
+//     }
+
+//     // Convert numeric fields if provided
+//     // if (updateData.size !== undefined) {
+//     //   updateData.size = Number(updateData.size);
+//     //   if (isNaN(updateData.size)) {
+//     //     return res.status(400).json({
+//     //       status: 400,
+//     //       success: false,
+//     //       message: "Size must be a valid number",
+//     //       field: "size",
+//     //     });
+//     //   }
+//     // }
+
+//     // if (updateData.weight !== undefined) {
+//     //   updateData.weight = Number(updateData.weight);
+//     //   if (isNaN(updateData.weight)) {
+//     //     return res.status(400).json({
+//     //       status: 400,
+//     //       success: false,
+//     //       message: "Weight must be a valid number",
+//     //       field: "weight",
+//     //     });
+//     //   }
+//     // }
+
+//     if (updateData.basePrice !== undefined) {
+//       updateData.basePrice = Number(updateData.basePrice);
+//       if (isNaN(updateData.basePrice)) {
+//         return res.status(400).json({
+//           status: 400,
+//           success: false,
+//           message: "Base Price must be a valid number",
+//           field: "basePrice",
+//         });
+//       }
+//     }
+
+//     // if (updateData.salePrice !== undefined) {
+//     //   updateData.salePrice = Number(updateData.salePrice);
+//     //   if (isNaN(updateData.salePrice)) {
+//     //     return res.status(400).json({
+//     //       status: 400,
+//     //       success: false,
+//     //       message: "Sale Price must be a valid number",
+//     //       field: "salePrice",
+//     //     });
+//     //   }
+//     // }
+
+//     // Update the variant
+//     product.Variants[variantIndex] = {
+//       ...currentVariant.toObject(),
+//       ...updateData,
+//       updatedAt: new Date(),
+//     };
+
+//     await product.save();
+
+//     res.status(200).json({
+//       success: true,
+//       data: product.Variants[variantIndex],
+//       status: 200,
+//       message: "Variant updated successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error updating variant:", error);
+
+//     if (error.name === "CastError") {
+//       return res.status(400).json({
+//         message: "Invalid ID format",
+//         status: 400,
+//         success: false,
+//       });
+//     }
+
+//     res.status(500).json({
+//       message: error.message || "Internal server error",
+//       status: 500,
+//       success: false,
+//     });
+//   }
+// };
+
 export const updateVariant = async (req, res) => {
   try {
     const { productId, variantId } = req.params;
     const updateData = req.body;
+
+    console.log("Updating variant with data:", updateData); // 🔥 Debug log
 
     if (!productId || !variantId) {
       return res.status(400).json({
@@ -832,7 +1088,6 @@ export const updateVariant = async (req, res) => {
 
     // Find the product
     const product = await productModel.findById(productId);
-
     if (!product) {
       return res.status(404).json({
         status: 404,
@@ -841,7 +1096,7 @@ export const updateVariant = async (req, res) => {
       });
     }
 
-    // Find the variant index in the array
+    // Find the variant index
     const variantIndex = product.Variants.findIndex(
       (variant) => variant._id.toString() === variantId
     );
@@ -854,74 +1109,42 @@ export const updateVariant = async (req, res) => {
       });
     }
 
-    // Get the current variant
+    // Get current variant
     const currentVariant = product.Variants[variantIndex];
 
-    // Check if SKU is being updated and if it already exists (excluding current variant)
+    // Check SKU uniqueness if being updated
     if (updateData.sku && updateData.sku !== currentVariant.sku) {
       const skuExists = product.Variants.some(
         (variant, index) =>
           index !== variantIndex && variant.sku === updateData.sku
       );
-
       if (skuExists) {
         return res.status(400).json({
           status: 400,
           success: false,
           message: "SKU already exists for another variant",
-          field: "sku",
         });
       }
     }
 
-    // Convert numeric fields if provided
-    // if (updateData.size !== undefined) {
-    //   updateData.size = Number(updateData.size);
-    //   if (isNaN(updateData.size)) {
-    //     return res.status(400).json({
-    //       status: 400,
-    //       success: false,
-    //       message: "Size must be a valid number",
-    //       field: "size",
-    //     });
-    //   }
-    // }
-
-    // if (updateData.weight !== undefined) {
-    //   updateData.weight = Number(updateData.weight);
-    //   if (isNaN(updateData.weight)) {
-    //     return res.status(400).json({
-    //       status: 400,
-    //       success: false,
-    //       message: "Weight must be a valid number",
-    //       field: "weight",
-    //     });
-    //   }
-    // }
-
+    // Convert numeric fields
     if (updateData.basePrice !== undefined) {
       updateData.basePrice = Number(updateData.basePrice);
-      if (isNaN(updateData.basePrice)) {
-        return res.status(400).json({
-          status: 400,
-          success: false,
-          message: "Base Price must be a valid number",
-          field: "basePrice",
-        });
-      }
+    }
+    if (updateData.weight !== undefined) {
+      updateData.weight = Number(updateData.weight);
+    }
+    if (updateData.comparePrice !== undefined) {
+      updateData.comparePrice = Number(updateData.comparePrice);
     }
 
-    // if (updateData.salePrice !== undefined) {
-    //   updateData.salePrice = Number(updateData.salePrice);
-    //   if (isNaN(updateData.salePrice)) {
-    //     return res.status(400).json({
-    //       status: 400,
-    //       success: false,
-    //       message: "Sale Price must be a valid number",
-    //       field: "salePrice",
-    //     });
-    //   }
-    // }
+    // 🔥 Handle customAttributes - merge with existing
+    if (updateData.customAttributes) {
+      updateData.customAttributes = {
+        ...currentVariant.customAttributes,
+        ...updateData.customAttributes
+      };
+    }
 
     // Update the variant
     product.Variants[variantIndex] = {
@@ -932,6 +1155,8 @@ export const updateVariant = async (req, res) => {
 
     await product.save();
 
+    console.log("Updated variant:", product.Variants[variantIndex]); // 🔥 Debug log
+
     res.status(200).json({
       success: true,
       data: product.Variants[variantIndex],
@@ -940,15 +1165,6 @@ export const updateVariant = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating variant:", error);
-
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        message: "Invalid ID format",
-        status: 400,
-        success: false,
-      });
-    }
-
     res.status(500).json({
       message: error.message || "Internal server error",
       status: 500,
@@ -1246,6 +1462,76 @@ export const removeMockupFromProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+// ============================ Custom Varaint
+
+// Get Variant Attributes for a Product
+export const getVariantAttributes = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const product = await productModel.findById(productId).select('variantAttributes');
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product.variantAttributes,
+      status: 200
+    });
+  } catch (error) {
+    console.error("Error fetching variant attributes:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Save Variant Attributes for a Product
+export const saveVariantAttributes = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { sizes, colors, customFields } = req.body;
+
+    const product = await productModel.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    // Update variant attributes
+    product.variantAttributes = {
+      sizes: sizes || product.variantAttributes.sizes,
+      colors: colors || product.variantAttributes.colors,
+      customFields: customFields || product.variantAttributes.customFields
+    };
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      data: product.variantAttributes,
+      message: "Variant attributes saved successfully",
+      status: 200
+    });
+  } catch (error) {
+    console.error("Error saving variant attributes:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 };
