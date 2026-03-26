@@ -51,3 +51,39 @@ export const deleteVariant = async (productId, variantId) => {
     return null;
   }
 };
+
+
+// =================== custom variants
+
+// Get variant attributes for a product
+export const getVariantAttributes = async (productId) => {
+  try {
+    const response = await authFetch(`${BASE_URL}/api/${productId}/variant-attributes`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching variant attributes:', error);
+    return { success: false, message: error.message };
+  }
+};
+
+// Save variant attributes for a product
+export const saveVariantAttributes = async (productId, attributes) => {
+  try {
+    const response = await authFetch(`${BASE_URL}/api/${productId}/variant-attributes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(attributes),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving variant attributes:', error);
+    return { success: false, message: error.message };
+  }
+};

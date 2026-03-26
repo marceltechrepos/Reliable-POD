@@ -1,62 +1,72 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // 1. Navigate import kiya
-import { PRODUCTS } from "../components/Products/productData";
+import { useNavigate } from "react-router-dom";
 import { LayoutGrid, List } from "lucide-react";
-import { getProductsByCategory } from "../api/category.api";
+import { getcustomerDesignByuserId } from "../api/customerDesign.api";
+import { getCustomProductByUserId } from "../api/customerProduct.api";
 
 export default function MyProducts() {
-  const navigate = useNavigate(); // 2. Hook initialize kiya
-  const { ProductId } = useParams();
-  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
+  // const [products, setProducts] = useState([]);
+  const [customProducts, setCustomProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState(0);
-  const [search, setSearch] = useState("");
-  const [filterName, setFilterName] = useState("");
-  const [sort, setSort] = useState("newest");
-  const [discountOnly, setDiscountOnly] = useState(false);
   const [view, setView] = useState("card");
-  const [productType, setProductType] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  console.log(customProducts, "<<<<< customProducts")
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"';
 
+  // useEffect(() => {
+  //   const fetchProductsByUserId = async () => {
+  //     try {
+  //       setLoading(true);
+  //       if (user?._id) {
+  //         const data = await getcustomerDesignByuserId(user?._id);
+  //         setProducts(data);
+  //       }
+  //       setLoading(false);
+  //     } catch (error) {
+  //       setLoading(false);
+  //       console.log(error, "<<<< error")
+  //     }
+  //   }
+
+  //   fetchProductsByUserId();
+  // }, [user?._id]);
   useEffect(() => {
-    const fetchProductsByCategoryId = async () => {
+    const fetchProductsByUserId = async () => {
       try {
         setLoading(true);
-        if (ProductId) {
-          const data = await getProductsByCategory(ProductId);
-          setProducts(data);
+        if (user?._id) {
+          const data = await getCustomProductByUserId(user?._id);
+          setCustomProducts(data.data || []);
         }
         setLoading(false);
       } catch (error) {
         setLoading(false);
-        console.log(error)
+        console.log(error, "<<<< error")
       }
     }
 
-    fetchProductsByCategoryId();
-  }, [ProductId])
+    fetchProductsByUserId();
+  }, [user?._id]);
 
-  const productNames = useMemo(() => [...new Set(products.map(p => p.title))], [products]);
+  // const productList = useMemo(() => {
+  //   return products
+  //     ?.map(d => d.product)
+  //     .filter(Boolean) || [];
+  // }, [products]);
 
-  const filtered = useMemo(() => {
-    let arr = [...products];
-    if (search) arr = arr.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
-    if (filterName) arr = arr.filter(p => p.title === filterName);
-    if (productType) arr = arr.filter(p => p.type.toLowerCase().includes(productType.toLowerCase()));
-    if (discountOnly) arr = arr.filter(p => p.discount);
+  const productList = useMemo(() => {
+    return customProducts || [];
+  }, [customProducts]);
 
-    if (sort === "newest") arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    if (sort === "oldest") arr.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    return arr;
-  }, [search, filterName, sort, discountOnly, productType, products]);
+  const filtered = productList;
 
-  // Add loading state in JSX
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading products...</div>;
   }
-
 
   const toggleSelect = (id, e) => {
     e.stopPropagation(); // Click ko card tak jane se rokega
@@ -64,15 +74,6 @@ export default function MyProducts() {
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
-
-  const selectAll = () => setSelectedProducts(filtered.map(p => p.id));
-  const selectNone = () => setSelectedProducts([]);
-
-  const tabs = [
-    { id: 'all', label: 'All Products', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
-    { id: 'featured', label: 'Featured', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
-    { id: 'new', label: 'New Arrivals', icon: 'M13 10V3L4 14h7v7l9-11h-7z' }
-  ];
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-8 px-4 md:py-12 md:px-8" style={{ fontFamily: fontStack }}>
@@ -101,38 +102,166 @@ export default function MyProducts() {
         </div>
 
         {/* Content Area */}
+
+        {
+          filtered?.length === 0 && (
+            <div className="flex justify-center items-center h-64">
+              No Product Found
+              </div>
+          )
+        }
         {view === "card" ? (
+          // <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          //   {filtered?.map((item) => {
+          //     const p = item.baseProduct;
+          //     const isSelected = selectedProducts.includes(item?._id);
+          //     return (
+          //       <div key={item._id} className="group relative font-sans">
+
+          //         <div
+          //           onClick={() => navigate(`/user/single-catalogue/${p?._id}`, {
+          //             state: { product: item }
+          //           })}
+          //           className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
+          //           ${isSelected ? "border-[#f05a28] ring-1 ring-[#f05a28]" : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1"}`}
+          //         >
+          //           <div className="relative h-[65%] overflow-hidden bg-[#f3f4f6]">
+          //             <img src={item?.selectedMockup?.mockupImage.url || p?.thumbnail?.url || "https://via.placeholder.com"} alt={p?.productTitle} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+          //           </div>
+
+          //           <div className="h-[38%] p-3 flex flex-col justify-between bg-white border-t border-gray-50">
+          //             <div>
+          //               <h3 className="text-[13px] font-bold text-gray-900 leading-tight">{item?.customVariant?.name || p?.productTitle}</h3>
+          //             </div>
+          //             <div className="flex items-end justify-between">
+          //               {/* <span className="text-sm font-black text-gray-900">${p?.Variants?.[0]?.basePrice || '0.00'}</span> */}
+          //               <span className="text-start font-black text-gray-700">${item?.customVariant?.description
+          //               }</span>
+          //               <button
+          //                 onClick={(e) => toggleSelect(item._id, e)} // Select logic
+          //                 className={`p-1.5 rounded-md transition-all ${isSelected ? "bg-[#f05a28] text-white" : "bg-gray-100 text-gray-400"}`}
+          //               >
+          //                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+          //               </button>
+          //             </div>
+          //           </div>
+          //         </div>
+          //       </div>
+          //     );
+          //   })}
+          // </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filtered.map((p) => {
-              const isSelected = selectedProducts.includes(p._id);
+            {filtered?.map((item) => {
+              const p = item.baseProduct;
+              const isSelected = selectedProducts.includes(item?._id);
+
+              // Custom variant data
+              const customName = item?.customVariant?.name || p?.productTitle;
+              const customDescription = item?.customVariant?.description;
+              const customTags = item?.customVariant?.tags || [];
+
+              // Product image
+              const displayImage = item?.selectedMockup?.mockupImage?.url ||
+                p?.thumbnail?.url ||
+                "https://via.placeholder.com/400x400?text=No+Image";
+
               return (
-                <div key={p._id} className="group relative font-sans">
+                <div
+                  key={item._id}
+                  className="group relative font-sans"
+                >
+                  {/* Selection Indicator */}
+                  {isSelected && (
+                    <div className="absolute -top-2 -right-2 z-10 w-6 h-6 bg-[#f05a28] text-white rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
 
+                  {/* Main Card */}
                   <div
-                    onClick={() => navigate(`/user/single-catalogue/${p._id}`, {
-                      state: { product: p }
-                    })} 
-                    className={`relative aspect-square bg-white rounded-none overflow-hidden border transition-all duration-500 cursor-pointer
-                    ${isSelected ? "border-[#f05a28] ring-1 ring-[#f05a28]" : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1"}`}
+                    onClick={() => navigate(`/user/detail-product/${item._id}`, {
+                      state: { product: item, fromProducts: true }
+                    })}
+                    className={`relative bg-white rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer
+            ${isSelected
+                        ? "border-[#f05a28] ring-2 ring-[#f05a28]/20"
+                        : "border-gray-200 hover:border-[#f05a28]/30 hover:shadow-lg"
+                      }`}
                   >
-                    <div className="relative h-[65%] overflow-hidden bg-[#f3f4f6]">
-                      <img src={p?.thumbnail?.url || "https://via.placeholder.com"} alt={p.productTitle} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                    {/* Image Container - 3:4 Aspect Ratio */}
+                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                      <img
+                        src={displayImage}
+                        alt={customName}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+
+                      {/* Custom Variant Badge */}
+                      {item?.customVariant?.enabled && (
+                        <div className="absolute top-2 left-2 bg-[#f05a28] text-white text-[10px] font-bold px-2 py-1 rounded">
+                          Custom
+                        </div>
+                      )}
                     </div>
 
-                    <div className="h-[38%] p-3 flex flex-col justify-between bg-white border-t border-gray-50">
-                      <div>
-                        <h3 className="text-[13px] font-bold text-gray-900 leading-tight">{p?.productTitle}</h3>
-                      </div>
-                      <div className="flex items-end justify-between">
-                        <span className="text-sm font-black text-gray-900">${p?.Variants[0]?.basePrice || '0.00'}</span>
-                        <button
-                          onClick={(e) => toggleSelect(p.id, e)} // Select logic
-                          className={`p-1.5 rounded-md transition-all ${isSelected ? "bg-[#f05a28] text-white" : "bg-gray-100 text-gray-400"}`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                        </button>
-                      </div>
+                    {/* Content Container */}
+                    <div className="p-3 space-y-2">
+                      {/* Name */}
+                      <h3 className="text-sm font-bold text-gray-900 line-clamp-2">
+                        {customName}
+                      </h3>
+
+                      {/* Description */}
+                      {customDescription && (
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {customDescription}
+                        </p>
+                      )}
+
+                      {/* Tags */}
+                      {customTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {customTags.slice(0, 3).map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                          {customTags.length > 3 && (
+                            <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                              +{customTags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Select Button - Small and Subtle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(item._id, e);
+                      }}
+                      className={`absolute bottom-3 right-3 p-1.5 rounded-full transition-all
+              ${isSelected
+                          ? "bg-[#f05a28] text-white"
+                          : "bg-white/80 backdrop-blur-sm text-gray-400 hover:bg-[#f05a28] hover:text-white"
+                        }`}
+                    >
+                      {isSelected ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               );
@@ -143,12 +272,13 @@ export default function MyProducts() {
             {/* List View logic */}
             <table className="w-full">
               <tbody>
-                {filtered.map(p => (
-                  <tr key={p_id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
+                {filtered.map(item => (
+                  <tr key={item_id} onClick={() => navigate("/user/detail-product")} className="cursor-pointer">
+
                     <ProductListRow
                       product={p}
-                      selected={selectedProducts.includes(p.id)}
-                      toggleSelect={(e) => toggleSelect(p.id, e)}
+                      selected={selectedProducts.includes(item.id)}
+                      toggleSelect={(e) => toggleSelect(item.id, e)}
                     />
                   </tr>
                 ))}
