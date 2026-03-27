@@ -1,5 +1,6 @@
 import CustomProduct from "../Models/CustomProduct.js";
 import mongoose from "mongoose";
+import Store from "../Models/Stores.Model.js"
 
 
 const createCustomProduct = async (req, res) => {
@@ -113,6 +114,13 @@ const getCustomProducts = async (req, res) => {
     const filter = { user: userId };
     if (req.query.productId) {
       filter.baseProduct = req.query.productId;
+    }
+
+    if (req.query.storeId) {
+      filter.storeId = req.query.storeId;
+    }
+    if (req.query.imported !== undefined) {
+      filter.importedToShopify = req.query.imported === 'true';
     }
 
     // Get custom products with populated references
@@ -473,6 +481,96 @@ const bulkDeleteCustomProducts = async (req, res) => {
   }
 };
 
+
+const importProductsToShopify = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const { productIds, storeId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ success: false, message: "Product IDs required" });
+    }
+    if (!storeId) {
+      return res.status(400).json({ success: false, message: "Store ID required" });
+    }
+
+    // Verify store belongs to user
+    const store = await Store.findOne({ _id: storeId, userId, isActive: true });
+    if (!store) {
+      return res.status(404).json({ success: false, message: "Store not found or not owned by user" });
+    }
+
+    // Update each product
+    const updateResult = await CustomProduct.updateMany(
+      { _id: { $in: productIds }, user: userId },
+      { $set: { importedToShopify: true, storeId: storeId } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "No valid products found" });
+    }
+
+    // Fetch updated products
+    const updatedProducts = await CustomProduct.find({ _id: { $in: productIds } })
+      .populate("baseProduct")
+      .populate("selectedMockup");
+
+    return res.status(200).json({
+      success: true,
+      message: `${updateResult.modifiedCount} products imported to Shopify`,
+      data: updatedProducts
+    });
+  } catch (error) {
+    console.error("importProductsToShopify error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// Get imported products by store ID
+ const getImportedProductsByStore = async (req, res) => {
+    try {
+        const { storeId } = req.params;
+        
+        if (!storeId) {
+            return res.status(400).json({
+                success: false,
+                message: "Store ID is required"
+            });
+        }
+
+        // Find all products with this storeId and importedToShopify = true
+        const products = await CustomProduct.find({
+            storeId: storeId,
+            importedToShopify: true
+        })
+        .populate("baseProduct")
+        .populate("customerDesign")
+        // .populate("baseProduct", "productTitle price thumbnail")
+        .populate("selectedMockup", "imageUrl name")
+        .sort({ createdAt: -1 });
+
+        console.log(`Found ${products.length} imported products for store ${storeId}`);
+
+        return res.status(200).json({
+            success: true,
+            data: products,
+            count: products.length,
+            message: "Products fetched successfully"
+        });
+        
+    } catch (error) {
+        console.error("getImportedProductsByStore error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 export {
   getCustomProducts,
   getCustomProductById,
@@ -480,5 +578,7 @@ export {
   deleteCustomProduct,
   bulkDeleteCustomProducts,
   createCustomProduct,
-  getCustomProductByUserId
+  getCustomProductByUserId,
+  importProductsToShopify,
+  getImportedProductsByStore
 };

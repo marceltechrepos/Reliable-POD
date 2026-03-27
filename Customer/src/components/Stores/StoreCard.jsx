@@ -17,7 +17,7 @@ const getStoreMeta = (type) => {
   }
 };
 
-export default function StoreCard({ store, onClick }) {
+export default function StoreCard({ store, onClick, onDisconnect }) {
   const meta = getStoreMeta(store.type);
 
   return (
@@ -28,14 +28,11 @@ export default function StoreCard({ store, onClick }) {
       hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)]
       transition-all duration-500 cursor-pointer overflow-hidden"
     >
-      {/* Gradient Hover Border */}
       <div
         className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-br ${meta.bg}`}
       />
 
-      {/* Inner */}
       <div className="relative bg-white rounded-3xl p-6 flex flex-col h-full min-h-[320px]">
-        {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div
             className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.bg}
@@ -45,60 +42,71 @@ export default function StoreCard({ store, onClick }) {
             {meta.icon}
           </div>
 
-          {/* Sync */}
           <div className="text-right">
             <div className="flex items-center gap-2 justify-end">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className={`h-2 w-2 rounded-full ${store.validated ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`}></span>
               <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                Live
+                {store.validated ? 'Connected' : 'Pending Validation'}
               </span>
             </div>
             <p className="text-[11px] text-gray-300 mt-1">
-              {store.lastSync || "Just now"}
+              {store.createdAt ? new Date(store.createdAt).toLocaleDateString() : "Just now"}
             </p>
           </div>
         </div>
 
-        {/* Store Info */}
         <div className="mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:translate-x-1 transition">
             {store.name}
           </h3>
-
           <div className="flex gap-2 flex-wrap">
             <span className="text-[10px] px-2 py-1 rounded-full bg-gray-50 border text-gray-500 font-medium">
-              ID #{store.id?.toString().padStart(3, "0")}
+              ID #{store.id || "N/A"}
             </span>
-
-            <span
-              className={`text-[10px] px-2 py-1 rounded-full text-white bg-gradient-to-r ${meta.bg}`}
-            >
+            <span className={`text-[10px] px-2 py-1 rounded-full text-white bg-gradient-to-r ${meta.bg}`}>
               {store.type}
             </span>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mt-auto">
           <Stat label="Products" value={store.products || 0} />
           <Stat label="Orders" value={store.orders || 0} />
-          <Stat
-            label="Revenue"
-            value={`$${store.revenue || 0}`}
-            highlight
-          />
+          <Stat label="Revenue" value={`$${store.revenue || 0}`} highlight />
         </div>
 
-        {/* Footer */}
-        <div className="mt-5 opacity-0 group-hover:opacity-100 transition flex items-center gap-2">
-          <span className="text-xs font-semibold text-orange-500">
-            View Analytics
-          </span>
-          <div className="flex-1 h-[2px] bg-gradient-to-r from-orange-400 to-transparent rounded-full" />
+        {store.apiKey && !store.validated && (
+          <div className="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-[10px] text-yellow-700 font-semibold">API Key:</p>
+            <code className="text-[9px] font-mono text-yellow-800 break-all">{store.apiKey}</code>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(store.apiKey);
+                toast.success('API Key copied!');
+              }}
+              className="ml-2 text-[9px] text-yellow-600 underline"
+            >
+              Copy
+            </button>
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center justify-between">
+          <div className="opacity-0 group-hover:opacity-100 transition flex items-center gap-2">
+            <span className="text-xs font-semibold text-orange-500">View Details</span>
+            <div className="flex-1 h-[2px] bg-gradient-to-r from-orange-400 to-transparent rounded-full w-12" />
+          </div>
+
+          <button
+            onClick={(e) => onDisconnect?.(e)}
+            className="text-xs text-red-500 opacity-0 group-hover:opacity-100 transition hover:text-red-700"
+          >
+            Disconnect
+          </button>
         </div>
       </div>
 
-      {/* Background Glow */}
       <div
         className={`absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br ${meta.bg}
         opacity-10 blur-3xl group-hover:opacity-20 transition`}
@@ -120,9 +128,8 @@ function Stat({ label, value, highlight }) {
         {label}
       </p>
       <p
-        className={`text-sm font-bold ${
-          highlight ? "text-orange-600" : "text-gray-900"
-        }`}
+        className={`text-sm font-bold ${highlight ? "text-orange-600" : "text-gray-900"
+          }`}
       >
         {value}
       </p>

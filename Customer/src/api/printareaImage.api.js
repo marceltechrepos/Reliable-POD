@@ -5,7 +5,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 export const getAllPrintAreaImages = async () => {
     try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${BASE_URL}/api/get-printarea-images`, {
+        const res = await fetch(`${BASE_URL}/api/printarea/get-printarea-image`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

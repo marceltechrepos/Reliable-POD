@@ -16,7 +16,7 @@ userPrintAreaImage.post(
   createPrintareaImage
 );
 
-userPrintAreaImage.get("/get-printarea-images", getAllPrintareaImages);
+userPrintAreaImage.get("/printarea/get-printarea-image", getAllPrintareaImages);
 
 userPrintAreaImage.get("/get-printarea-image/:id", getPrintareaImageById);
 

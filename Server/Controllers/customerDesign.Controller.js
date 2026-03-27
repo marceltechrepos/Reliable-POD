@@ -25,6 +25,50 @@ const uploadImage = async (req, res) => {
     }
 };
 
+const uploadFinalImage = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const userId = req.user._id;
+
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file provided' });
+        }
+
+        // Delete existing final image if present
+        if (design.finalDesignPublicId) {
+            try {
+                await cloudinary.uploader.destroy(design.finalDesignPublicId);
+            } catch (err) {
+                console.warn('Failed to delete old final image:', err);
+            }
+        }
+
+        // Upload new image to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'customer_final_designs',
+        });
+
+        design.finalDesignImage = result.secure_url;
+        design.finalDesignPublicId = result.public_id;
+        await design.save();
+
+        res.json({
+            success: true,
+            message: 'Final image uploaded',
+            data: { imageUrl: result.secure_url }
+        });
+    } catch (error) {
+        console.error('uploadFinalImage error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // const saveDesign = async (req, res) => {
 //     try {
 //         const { productId, mockupId, layers } = req.body;
@@ -187,7 +231,7 @@ const getDesign = async (req, res) => {
             });
         }
 
-        const userId = req.user._id; 
+        const userId = req.user._id;
 
         const query = {
             user: userId,
@@ -284,5 +328,6 @@ export {
     getDesign,
     deleteLayer,
     updateLayer,
-    getcustomerDesignByuserId
+    getcustomerDesignByuserId,
+    uploadFinalImage
 }

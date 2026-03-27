@@ -8,7 +8,7 @@ export const createPrintareaImage = async (req, res) => {
     const body = req.body;
     const userId = req.UserId; // Assuming auth middleware sets req.user
 
-    console.log(userId , "<<< userId")
+    console.log(userId, "<<< userId")
 
     // Validation array
     const validation = [
@@ -121,13 +121,14 @@ export const getAllPrintareaImages = async (req, res) => {
     const printAreaImages = await printAreaImageModel
       .find(query)
       .sort({ createdAt: -1 });
-
+    console.log(printAreaImages);
     res.status(200).json({
       success: true,
       data: printAreaImages,
       status: 200,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: error.message,
       success: false,

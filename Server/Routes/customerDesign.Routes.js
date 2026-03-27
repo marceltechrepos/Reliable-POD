@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { upload } from "../Middlewares/Multer/multer.js";
-import { deleteLayer, getcustomerDesignByuserId, getDesign, saveDesign, updateLayer, uploadImage } from "../Controllers/customerDesign.Controller.js";
+import { deleteLayer, getcustomerDesignByuserId, getDesign, saveDesign, updateLayer, uploadFinalImage, uploadImage } from "../Controllers/customerDesign.Controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const customerRoute = Router();
 
-customerRoute.post('/upload',isLogin, upload.single('image'), uploadImage); // /api/customer/designs
+customerRoute.post('/upload', isLogin, upload.single('image'), uploadImage);
+customerRoute.post('/:designId/final-image', isLogin, upload.single('image'), uploadFinalImage);
 customerRoute.post('/', isLogin, saveDesign);
 customerRoute.get('/:productId', isLogin, getDesign);
 customerRoute.delete('/layer/:layerId', isLogin, deleteLayer);

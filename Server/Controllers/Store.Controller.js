@@ -1,51 +1,284 @@
-import Store from "../Models/Stores.Model.js";
+// Controllers/Store.Controller.js
 
+import Store from "../Models/Stores.Model.js";
+import crypto from "crypto";
+
+// Create store with unique token
 export const createStore = async (req, res) => {
     try {
         const userId = req.user.id;
         const { shopDomain, type } = req.body;
 
-        const existingShopDomain = await Store.findOne({ shopDomain });
-        if (existingShopDomain) {
-            return res.status(400).json({ success: false, message: "Shop domain already exists" });
+        // Check if store already exists
+        const existingStore = await Store.findOne({
+            shopDomain,
+            userId,
+            isActive: true
+        });
+
+        if (existingStore) {
+            return res.status(400).json({
+                success: false,
+                message: "Store already exists"
+            });
         }
 
-        const Token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        // Generate unique token/key
+        const uniqueKey = crypto.randomBytes(32).toString('hex');
 
-        const store = await Store.create({ userId, shopDomain, type, token: Token });
+        // Generate API key format: exp_ + first 16 chars of unique key
+        const apiKey = `exp_${uniqueKey.substring(0, 16)}`;
 
-        return res.status(201).json({ success: true, data: store, status: 201, message: "Store created successfully" });
+        const store = await Store.create({
+            userId,
+            name: shopDomain,
+            shopDomain,
+            type,
+            token: uniqueKey,
+            apiKey: apiKey,
+            isActive: true,
+            validated: false
+        });
+
+        return res.status(201).json({
+            success: true,
+            data: {
+                storeId: store._id,
+                shopDomain: store.shopDomain,
+                apiKey: store.apiKey,
+                message: "Store created. Share this API key with Shopify app"
+            },
+            message: "Store created successfully"
+        });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error("CreateStore Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
 
-export const getStore = async (req, res) => {
+// Validate store with API key (called from Shopify app)
+export const validateStoreWithApiKey = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { type } = req.params;
-        const store = await Store.findOne({ userId, type });
-        if (!store) {
-            return res.status(404).json({ success: false, message: "Store not found" });
-        }
-        return res.status(200).json({ success: true, data: store, status: 200 });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-}
+        const { apiKey, storeDomain } = req.body;
 
-export const validateToken = async (req, res) => {
-    try {
-        const { secret_key, storeDomain } = req.body;
-        const store = await Store.findOne({ token: secret_key, shopDomain: storeDomain });
-        if (!store) {
-            return res.status(404).json({ success: false, message: "Store not found" });
+        if (!apiKey || !storeDomain) {
+            return res.status(400).json({
+                success: false,
+                message: "API Key and Store Domain are required"
+            });
         }
-        store.Validated = true;
+
+        // Find store by apiKey and shopDomain
+        const store = await Store.findOne({
+            apiKey: apiKey,
+            shopDomain: storeDomain,
+            isActive: true
+        });
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: "Invalid API Key or Store Domain"
+            });
+        }
+
+        // Mark store as validated
+        store.validated = true;
+        store.validatedAt = new Date();
         await store.save();
 
-        return res.status(200).json({ success: true, data: store, status: 200, message: "Store validated successfully" });
+        return res.status(200).json({
+            success: true,
+            message: "Store validated successfully!",
+            data: {
+                storeId: store._id,
+                shopDomain: store.shopDomain,
+                type: store.type
+            }
+        });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error("ValidateStore Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
+
+// Get store by ID
+export const getStoreById = async (req, res) => {
+    try {
+        const { storeId } = req.params;
+        const userId = req.user.id;
+
+        const store = await Store.findOne({ _id: storeId, userId });
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: store
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const getStoreByDomain = async (req, res) => {
+    try {
+        const { domain } = req.body;
+
+        console.log("Getting store by domain:", domain);
+
+        const store = await Store.findOne({
+            shopDomain: domain,
+            isActive: true
+        });
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: "Store not found in ExpressPOD"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                domain: store.shopDomain,
+                name: store.name,
+                apiKey: store.apiKey,
+                validated: store.validated,
+                validatedAt: store.validatedAt,
+                type: store.type,
+                storeId: store._id
+            }
+        });
+    } catch (error) {
+        console.error("GetStoreByDomain Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Get all stores for user
+export const getUserStores = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const stores = await Store.find({ userId, isActive: true })
+            .sort({ createdAt: -1 });
+
+        const formattedStores = stores.map(store => ({
+            id: store._id,
+            name: store.name,
+            type: store.type,
+            shopDomain: store.shopDomain,
+            apiKey: store.apiKey,
+            validated: store.validated,
+            validatedAt: store.validatedAt,
+            isActive: store.isActive,
+            createdAt: store.createdAt,
+            products: 0,
+            orders: 0,
+            revenue: 0
+        }));
+
+        res.json({
+            success: true,
+            data: formattedStores,
+            count: formattedStores.length
+        });
+    } catch (error) {
+        console.error('Error fetching stores:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Disconnect store
+export const disconnectStore = async (req, res) => {
+    try {
+        const { storeId } = req.params;
+        const userId = req.user.id;
+
+        const store = await Store.findOne({ _id: storeId, userId });
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: 'Store not found'
+            });
+        }
+
+        store.isActive = false;
+        store.disconnectedAt = new Date();
+        await store.save();
+
+        res.json({
+            success: true,
+            message: 'Store disconnected successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Create manual store (non-Shopify)
+export const createManualStore = async (req, res) => {
+    try {
+        const { name, type } = req.body;
+        const userId = req.user.id;
+
+        const existingStore = await Store.findOne({
+            userId,
+            name,
+            type,
+            isActive: true
+        });
+
+        if (existingStore) {
+            return res.status(400).json({
+                success: false,
+                message: 'Store with this name already exists'
+            });
+        }
+
+        const newStore = await Store.create({
+            userId,
+            name,
+            type,
+            isActive: true,
+            validated: true // Manual stores are auto-validated
+        });
+
+        res.status(201).json({
+            success: true,
+            data: newStore,
+            message: `${type} store created successfully`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

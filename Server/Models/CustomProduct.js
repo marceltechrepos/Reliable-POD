@@ -116,6 +116,15 @@ const customProductSchema = new mongoose.Schema(
         verticalAlign: String,
       },
     ],
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      default: null,
+    },
+    importedToShopify: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
