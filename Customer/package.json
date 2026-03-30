@@ -12,6 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+<<<<<<< HEAD
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@tailwindcss/vite": "^4.1.18",
@@ -23,6 +24,43 @@
     "axios": "^1.13.6",
     "framer-motion": "^12.34.0",
     "html-to-image": "^1.11.13",
+=======
+<<<<<<<< HEAD:Client/package.json
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@reduxjs/toolkit": "^2.11.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tiptap/extension-image": "^3.19.0",
+    "@tiptap/extension-link": "^3.19.0",
+    "@tiptap/extension-underline": "^3.19.0",
+    "@tiptap/react": "^3.19.0",
+    "@tiptap/starter-kit": "^3.19.0",
+    "axios": "^1.13.4",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
+    "react-redux": "^9.2.0",
+    "react-rnd": "^10.5.2",
+    "react-router-dom": "^7.9.6",
+    "react-sortablejs": "^6.1.4",
+    "react-toast": "^1.0.3",
+    "react-toastify": "^11.0.5",
+    "recharts": "^3.6.0",
+    "sortablejs": "^1.15.6",
+    "tailwindcss": "^4.1.18",
+    "three": "^0.182.0",
+    "tiptap": "^1.32.2",
+    "uuid": "^13.0.0"
+========
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
+    "@tailwindcss/vite": "^4.1.18",
+    "framer-motion": "^12.34.0",
+>>>>>>> 5573835a0aec06763e22859ec8fee3e93ea19f7e
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -32,6 +70,10 @@
     "react-toastify": "^11.0.5",
     "recharts": "^3.6.0",
     "tailwindcss": "^4.1.18"
+<<<<<<< HEAD
+=======
+>>>>>>>> 5573835a0aec06763e22859ec8fee3e93ea19f7e:Customer/package.json
+>>>>>>> 5573835a0aec06763e22859ec8fee3e93ea19f7e
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

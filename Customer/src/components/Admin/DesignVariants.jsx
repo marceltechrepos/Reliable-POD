@@ -168,7 +168,6 @@ const CustomVariantPreview = ({ variant, onRemove, isSelected, onToggleSelect })
     );
 };
 
-
 export default function DesignVariants() {
     const navigate = useNavigate();
     const { productId } = useParams();

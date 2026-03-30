@@ -22,11 +22,7 @@ const app = express();
 // ✅ CORS with credentials support
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:5174",  // ✅ Add this
-      "http://localhost:5175"
-    ],
+    origin: "*",
     credentials: true,
     methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]

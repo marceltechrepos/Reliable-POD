@@ -69,40 +69,6 @@ const uploadFinalImage = async (req, res) => {
     }
 };
 
-// const saveDesign = async (req, res) => {
-//     try {
-//         const { productId, mockupId, layers } = req.body;
-//         const userId = req.user._id; // from auth middleware
-
-//         if (!productId || !mockupId || !layers) {
-//             return res.status(400).json({ success: false, message: 'Missing required fields' });
-//         }
-
-//         // Find existing design
-//         let design = await CustomerDesign.findOne({ user: userId, product: productId, mockup: mockupId });
-
-//         if (design) {
-//             // Update
-//             design.layers = layers;
-//             await design.save();
-//         } else {
-//             // Create new
-//             design = new CustomerDesign({
-//                 user: userId,
-//                 product: productId,
-//                 mockup: mockupId,
-//                 layers
-//             });
-//             await design.save();
-//         }
-
-//         res.json({ success: true, data: design });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// };
-
 
 // Controllers/customerDesign.Controller.js
 
