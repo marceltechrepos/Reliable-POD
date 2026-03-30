@@ -1,6 +1,6 @@
 import React from "react";
 
-const ConfirmDesignModal = ({ open, onClose, onConfirm, customerDesignId }) => {
+const ConfirmDesignModal = ({ open, onClose, onConfirm, customerDesignId ,saving}) => {
     if (!open) return null;
 
     return (
@@ -36,7 +36,7 @@ const ConfirmDesignModal = ({ open, onClose, onConfirm, customerDesignId }) => {
                         onClick={onConfirm}
                         className="px-4 py-2 bg-[#f05a28] text-white text-sm font-semibold hover:opacity-90 transition cursor-pointer"
                     >
-                        Confirm
+                       {saving ? "Saving..."  : "Confirm"}
                     </button>
                 </div>
             </div>

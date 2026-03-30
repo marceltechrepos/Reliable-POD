@@ -20,6 +20,7 @@ import * as layerHelpers from "../components/Admin/utils/layerHelpers";
 import { toast } from "react-toastify";
 import ConfirmDesignModal from "../components/Admin/ConfirmDesignModal";
 import { getCustomProductByUserId, updateCustomProduct } from "../api/customerProduct.api";
+import { captureFinalDesign, uploadFinalImage } from "../api/customerDesign.api";
 
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 const toNumber = (v, fallback = 0) => {
@@ -29,14 +30,10 @@ const toNumber = (v, fallback = 0) => {
 const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
 
 const normalizeLayer = (layer) => {
-    // Sirf width/height ko normalize karo, position ko nahi
     const width = clamp(toNumber(layer.width, 30), 5, 100);
     const height = clamp(toNumber(layer.height, 30), 5, 100);
-
-    // Position ko EXACT rahne do, clamp mat karo
     const positionX = toNumber(layer.positionX, 0);
     const positionY = toNumber(layer.positionY, 0);
-
     return {
         ...layer,
         width: round2(width),
@@ -46,6 +43,13 @@ const normalizeLayer = (layer) => {
         rotation: round2(toNumber(layer.rotation, 0)),
         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1)
     };
+};
+
+const stripHtml = (html) => {
+    if (!html) return "";
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
 };
 
 const Editor = () => {
@@ -72,13 +76,13 @@ const Editor = () => {
     const [containersReady, setContainersReady] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [customerDesignId, setCustomerDesignId] = useState(null);
-
     const [existingCustomProduct, setExistingCustomProduct] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isCheckingExisting, setIsCheckingExisting] = useState(false);
 
     const fileInputRef = useRef(null);
     const containerRefs = useRef({});
+    const designContainerRef = useRef(null);
     const rndRefs = useRef({});
     const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
 
@@ -93,12 +97,9 @@ const Editor = () => {
 
     const activeProduct = existingCustomProduct?.baseProduct || product;
 
-    // Variants se unique colors nikalain
     const productColors = activeProduct?.Variants?.reduce((acc, variant) => {
         if (!variant.color || variant.color === "") return acc;
-
         const existingColor = acc.find(c => c.name === variant.color);
-
         if (!existingColor) {
             acc.push({
                 name: variant.color,
@@ -108,22 +109,17 @@ const Editor = () => {
         } else {
             existingColor.variants.push(variant);
         }
-
         return acc;
     }, []) || [];
 
-    // Variants se unique sizes nikalain
     const productSizes = activeProduct?.Variants?.reduce((acc, variant) => {
         if (!variant.size || variant.size === "") return acc;
-
         if (!acc.includes(variant.size)) {
             acc.push(variant.size);
         }
-
         return acc;
     }, []) || [];
 
-    // Sort sizes properly
     const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
     const sortedSizes = [...productSizes].sort((a, b) => {
         const indexA = sizeOrder.indexOf(a);
@@ -137,35 +133,22 @@ const Editor = () => {
     const displayColors = productColors.length > 0 ? productColors : [];
     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
 
-    // Ye naya useEffect add karo - Check if custom product exists
-    // Check if custom product exists
+    // Check existing custom product
     useEffect(() => {
         const checkExistingDesign = async () => {
             if (!productId || !selectedMockup?._id) return;
-
             try {
                 setIsCheckingExisting(true);
                 const user = JSON.parse(localStorage.getItem("user"));
                 if (!user?._id) return;
-
-                // Get all custom products for this user
                 const res = await getCustomProductByUserId(user._id);
-
                 if (res.success && res.data) {
-                    // Find custom product with matching productId
-                    const existing = res.data.find(
-                        cp => cp.baseProduct?._id === productId
-                    );
-
+                    const existing = res.data.find(cp => cp.baseProduct?._id === productId);
                     if (existing) {
                         setExistingCustomProduct(existing);
                         setIsEditing(true);
-                        console.log("Existing custom product found:", existing);
-
-                        // ✅ Load existing design layers
                         const designRes = await getCustomerDesign(productId, selectedMockup._id);
                         if (designRes.success && designRes.data) {
-                            console.log("Loading existing design layers:", designRes.data);
                             setCustomerLayers(designRes.data.layers || []);
                             setCustomerDesignId(designRes.data._id);
                         }
@@ -181,18 +164,15 @@ const Editor = () => {
                 setIsCheckingExisting(false);
             }
         };
-
         checkExistingDesign();
     }, [productId, selectedMockup]);
 
-    // resize listener (cheap trigger)
     useEffect(() => {
         const handleResize = () => setWindowSize(w => w + 1);
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // fetch product
     useEffect(() => {
         const fetchProduct = async () => {
             if (!product && productId) {
@@ -211,7 +191,6 @@ const Editor = () => {
         fetchProduct();
     }, [productId, product]);
 
-    // fetch admin print areas
     useEffect(() => {
         const fetchAdmin = async () => {
             if (product?._id && selectedMockup?._id) {
@@ -247,13 +226,10 @@ const Editor = () => {
                             rotation: Number(layer.rotation) || 0,
                             opacity: Number(layer.opacity) || 1
                         }));
-
                         setCustomerLayers(loadedLayers);
-
-                        // Add this: Wait for next tick then trigger container check
                         setTimeout(() => {
                             setRenderKey(prev => prev + 1);
-                            setContainersReady(false); // This will trigger recheck
+                            setContainersReady(false);
                         }, 100);
                     }
                 } catch (error) {
@@ -266,17 +242,12 @@ const Editor = () => {
         fetchCustomerDesign();
     }, [productId, selectedMockup]);
 
-
-
-    // convert percent -> pixels relative to printArea DOM
     const getPixelValues = (printAreaId, layer) => {
         const container = containerRefs.current[printAreaId];
         if (!container) return { x: 0, y: 0, width: 100, height: 100 };
         const rect = container.getBoundingClientRect();
         const cw = rect.width || 300;
         const ch = rect.height || 300;
-
-        // ensure normalized layer (safety)
         const safe = normalizeLayer(layer);
         return {
             x: (safe.positionX / 100) * cw,
@@ -288,21 +259,14 @@ const Editor = () => {
 
     useEffect(() => {
         if (!startDesigning || adminLayers.length === 0) return;
-
-        // Directly set containersReady to true after a small delay
-        const timer = setTimeout(() => {
-            setContainersReady(true);
-        }, 200);
-
+        const timer = setTimeout(() => setContainersReady(true), 200);
         return () => clearTimeout(timer);
     }, [startDesigning, adminLayers]);
 
     const updateLayerLocalAndMaybeServer = (index, updates, callServer = true) => {
         setCustomerLayers(prev => {
             const updated = [...prev];
-            // Normalize mat karo - exact values save karo
             updated[index] = { ...updated[index], ...updates };
-
             if (callServer && hasSavedDesign && updated[index]._id) {
                 const payload = { ...updated[index] };
                 updateCustomerLayer(updated[index]._id, payload).catch(err => {
@@ -315,10 +279,7 @@ const Editor = () => {
         setTimeout(() => setRenderKey(k => k + 1), 5);
     };
 
-    // drag start
-    const handleDragStart = (layerIndex) => {
-        setSelectedLayerIndex(layerIndex);
-    };
+    const handleDragStart = (layerIndex) => setSelectedLayerIndex(layerIndex);
 
     const handleDragStop = (printAreaId, layerIndex, d) => {
         const container = containerRefs.current[printAreaId];
@@ -326,25 +287,14 @@ const Editor = () => {
         const rect = container.getBoundingClientRect();
         const layer = customerLayers[layerIndex];
         if (!layer) return;
-
-        // Check if d.x and d.y are valid (not zero when they shouldn't be)
         let newXPercent, newYPercent;
-
         if (d.x === 0 && d.y === 0 && layer.positionX !== 0 && layer.positionY !== 0) {
-            // Rnd bug - use current layer position
-            console.warn("Rnd bug detected - using current position");
             newXPercent = layer.positionX;
             newYPercent = layer.positionY;
         } else {
             newXPercent = (d.x / rect.width) * 100;
             newYPercent = (d.y / rect.height) * 100;
         }
-
-        // Agar border par hai to exact value lo
-        if (Math.abs(newXPercent - 0) < 0.1 || Math.abs(newXPercent - (100 - layer.width)) < 0.1) {
-            console.log("Border touch detected");
-        }
-
         updateLayerLocalAndMaybeServer(layerIndex, {
             positionX: round2(newXPercent),
             positionY: round2(newYPercent)
@@ -355,13 +305,10 @@ const Editor = () => {
         const container = containerRefs.current[printAreaId];
         if (!container) return;
         const rect = container.getBoundingClientRect();
-
-        // Clamping hatao
         const widthPercent = (parseFloat(ref.style.width) / rect.width) * 100;
         const heightPercent = (parseFloat(ref.style.height) / rect.height) * 100;
         const posX = (position.x / rect.width) * 100;
         const posY = (position.y / rect.height) * 100;
-
         updateLayerLocalAndMaybeServer(layerIndex, {
             width: round2(widthPercent),
             height: round2(heightPercent),
@@ -370,7 +317,6 @@ const Editor = () => {
         }, true);
     };
 
-    // duplicate
     const handleDuplicateLayer = (index) => {
         const updated = layerHelpers.duplicateLayer(customerLayers, index);
         setCustomerLayers(updated.map(l => normalizeLayer(l)));
@@ -378,7 +324,6 @@ const Editor = () => {
         setRenderKey(k => k + 1);
     };
 
-    // toggle lock
     const handleToggleLock = (index) => {
         setCustomerLayers(prev => {
             const updated = layerHelpers.toggleLayerLock(prev, index);
@@ -387,20 +332,13 @@ const Editor = () => {
         setTimeout(() => setRenderKey(k => k + 1), 10);
     };
 
-    // save design (first time or update whole)
-
     const handleSave = async () => {
         try {
             setSaving(true);
             const normalized = customerLayers.map(l => normalizeLayer(l));
-
             let res;
             let designId = null;
-
             if (isEditing && existingCustomProduct?._id) {
-                // ✅ UPDATE existing custom product
-                console.log("Updating existing custom product:", existingCustomProduct._id);
-
                 const payload = {
                     productId,
                     mockupId: selectedMockup._id,
@@ -413,42 +351,30 @@ const Editor = () => {
                     },
                     selectedDefaultVariants: existingCustomProduct.selectedDefaultVariants || []
                 };
-
                 res = await updateCustomProduct(existingCustomProduct._id, payload);
-
                 if (res.success) {
                     designId = existingCustomProduct._id;
+                    setShowConfirmModal(false)
                     toast.success("Design updated successfully!");
                 }
             } else {
-                // ✅ CREATE new custom product
-                console.log("Creating new custom product");
-
                 res = await saveCustomerDesign({
                     productId,
                     mockupId: selectedMockup._id,
                     layers: normalized
                 });
-
                 if (res.success) {
-                    if (res.data && res.data._id) {
-                        designId = res.data._id;
-                    }
+                    designId = res.data?._id;
                     toast.success("Design saved successfully!");
                 }
             }
-
             if (res?.success) {
                 setHasSavedDesign(true);
                 setCustomerDesignId(designId);
-
-                // Refresh design from server
                 try {
                     const fresh = await getCustomerDesign(productId, selectedMockup._id);
                     if (fresh.success && fresh.data) {
-                        if (fresh.data._id) {
-                            setCustomerDesignId(fresh.data._id);
-                        }
+                        if (fresh.data._id) setCustomerDesignId(fresh.data._id);
                         const loaded = (fresh.data.layers || []).map(l => normalizeLayer({
                             ...l,
                             horizontalAlign: l.horizontalAlign || 'center',
@@ -460,7 +386,6 @@ const Editor = () => {
                 } catch (e) {
                     console.error("fetch fresh after save", e);
                 }
-
                 return designId;
             } else {
                 toast.error(isEditing ? "Update failed" : "Save failed");
@@ -475,144 +400,43 @@ const Editor = () => {
         }
     };
 
-    // const handleSave = async () => {
-    //     try {
-    //         setSaving(true);
-    //         // normalize all layers before saving
-    //         const normalized = customerLayers.map(l => normalizeLayer(l));
-    //         const res = await saveCustomerDesign({
-    //             productId: product._id,
-    //             mockupId: selectedMockup._id,
-    //             layers: normalized
-    //         });
-
-    //         if (res.success) {
-    //             setHasSavedDesign(true);
-
-    //             let designId = null;
-
-    //             // ✅ Get ID from response
-    //             if (res.data && res.data._id) {
-    //                 designId = res.data._id;
-    //                 setCustomerDesignId(designId);
-    //                 console.log("✅ Design ID saved from response:", designId);
-    //             }
-
-    //             // refresh from server (optional)
-    //             try {
-    //                 const fresh = await getCustomerDesign(product._id, selectedMockup._id);
-    //                 if (fresh.success && fresh.data) {
-    //                     if (fresh.data._id) {
-    //                         designId = fresh.data._id;
-    //                         setCustomerDesignId(designId);
-    //                     }
-
-    //                     const loaded = (fresh.data.layers || []).map(l => normalizeLayer({
-    //                         ...l,
-    //                         horizontalAlign: l.horizontalAlign || 'center',
-    //                         verticalAlign: l.verticalAlign || 'middle'
-    //                     }));
-    //                     setCustomerLayers(loaded);
-    //                     setRenderKey(k => k + 1);
-    //                 }
-    //             } catch (e) {
-    //                 console.error("fetch fresh after save", e);
-    //             }
-
-    //             toast.success("Design saved successfully!");
-    //             return designId; // ✅ Return ID for navigation
-    //         } else {
-    //             toast.error("Save failed");
-    //             return null;
-    //         }
-    //     } catch (e) {
-    //         console.error("save error", e);
-    //         toast.error("Save failed");
-    //         return null;
-    //     } finally {
-    //         setSaving(false);
-    //     }
-    // };
-
     const handleConfirm = async () => {
         const savedDesignId = await handleSave();
-
         if (savedDesignId) {
-            if (isEditing) {
-                // Agar update hai to variants page pe bina extra data ke jao
-                navigate(`/user/design-variants/${productId}`, {
-                    state: {
-                        product,
-                        selectedMockup,
-                        customerLayers,
-                        adminLayers,
-                        customerDesignId: savedDesignId,
-                        isEditing: true, // ✅ Flag for variants page
-                        existingCustomProduct // ✅ Pass existing data
-                    }
-                });
-            } else {
-                // New create
-                navigate(`/user/design-variants/${productId}`, {
-                    state: {
-                        product,
-                        selectedMockup,
-                        customerLayers,
-                        adminLayers,
-                        customerDesignId: savedDesignId,
-                        isEditing: false
-                    }
-                });
-            }
+            navigate(`/user/design-variants/${productId}`, {
+                state: {
+                    product,
+                    selectedMockup,
+                    customerLayers,
+                    adminLayers,
+                    customerDesignId: savedDesignId,
+                    isEditing,
+                    existingCustomProduct: isEditing ? existingCustomProduct : null
+                }
+            });
         }
     };
 
-    // const handleConfirm = async () => {
-    //     const savedDesignId = await handleSave(); // ensure design is saved first
-    //     console.log("Navigating with customerDesignId:", savedDesignId); // ✅ Check this
+    const handleOpenModal = () => setShowConfirmModal(true);
 
-    //     navigate(`/user/design-variants/${productId}`, {
-    //         state: {
-    //             product,
-    //             selectedMockup,
-    //             customerLayers,
-    //             adminLayers,
-    //             customerDesignId: savedDesignId, // ✅ This will now have the ID
-    //         }
-    //     });
-    // };
-
-
-    const handleOpenModal = () => {
-        setShowConfirmModal(true);
-    };
-
+    // Refactored handleNext: now uses captureFinalDesign and uploadFinalImage
     const handleNext = async () => {
         try {
             setSaving(true);
             const normalized = customerLayers.map(l => normalizeLayer(l));
-
             let designId = null;
 
             if (isEditing && existingCustomProduct?._id) {
-                // ✅ UPDATE existing design (layers update karo)
-                console.log("Updating existing design layers");
-
-                // Pehle check karo ke design ID kya hai
-                // existingCustomProduct mein design ID kahan store hai?
                 const designRes = await getCustomerDesign(productId, selectedMockup._id);
-
                 if (designRes.success && designRes.data) {
-                    // Design mil gaya, ab update karo
-                    // Note: saveCustomerDesign UPSERT karta hai (agar exist karta hai to update, nahi to create)
                     const updateRes = await saveCustomerDesign({
                         productId,
                         mockupId: selectedMockup._id,
                         layers: normalized
                     });
-
                     if (updateRes.success) {
                         designId = designRes.data._id;
+                        setShowConfirmModal(false)
                         toast.success("Design updated successfully!");
                     } else {
                         toast.error("Design update failed");
@@ -620,15 +444,14 @@ const Editor = () => {
                         return;
                     }
                 } else {
-                    // Design exist nahi karta - create karo
                     const createRes = await saveCustomerDesign({
                         productId,
                         mockupId: selectedMockup._id,
                         layers: normalized
                     });
-
                     if (createRes.success) {
                         designId = createRes.data?._id;
+                        setShowConfirmModal(false)
                         toast.success("Design saved successfully!");
                     } else {
                         toast.error("Save failed");
@@ -637,17 +460,14 @@ const Editor = () => {
                     }
                 }
             } else {
-                // ✅ CREATE new design
-                console.log("Creating new design");
-
                 const res = await saveCustomerDesign({
                     productId,
                     mockupId: selectedMockup._id,
                     layers: normalized
                 });
-
                 if (res.success) {
-                    designId = res.data?._id || null;
+                    designId = res.data?._id;
+                    setShowConfirmModal(false)
                     toast.success("Design saved successfully!");
                 } else {
                     toast.error("Save failed");
@@ -656,7 +476,17 @@ const Editor = () => {
                 }
             }
 
-            // Navigate to variants page
+            // Capture and upload final image
+            if (designId) {
+                const imageFile = await captureFinalDesign(designContainerRef);
+                if (imageFile) {
+                    await uploadFinalImage(designId, imageFile);
+                } else {
+                    toast.warn("Could not generate final image, but design saved.");
+                }
+            }
+
+            // Navigate
             if (designId) {
                 navigate(`/user/design-variants/${productId}`, {
                     state: {
@@ -665,7 +495,7 @@ const Editor = () => {
                         customerLayers,
                         adminLayers,
                         customerDesignId: designId,
-                        isEditing: isEditing,
+                        isEditing,
                         existingCustomProduct: isEditing ? existingCustomProduct : null
                     }
                 });
@@ -682,13 +512,10 @@ const Editor = () => {
         if (selectedLayerIndex === null) return;
         const layer = customerLayers[selectedLayerIndex];
         if (!layer) return;
-
         let newX;
         if (align === 'left') newX = 0;
         else if (align === 'center') newX = 50 - (toNumber(layer.width, 30) / 2);
         else newX = 100 - toNumber(layer.width, 30);
-
-        // Direct value bhejo - clamp mat karo
         updateLayerLocalAndMaybeServer(selectedLayerIndex, {
             positionX: round2(newX),
             horizontalAlign: align
@@ -699,26 +526,21 @@ const Editor = () => {
         if (selectedLayerIndex === null) return;
         const layer = customerLayers[selectedLayerIndex];
         if (!layer) return;
-
         let newY;
         if (align === 'top') newY = 0;
         else if (align === 'middle') newY = 50 - (toNumber(layer.height, 30) / 2);
         else newY = 100 - toNumber(layer.height, 30);
-
-        // Direct value bhejo - clamp mat karo
         updateLayerLocalAndMaybeServer(selectedLayerIndex, {
             positionY: round2(newY),
             verticalAlign: align
         }, true);
     };
 
-    // properties change from LayerProperties component
     const handleLayerPropertiesChange = (updates) => {
         if (selectedLayerIndex === null) return;
         updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
     };
 
-    // upload handler from input or modal
     const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
         if (!file) return;
         try {
@@ -726,7 +548,6 @@ const Editor = () => {
             const uploadRes = await uploadCustomerImage(file);
             if (!uploadRes.success) throw new Error(uploadRes.message);
             const { imageUrl, publicId } = uploadRes.data;
-
             const newLayer = {
                 printArea: printAreaLayer._id,
                 imageUrl,
@@ -743,7 +564,6 @@ const Editor = () => {
                 horizontalAlign: 'center',
                 verticalAlign: 'middle'
             };
-
             setCustomerLayers(prev => [...prev, normalizeLayer(newLayer)]);
             setSelectedLayerIndex(customerLayers.length);
             setTimeout(() => setRenderKey(k => k + 1), 10);
@@ -756,7 +576,6 @@ const Editor = () => {
         }
     };
 
-    // modal image select
     const handleImageFromModal = (image) => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
         if (!defaultPrintArea) {
@@ -785,7 +604,6 @@ const Editor = () => {
         setTimeout(() => setRenderKey(k => k + 1), 10);
     };
 
-    // remove via top-right button
     const handleRemoveLayer = async (index) => {
         const layer = customerLayers[index];
         if (layer && layer._id) {
@@ -803,8 +621,6 @@ const Editor = () => {
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading product...</div>;
     if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
 
-    // Editor.jsx (partial – only JSX changes shown; state and logic remain the same)
-
     return (
         <div className="min-h-screen bg-[#f8fafc] py-6 px-4 md:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
@@ -815,17 +631,8 @@ const Editor = () => {
                     >
                         Back to Products
                     </button>
-
                     {startDesigning && (
                         <div className="flex items-center gap-2">
-                            {/* <button
-                                onClick={handleNext}
-                                className="px-5 py-2 border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition cursor-pointer"
-                            >
-                                Next
-                            </button> */}
-
-                            {/* Right side buttons - SIRF NEXT BUTTON */}
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleOpenModal}
@@ -844,29 +651,23 @@ const Editor = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* Canvas Column */}
-
                     <div className="lg:col-span-8">
                         <div className="relative bg-white shadow-xl border border-gray-200 overflow-hidden">
-                            <div className="aspect-square relative">
+                            <div ref={designContainerRef} className="aspect-square relative">
                                 <img
                                     src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
                                 />
-
                                 {startDesigning && adminLayers.map((printAreaLayer) => {
                                     const areaLayers = customerLayers.filter(
                                         l => (l.printArea?._id || l.printArea) === printAreaLayer._id
                                     );
-
                                     return (
                                         <div
                                             key={printAreaLayer._id}
-                                            ref={el => {
-                                                if (el) containerRefs.current[printAreaLayer._id] = el;
-                                            }}
-                                            className="absolute border-2 border-dashed border-[#f05a28] bg-white/10"
+                                            ref={el => { if (el) containerRefs.current[printAreaLayer._id] = el; }}
+                                            className="absolute print-area-border border-2 border-dashed border-[#f05a28] bg-white/10"
                                             style={{
                                                 left: `${printAreaLayer.x_percent || 20}%`,
                                                 top: `${printAreaLayer.y_percent || 20}%`,
@@ -886,9 +687,7 @@ const Editor = () => {
                                                         l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
                                                     );
                                                     if (globalIndex === -1) return null;
-
                                                     const pixelValues = getPixelValues(printAreaLayer._id, layer);
-
                                                     return (
                                                         <Rnd
                                                             dragAxis="both"
@@ -930,9 +729,10 @@ const Editor = () => {
                             </div>
                         </div>
                     </div>
+
                     <div className="lg:col-span-4 lg:sticky lg:top-6 self-start">
                         <div className="bg-white border border-gray-200 shadow-xl overflow-hidden">
-                            <div className="p-4 border-b border-gray-200 flex justify-between ">
+                            <div className="p-4 border-b border-gray-200 flex justify-between">
                                 <h3 className="text-[15px] font-black text-gray-900">Design Studio</h3>
                                 <div
                                     style={{ display: startDesigning ? "none" : "block" }}
@@ -950,11 +750,9 @@ const Editor = () => {
                                             <h1 className="text-xl font-black text-gray-900 leading-snug truncate">
                                                 {product?.productTitle || product?.title}
                                             </h1>
-
                                             <p className="text-gray-500 text-sm mt-2 line-clamp-2">
-                                                {product?.description || "No description available"}
+                                                {stripHtml(product?.description) || "No description available"}
                                             </p>
-
                                             <div className="flex items-center justify-between mt-4">
                                                 <div className="text-xl font-black text-gray-900">
                                                     ${product?.Variants?.[0]?.basePrice || "0.00"}
@@ -977,7 +775,6 @@ const Editor = () => {
                                             </button>
                                         </div>
 
-                                        {/* Available Colors & Sizes Section - DYNAMIC FROM VARIANTS */}
                                         <div className="border border-gray-200 p-4">
                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
                                                 Available Colors ({displayColors.length})
@@ -999,7 +796,6 @@ const Editor = () => {
                                                 )}
                                             </div>
 
-                                            {/* Available Sizes Section */}
                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
                                                 Available Sizes ({displaySizes.length})
                                             </h4>
@@ -1028,7 +824,6 @@ const Editor = () => {
                                                     Layers <span className="text-xs text-gray-400">({customerLayers.length})</span>
                                                 </h3>
                                             </div>
-
                                             <div className="space-y-2">
                                                 {customerLayers.length > 0 ? (
                                                     customerLayers.map((layer, index) => (
@@ -1053,7 +848,6 @@ const Editor = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-
                                                             <div className="flex items-center gap-1">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleDuplicateLayer(index); }}
@@ -1093,18 +887,14 @@ const Editor = () => {
                                                     <h3 className="text-sm font-semibold text-gray-800">Properties</h3>
                                                     <span className="text-[11px] text-gray-400">Selected Layer</span>
                                                 </div>
-
                                                 <div className="space-y-3">
-
                                                     <LayerProperties
                                                         layer={customerLayers[selectedLayerIndex]}
                                                         onChange={handleLayerPropertiesChange}
                                                         onAlignHorizontal={handleAlignHorizontal}
                                                         onAlignVertical={handleAlignVertical}
                                                     />
-
                                                     <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-
                                                         <button
                                                             onClick={() => handleDuplicateLayer(selectedLayerIndex)}
                                                             className="flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
@@ -1112,7 +902,6 @@ const Editor = () => {
                                                             <Copy size={14} />
                                                             Duplicate
                                                         </button>
-
                                                         <button
                                                             onClick={() => handleToggleLock(selectedLayerIndex)}
                                                             className="flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
@@ -1120,7 +909,6 @@ const Editor = () => {
                                                             {customerLayers[selectedLayerIndex]?.locked ? <Unlock size={14} /> : <Lock size={14} />}
                                                             {customerLayers[selectedLayerIndex]?.locked ? "Unlock" : "Lock"}
                                                         </button>
-
                                                         <button
                                                             onClick={() => handleRemoveLayer(selectedLayerIndex)}
                                                             className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-red-500 text-white text-sm font-semibold hover:bg-red-600 cursor-pointer"
@@ -1128,7 +916,6 @@ const Editor = () => {
                                                             <Trash2 size={14} />
                                                             Delete Layer
                                                         </button>
-
                                                     </div>
                                                 </div>
                                             </div>
@@ -1142,7 +929,7 @@ const Editor = () => {
                                                 }
                                                 setOpenMockupModal(true);
                                             }}
-                                            className="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 font-medium hover:border-[#f05a28] hover:text-[#f05a28] transition-colors cursor-pointer rounded "
+                                            className="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 font-medium hover:border-[#f05a28] hover:text-[#f05a28] transition-colors cursor-pointer rounded"
                                         >
                                             Add Image from Library
                                         </button>
@@ -1153,7 +940,6 @@ const Editor = () => {
                     </div>
                 </div>
 
-                {/* AddMockup Modal */}
                 <AddMockup
                     open={openMockupModal}
                     onClose={() => setOpenMockupModal(false)}
@@ -1161,25 +947,11 @@ const Editor = () => {
                     onImageSelect={handleImageFromModal}
                 />
 
-                {/* Confirmation Modal */}
-
                 <ConfirmDesignModal
                     open={showConfirmModal}
                     onClose={() => setShowConfirmModal(false)}
-                    // onConfirm={async () => {
-                    //     await handleSave()
-                    //     setShowConfirmModal(false);
-                    //     navigate(`/user/design-variants/${productId}`, {
-                    //         state: {
-                    //             product,
-                    //             selectedMockup,
-                    //             customerLayers,
-                    //             adminLayers,
-                    //             customerDesignId,
-                    //         }
-                    //     });
-                    // }}
                     onConfirm={handleNext}
+                    saving={saving}
                 />
             </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -25,7 +25,10 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  CircularProgress,
+  Alert,
+  Snackbar
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -40,8 +43,10 @@ import {
   ShoppingBag,
   Receipt,
   TrendingUp,
-  Download
+  Download,
+  Sync
 } from "@mui/icons-material";
+import { fetchStoreProducts, syncStoreProducts, exportProducts } from "../api/storeProducts.api";
 
 export default function StoreDetail() {
   const navigate = useNavigate();
@@ -50,6 +55,117 @@ export default function StoreDetail() {
   const [activeTab, setActiveTab] = useState(0);
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [syncFilter, setSyncFilter] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Fetch products when component mounts
+  useEffect(() => {
+    const storeId = store?.id || store?._id;
+    if (storeId) {
+      console.log("Fetching products for store:", storeId);
+      fetchProducts(storeId);
+    } else {
+      console.log("No store ID found", store);
+      setLoading(false);
+    }
+  }, [store]);
+
+  const fetchProducts = async (storeId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Calling fetchStoreProducts with ID:", storeId);
+      const data = await fetchStoreProducts(storeId);
+      console.log("API Response:", data);
+
+      if (data.success && data.data) {
+        // Transform API data to match component structure
+        const transformedProducts = data.data.map(product => ({
+          id: product._id,
+          name: product.customVariant?.name || product.baseProduct?.productTitle || "Unnamed Product",
+          price: product.baseProduct?.price ? `$${product.baseProduct.price}` : "$0",
+          // image: product.customVariant?.imageUrl || 
+          //        product.selectedMockup?.imageUrl || 
+          //        product.baseProduct?.thumbnail?.url || 
+          //        "https://via.placeholder.com/50x50?text=No+Image",
+          image: product.customerDesign?.finalDesignImage,
+          description: product.customVariant?.description ||
+            product.baseProduct?.description ||
+            "No description available",
+          variants: product.selectedDefaultVariants || [],
+          imported: product.importedToShopify,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          storeId: product.storeId,
+          customVariant: product.customVariant,
+          baseProduct: product.baseProduct
+        }));
+
+        setProducts(transformedProducts);
+        console.log("Products set:", transformedProducts.length);
+      } else {
+        setError(data.message || "Failed to fetch products");
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Error loading products. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSync = async () => {
+    const storeId = store?.id || store?._id;
+    if (!storeId) return;
+
+    try {
+      setLoading(true);
+      await syncStoreProducts(storeId);
+      await fetchProducts(storeId);
+      setSnackbar({
+        open: true,
+        message: 'Products synced successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to sync products',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    const storeId = store?.id || store?._id;
+    if (!storeId) return;
+
+    try {
+      await exportProducts(storeId, filteredProducts);
+      setSnackbar({
+        open: true,
+        message: 'Products exported successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to export products',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   if (!store) {
     return (
@@ -73,14 +189,56 @@ export default function StoreDetail() {
 
   const storeColor = getStoreColor(store.type);
 
-  // Mock products data
-  const products = [
-    { id: 1, name: "Premium T-Shirt", state: "Published", sync: "Synced", updated: "2 hours ago", created: "Jan 15, 2024" },
-    { id: 2, name: "Designer Hoodie", state: "Draft", sync: "Pending", updated: "1 day ago", created: "Jan 10, 2024" },
-    { id: 3, name: "Custom Mug", state: "Published", sync: "Synced", updated: "3 hours ago", created: "Jan 12, 2024" },
-    { id: 4, name: "Phone Case", state: "Archived", sync: "Failed", updated: "2 days ago", created: "Jan 5, 2024" },
-    { id: 5, name: "Laptop Sleeve", state: "Published", sync: "Synced", updated: "5 hours ago", created: "Jan 18, 2024" },
-  ];
+  // Filter products based on search and filters
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesState = !stateFilter ||
+      (stateFilter === 'published' && product.imported) ||
+      (stateFilter === 'draft' && !product.imported);
+    const matchesSync = !syncFilter || syncFilter === 'synced';
+    return matchesSearch && matchesState && matchesSync;
+  });
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'name') {
+      return sortOrder === 'asc'
+        ? (a.name || '').localeCompare(b.name || '')
+        : (b.name || '').localeCompare(a.name || '');
+    }
+    if (sortBy === 'created') {
+      return sortOrder === 'asc'
+        ? new Date(a.createdAt) - new Date(b.createdAt)
+        : new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    if (sortBy === 'updated') {
+      return sortOrder === 'asc'
+        ? new Date(a.updatedAt) - new Date(b.updatedAt)
+        : new Date(b.updatedAt) - new Date(a.updatedAt);
+    }
+    return 0;
+  });
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getSyncStatusColor = () => {
+    return '#10B981';
+  };
+
+  // Debug log
+  console.log("Products in component:", products.length);
+  console.log("Filtered products:", filteredProducts.length);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F7FA", p: 4 }}>
@@ -144,22 +302,31 @@ export default function StoreDetail() {
                   }}
                 />
                 <Chip
-                  label={store.status}
+                  label={store.validated ? "Connected" : "Pending"}
                   size="small"
-                  color="success"
+                  color={store.validated ? "success" : "warning"}
                   variant="outlined"
                 />
-                <Chip
-                  label="0z5ky0a6fbqcprod7effmne"
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
+                {store.apiKey && (
+                  <Chip
+                    label={store.apiKey}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
               </Box>
             </Box>
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              startIcon={<Sync />}
+              variant="outlined"
+              onClick={handleSync}
+              disabled={loading}
+            >
+              Sync
+            </Button>
             <Button startIcon={<Settings />} variant="outlined">
               Settings
             </Button>
@@ -192,11 +359,15 @@ export default function StoreDetail() {
                 Products
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {store.name} • {store.products} products
+                {store.name} • {products.length} imported products
               </Typography>
             </Box>
-            <Button variant="contained" startIcon={<ShoppingBag />}>
-              Add Product
+            <Button
+              variant="contained"
+              startIcon={<ShoppingBag />}
+              onClick={() => window.open('http://localhost:8080/user/my-products', '_blank')}
+            >
+              Import More Products
             </Button>
           </Box>
 
@@ -208,6 +379,8 @@ export default function StoreDetail() {
               size="small"
               placeholder="Search for Product..."
               sx={{ width: 300 }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -219,21 +392,26 @@ export default function StoreDetail() {
 
             <FormControl size="small" sx={{ width: 150 }}>
               <InputLabel>State</InputLabel>
-              <Select label="State" defaultValue="">
+              <Select
+                label="State"
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+              >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="published">Published</MenuItem>
                 <MenuItem value="draft">Draft</MenuItem>
-                <MenuItem value="archived">Archived</MenuItem>
               </Select>
             </FormControl>
 
             <FormControl size="small" sx={{ width: 150 }}>
               <InputLabel>Sync Status</InputLabel>
-              <Select label="Sync Status" defaultValue="">
+              <Select
+                label="Sync Status"
+                value={syncFilter}
+                onChange={(e) => setSyncFilter(e.target.value)}
+              >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="synced">Synced</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="failed">Failed</MenuItem>
               </Select>
             </FormControl>
 
@@ -241,89 +419,173 @@ export default function StoreDetail() {
               More Filters
             </Button>
 
-            <Button startIcon={<Download />} variant="outlined" sx={{ ml: 'auto' }}>
+            <Button
+              startIcon={<Download />}
+              variant="outlined"
+              sx={{ ml: 'auto' }}
+              onClick={handleExport}
+              disabled={products.length === 0}
+            >
               Export
             </Button>
           </Box>
 
-          {/* Products Table */}
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                  <TableCell>
-                    <TableSortLabel
-                      active={sortBy === 'name'}
-                      direction={sortOrder}
-                      onClick={() => {
-                        setSortBy('name');
-                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                      }}
-                    >
-                      Name
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>State</TableCell>
-                  <TableCell>Sync Status</TableCell>
-                  <TableCell>Updated</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id} hover>
-                    <TableCell>
-                      <Typography fontWeight={500}>{product.name}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={product.state}
-                        size="small"
-                        color={
-                          product.state === 'Published' ? 'success' :
-                            product.state === 'Draft' ? 'warning' :
-                              'default'
-                        }
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          bgcolor: product.sync === 'Synced' ? '#10B981' :
-                            product.sync === 'Pending' ? '#F59E0B' : '#EF4444'
-                        }} />
-                        {product.sync}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{product.updated}</TableCell>
-                    <TableCell>{product.created}</TableCell>
-                    <TableCell align="right">
-                      <Button size="small">Edit</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* Table Footer */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, pt: 2, borderTop: '1px solid #E5E7EB' }}>
-            <Typography variant="body2" color="text.secondary">
-              Showing 5 of {store.products} products
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button size="small" disabled>Previous</Button>
-              <Button size="small" variant="contained">1</Button>
-              <Button size="small">2</Button>
-              <Button size="small">3</Button>
-              <Button size="small">Next</Button>
+          {/* Loading State */}
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
             </Box>
-          </Box>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <Alert severity="error" sx={{ mb: 2 }} action={
+              <Button color="inherit" size="small" onClick={() => fetchProducts(store?.id || store?._id)}>
+                Retry
+              </Button>
+            }>
+              {error}
+            </Alert>
+          )}
+
+          {/* Products Table */}
+          {!loading && !error && (
+            <>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                      <TableCell>Image</TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === 'name'}
+                          direction={sortOrder}
+                          onClick={() => {
+                            setSortBy('name');
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          }}
+                        >
+                          Name
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>State</TableCell>
+                      <TableCell>Sync Status</TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === 'updated'}
+                          direction={sortOrder}
+                          onClick={() => {
+                            setSortBy('updated');
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          }}
+                        >
+                          Updated
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === 'created'}
+                          direction={sortOrder}
+                          onClick={() => {
+                            setSortBy('created');
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          }}
+                        >
+                          Created
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sortedProducts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                          <Typography color="text.secondary">
+                            No products found
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedProducts.map((product) => (
+                        <TableRow key={product.id} hover>
+                          <TableCell>
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              style={{
+                                width: 50,
+                                height: 50,
+                                objectFit: 'cover',
+                                borderRadius: 8
+                              }}
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/50x50?text=No+Image';
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography fontWeight={500}>{product.name}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography fontWeight={600}>{product.price}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={product.imported ? "Published" : "Draft"}
+                              size="small"
+                              color={product.imported ? "success" : "warning"}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                bgcolor: getSyncStatusColor()
+                              }} />
+                              Synced
+                            </Box>
+                          </TableCell>
+                          <TableCell>{formatDate(product.updatedAt)}</TableCell>
+                          <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                console.log('View product:', product);
+                              }}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Table Footer */}
+              {sortedProducts.length > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, pt: 2, borderTop: '1px solid #E5E7EB' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Showing {sortedProducts.length} of {products.length} products
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" disabled>Previous</Button>
+                    <Button size="small" variant="contained">1</Button>
+                    <Button size="small">2</Button>
+                    <Button size="small">3</Button>
+                    <Button size="small">Next</Button>
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
         </Paper>
       )}
 
@@ -332,34 +594,54 @@ export default function StoreDetail() {
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
             <ShoppingBag color="primary" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h4" fontWeight={700}>{store.products}</Typography>
+            <Typography variant="h4" fontWeight={700}>{products.length}</Typography>
             <Typography color="text.secondary">Total Products</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
             <Receipt color="success" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h4" fontWeight={700}>{store.orders}</Typography>
+            <Typography variant="h4" fontWeight={700}>{store.orders || 0}</Typography>
             <Typography color="text.secondary">Total Orders</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
             <TrendingUp color="warning" sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h4" fontWeight={700}>${store.revenue}</Typography>
+            <Typography variant="h4" fontWeight={700}>${store.revenue || 0}</Typography>
             <Typography color="text.secondary">Total Revenue</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>Last Sync</Typography>
-            <Typography variant="h4" fontWeight={700}>{store.lastSync}</Typography>
-            <Button size="small" variant="outlined" sx={{ mt: 1 }}>
+            <Typography variant="h4" fontWeight={700}>
+              {products.length > 0 ? new Date(products[0]?.updatedAt).toLocaleDateString() : 'Never'}
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              sx={{ mt: 1 }}
+              onClick={handleSync}
+              disabled={loading}
+            >
               Sync Now
             </Button>
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

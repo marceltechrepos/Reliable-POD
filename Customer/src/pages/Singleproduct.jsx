@@ -18,6 +18,13 @@ const SingleProduct = () => {
 
   console.log(customProduct, "<<<<<<customProduct")
 
+  const stripHtml = (html) => {
+    if (!html) return "";
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
+  };
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -311,7 +318,7 @@ const SingleProduct = () => {
             {/* Custom Variant Details */}
             {customVariant.description && (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-700">{customVariant.description}</p>
+                <p className="text-sm text-gray-700">{stripHtml(customVariant.description)}</p>
               </div>
             )}
 

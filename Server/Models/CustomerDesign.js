@@ -92,6 +92,15 @@ const customerDesignSchema = new mongoose.Schema(
       index: true
     },
 
+    finalDesignImage: {
+      type: String,
+      default: ''
+    },
+    finalDesignPublicId: {
+      type: String,
+      default: ''
+    },
+
     mockup: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MockupImage",

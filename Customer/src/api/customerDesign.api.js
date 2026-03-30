@@ -1,4 +1,55 @@
+import { toJpeg } from "html-to-image";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+export const captureFinalDesign = async (designContainerRef) => {
+  if (!designContainerRef.current) return null;
+  try {
+    const borders = designContainerRef.current.querySelectorAll('.print-area-border');
+    borders.forEach(el => el.classList.add('capture-hide-border'));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const dataUrl = await toJpeg(designContainerRef.current, {
+      quality: 0.95,
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true,
+    });
+
+    borders.forEach(el => el.classList.remove('capture-hide-border'));
+
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `final-design-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    return file;
+  } catch (err) {
+    console.error('Capture error:', err);
+    return null;
+  }
+};
+
+export const uploadFinalImage = async (designId, file) => {
+  if (!designId || !file) return false;
+  const formData = new FormData();
+  formData.append('image', file);
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/api/customer/designs/${designId}/final-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('Final image uploaded successfully');
+      return true;
+    } else {
+      console.warn('Final image upload failed:', data.message);
+      return false;
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    return false;
+  }
+};
 
 // Upload image
 export const uploadCustomerImage = async (file) => {

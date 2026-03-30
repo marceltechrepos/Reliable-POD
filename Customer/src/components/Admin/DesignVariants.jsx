@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -16,6 +16,7 @@ import {
 import { getProductById } from "../../api/category.api";
 import { uploadCustomerImage } from "../../api/customerDesign.api";
 import { createCustomProduct, updateCustomProduct } from "../../api/customerProduct.api";
+import RichTextEditor from "./RichTextEditor";
 
 const createCustomVariantId = () =>
     `custom-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -623,7 +624,7 @@ export default function DesignVariants() {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-black text-gray-900">
-                                            Custom Variants Details
+                                            Custom Details
                                         </h2>
                                         <p className="text-sm text-gray-500">
                                             These details will apply to all selected custom variants ({selectedCustomVariants.length}).
@@ -677,7 +678,21 @@ export default function DesignVariants() {
                                         <label className="mb-2 block text-sm font-semibold text-gray-700">
                                             Description
                                         </label>
-                                        <textarea
+                                        <Suspense fallback={<div className="border p-4 text-gray-400">Loading editor...</div>}>
+                                            <RichTextEditor
+                                                value={customVariantDetails.description}
+                                                onChange={(htmlContent) =>
+                                                    setCustomVariantDetails(prev => ({
+                                                        ...prev,
+                                                        description: htmlContent,
+                                                    }))
+                                                }
+                                            />
+                                        </Suspense>
+                                        <p className="mt-2 text-xs text-gray-500">
+                                            You can format text with bold, italic, lists, images, and links.
+                                        </p>
+                                        {/* <textarea
                                             rows={12}
                                             value={customVariantDetails.description}
                                             onChange={(e) =>
@@ -688,7 +703,7 @@ export default function DesignVariants() {
                                             }
                                             placeholder="Brighten someone's day with our custom photo mugs..."
                                             className="w-full resize-none border border-gray-300 px-4 py-3 outline-none placeholder:text-gray-400 focus:border-[#f05a28] cursor-text"
-                                        />
+                                        /> */}
                                     </div>
                                 </div>
 

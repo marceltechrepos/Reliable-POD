@@ -25,39 +25,49 @@ const uploadImage = async (req, res) => {
     }
 };
 
-// const saveDesign = async (req, res) => {
-//     try {
-//         const { productId, mockupId, layers } = req.body;
-//         const userId = req.user._id; // from auth middleware
+const uploadFinalImage = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const userId = req.user._id;
 
-//         if (!productId || !mockupId || !layers) {
-//             return res.status(400).json({ success: false, message: 'Missing required fields' });
-//         }
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
 
-//         // Find existing design
-//         let design = await CustomerDesign.findOne({ user: userId, product: productId, mockup: mockupId });
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file provided' });
+        }
 
-//         if (design) {
-//             // Update
-//             design.layers = layers;
-//             await design.save();
-//         } else {
-//             // Create new
-//             design = new CustomerDesign({
-//                 user: userId,
-//                 product: productId,
-//                 mockup: mockupId,
-//                 layers
-//             });
-//             await design.save();
-//         }
+        // Delete existing final image if present
+        if (design.finalDesignPublicId) {
+            try {
+                await cloudinary.uploader.destroy(design.finalDesignPublicId);
+            } catch (err) {
+                console.warn('Failed to delete old final image:', err);
+            }
+        }
 
-//         res.json({ success: true, data: design });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// };
+        // Upload new image to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'customer_final_designs',
+        });
+
+        design.finalDesignImage = result.secure_url;
+        design.finalDesignPublicId = result.public_id;
+        await design.save();
+
+        res.json({
+            success: true,
+            message: 'Final image uploaded',
+            data: { imageUrl: result.secure_url }
+        });
+    } catch (error) {
+        console.error('uploadFinalImage error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 
 // Controllers/customerDesign.Controller.js
@@ -187,7 +197,7 @@ const getDesign = async (req, res) => {
             });
         }
 
-        const userId = req.user._id; 
+        const userId = req.user._id;
 
         const query = {
             user: userId,
@@ -284,5 +294,6 @@ export {
     getDesign,
     deleteLayer,
     updateLayer,
-    getcustomerDesignByuserId
+    getcustomerDesignByuserId,
+    uploadFinalImage
 }
