@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Box, Typography } from "@mui/material";
-import Masonry from "react-masonry-css";
+// import Masonry from "react-masonry-css";
 
 import { CATALOGUES } from "../components/Catalogue/data";
 import CatalogueFilters from "../components/Catalogue/CatalogueFilters";
