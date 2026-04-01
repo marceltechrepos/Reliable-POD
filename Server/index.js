@@ -37,20 +37,6 @@ app.use(express.static("public"));
 // ✅ Cookie parser (required for Shopify OAuth)
 app.use(cookieParser());
 
-// ✅ Session middleware (required for Shopify OAuth state)
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your-session-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production", // HTTPS only in production
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  })
-);
-
 // Connect to Database
 ConnectDB();
 
