@@ -6,7 +6,7 @@ import crypto from "crypto";
 // Create store with unique token
 export const createStore = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user._id;
         const { shopDomain, type } = req.body;
 
         // Check if store already exists
@@ -177,7 +177,7 @@ export const getStoreByDomain = async (req, res) => {
 // Get all stores for user
 export const getUserStores = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
 
         const stores = await Store.find({ userId, isActive: true })
             .sort({ createdAt: -1 });

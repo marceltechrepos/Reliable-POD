@@ -5,7 +5,6 @@ export const isLogin = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // 1️⃣ Check if token exists
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
@@ -18,13 +17,19 @@ export const isLogin = async (req, res, next) => {
     // 2️⃣ Verify token
     let decoded;
     try {
-      // ✅ Use correct JWT_SECRET
       decoded = jwt.verify(token, process.env.JWT_TOKEN);
     } catch (jwtError) {
+      console.error("JWT Verification Error:", jwtError.name, jwtError.message);
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({
           success: false,
           message: "Token expired"
+        });
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token signature"
         });
       }
       return res.status(401).json({
@@ -35,6 +40,7 @@ export const isLogin = async (req, res, next) => {
 
     // 3️⃣ Get user from database
     const user = await User.findById(decoded.id).select("-password");
+    console.log("User found:", !!user); // Debug log
 
     if (!user) {
       return res.status(401).json({
@@ -43,10 +49,9 @@ export const isLogin = async (req, res, next) => {
       });
     }
 
-    // 4️⃣ Set user in request and session
+    // 4️⃣ Set user in request
     req.user = user;
-    req.user.id = user._id;  // For convenience
-    req.session.userId = user._id;  // For session fallback
+    req.user.id = user._id;
 
     next();
   } catch (error) {

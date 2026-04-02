@@ -86,7 +86,11 @@ export const verifyTokenApi = async () => {
 
     try {
         const res = await axios.get(
-            `${import.meta.env.VITE_BASE_URL}/api/User/VerifyToken`
+            `${BASE_URL}/api/User/VerifyToken`, {
+            headers: {
+                Authorization: `Bearer ${token}`   // ✅ Add this
+            }
+        }
         );
 
         return { valid: res.data.success, user: res.data.user };

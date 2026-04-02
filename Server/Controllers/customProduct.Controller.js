@@ -394,19 +394,6 @@ const deleteCustomProduct = async (req, res) => {
       });
     }
 
-    // Optional: Clean up associated images/files if needed
-    // if (customProduct.customVariant?.publicId) {
-    //   await deleteCloudinaryImage(customProduct.customVariant.publicId);
-    // }
-
-    // if (customProduct.customerLayers?.length) {
-    //   for (const layer of customProduct.customerLayers) {
-    //     if (layer.publicId) {
-    //       await deleteCloudinaryImage(layer.publicId);
-    //     }
-    //   }
-    // }
-
     await CustomProduct.deleteOne({ _id: id, user: userId });
 
     return res.status(200).json({
@@ -451,16 +438,6 @@ const bulkDeleteCustomProducts = async (req, res) => {
         invalidIds,
       });
     }
-
-    // Optional: Clean up images before deletion
-    // const productsToDelete = await CustomProduct.find({
-    //   _id: { $in: ids },
-    //   user: userId,
-    // });
-    // 
-    // for (const product of productsToDelete) {
-    //   // Clean up images...
-    // }
 
     const result = await CustomProduct.deleteMany({
       _id: { $in: ids },
