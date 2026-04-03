@@ -70,7 +70,6 @@ const deleteProductById = async (productId) => {
             Authorization: `Bearer ${token}`
         }
     })
-    //   const res = await axios.delete(`${BASE_URL}/api/delete-product/${productId}`);
     return res.data;
 };
 
@@ -92,15 +91,6 @@ export const getProductsByCategory = async (categoryId) => {
         }
 
         return data.success ? data.data : [];
-        // if (res) {
-        //     const data = await res?.json();
-
-        //     if (data?.success) {
-        //         return data.data; // ye array of products return karega
-        //     }
-        // }
-
-        // return [];
     } catch (error) {
         console.log(error, "<<<< getProductsByCategory error");
         return [];

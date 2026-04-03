@@ -12,7 +12,7 @@ import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 const UserRouter = Router();
 
 UserRouter.post("/User/CreateUser", CreateUser);
-UserRouter.post("/User/Login", Login);
+UserRouter.post("/User/Login",  Login);
 UserRouter.post(
   "/User/AddUserInfo",
   upload.single("profileImage"),

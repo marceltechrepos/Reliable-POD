@@ -96,7 +96,6 @@ export default function Settings() {
         fetchProvider();
     }, [])
 
-    // --- Effects for profile preview cleanup ---
     useEffect(() => {
         return () => {
             // cleanup object URLs on unmount

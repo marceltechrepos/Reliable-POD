@@ -18,13 +18,14 @@ function CategoryPage() {
 
     const [isEdit, setIsEdit] = useState(false);
     const [editCategoryId, setEditCategoryId] = useState(null);
+    console.log(categories , "<< categories")
 
     // Fetch all categories
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const data = await getAllCategory();
-                const formattedCategories = data.map((item) => ({
+                const formattedCategories = data?.map((item) => ({
                     id: item._id,
                     label: item.slug,
                     value: item.name.toLowerCase().replace(/\s+/g, "-"),
@@ -149,7 +150,7 @@ function CategoryPage() {
 
                 {/* Category Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {categories.map((cat) => (
+                    {categories?.map((cat) => (
                         <div
                             key={cat.id}
                             className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border cursor-pointer"

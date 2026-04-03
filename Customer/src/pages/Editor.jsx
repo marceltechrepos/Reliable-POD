@@ -705,7 +705,7 @@ const Editor = () => {
                                                         >
                                                             <div className={`relative group w-full h-full overflow-hidden ${selectedLayerIndex === globalIndex ? 'ring-2 ring-blue-500 ring-inset' : ''}`}>
                                                                 <img
-                                                                    src={layer.imageUrl}
+                                                                    src={layer?.imageUrl}
                                                                     alt=""
                                                                     className="w-full h-full object-cover pointer-events-none"
                                                                     style={{ transform: `rotate(${layer.rotation || 0}deg)`, opacity: layer.opacity ?? 1 }}
@@ -837,7 +837,7 @@ const Editor = () => {
                                                         >
                                                             <div className="flex items-center gap-3 min-w-0">
                                                                 <div className="w-10 h-10 overflow-hidden bg-gray-100 flex-shrink-0">
-                                                                    <img src={layer.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                                    <img src={layer?.imageUrl} alt="" className="w-full h-full object-cover" />
                                                                 </div>
                                                                 <div className="min-w-0">
                                                                     <div className="text-sm font-medium text-gray-800 truncate">

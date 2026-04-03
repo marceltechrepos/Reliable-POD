@@ -23,9 +23,6 @@ const SubCategoryProduct = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-
-  console.log(products, " <<<< product");
-
   useEffect(() => {
     if (!subCategoryId) return;
 

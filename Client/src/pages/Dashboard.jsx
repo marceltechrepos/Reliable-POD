@@ -44,13 +44,6 @@ import {
   Legend
 } from "recharts";
 
-/* -------------------------
-  Advanced Tabbed Dashboard w/ working CRUD, search & filters (dummy state)
-  - Modal UI for add/edit/view
-  - Search + Filter within Products & Orders
-  - Delete confirmations
-  ------------------------- */
-
 const COLORS = ["#6366f1", "#fb923c", "#10b981", "#ef4444", "#8b5cf6"];
 
 export default function Dashboard() {
@@ -74,13 +67,6 @@ export default function Dashboard() {
               placeholder="Quick search..."
             />
           </div>
-
-          {/* <button
-            onClick={() => setShowAddProductModal(true)}
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition active:scale-95 shadow-sm hover:shadow"
-          >
-            <Plus size={16} /> Add Product
-          </button> */}
         </div>
       </div>
 
@@ -127,9 +113,6 @@ export default function Dashboard() {
   );
 }
 
-/* -------------------------
-   UI small bits
-   ------------------------- */
 function TabButton({ children, active, onClick }) {
   return (
     <button

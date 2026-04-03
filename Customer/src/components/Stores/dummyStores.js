@@ -1,14 +1,3 @@
-// export const STORES = [
-//   // { id: 1, name: "Trendify", type: "Shopify" },
-//   // { id: 2, name: "GiftCrafts", type: "Etsy" },
-//   { id: 3, name: "Local Orders", type: "Manual Order" },
-//   { id: 4, name: "PrintMaster", type: "WooCommerce" },
-//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
-//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
-//   { id: 5, name: "GlobalPrint", type: "Anywhere POD" },
-// ];
-
-
 export const STORES = [
   {
     id: 1,

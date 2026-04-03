@@ -17,8 +17,6 @@ import {
     Undo,
     Redo,
 } from "lucide-react";
-// import { useState, useEffect } from "react";
-
 
 const btn =
     "px-2 py-1 rounded hover:bg-gray-300 transition text-sm font-semibold text-gray-700";

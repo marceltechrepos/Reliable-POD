@@ -268,9 +268,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
     }
   };
 
-
-  // form changes
-
   // form changes - UPDATED VERSION
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -279,13 +276,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       [name]: type === 'checkbox' ? checked : value
     }));
   };
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     [name]: name === 'addToCampaigns' ? e.target.checked : value
-  //   }));
-  // };
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
@@ -548,19 +538,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         editData[`custom_${key}`] = value;
       });
     } F
-
-    // setEditFormData({
-    //   sku: row.sku,
-    //   color: row.color,
-    //   size: row.size,
-    //   colorHex: row.colorHex,
-    //   weight: row.weight,
-    //   price: row.price ? String(row.price) : '',
-    //   comparePrice: row.comparePrice ? String(row.comparePrice) : '',
-    //   baseCost: row.baseCost ? String(row.baseCost) : '',
-    //   available: row.available || 'available',
-    //   addToCampaigns: row.addToCampaigns || false,
-    // });
 
     setEditFormData(editData);
   };
@@ -1015,186 +992,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
           <Button onClick={handlePrintAreaSubmit} variant='contained' sx={{ backgroundColor: '#3b6d92', '&:hover': { backgroundColor: '#2a4d6e' } }}>Add Print Area</Button>
         </DialogActions>
       </Dialog>
-
-      {/* modal for custom feild */}
-      {/* <Dialog
-        open={attributesModalOpen}
-        onClose={() => setAttributesModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Manage Variant Attributes</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-
-          
-            <Typography variant="h6" gutterBottom>📏 Sizes</Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-              {variantAttributes.sizes.map((size, index) => (
-                <Chip
-                  key={index}
-                  label={size}
-                  onDelete={() => handleDeleteSize(size)}
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-              <TextField
-                size="small"
-                label="Add Size"
-                value={newSize}
-                onChange={(e) => setNewSize(e.target.value.toUpperCase())}
-                placeholder="e.g., XL"
-              />
-              <Button
-                variant="contained"
-                onClick={handleAddSize}
-                disabled={!newSize}
-              >
-                Add Size
-              </Button>
-            </Box>
-
-     
-            <Typography variant="h6" gutterBottom>🎨 Colors</Typography>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-              {Object.entries(variantAttributes.colors).map(([colorName, colorHex]) => (
-                <Box key={colorName} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 1,
-                      backgroundColor: colorHex,
-                      border: '1px solid #ddd'
-                    }}
-                  />
-                  <Typography>{colorName}</Typography>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDeleteColor(colorName)}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-              <TextField
-                size="small"
-                label="Color Name"
-                value={newColor.name}
-                onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
-                placeholder="e.g., Red"
-              />
-              <TextField
-                size="small"
-                label="Hex Code"
-                value={newColor.hex}
-                onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
-                placeholder="#ff0000"
-                type="color"
-                sx={{ width: 100 }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleAddColor}
-                disabled={!newColor.name || !newColor.hex}
-              >
-                Add Color
-              </Button>
-            </Box>
-
-          
-            <Typography variant="h6" gutterBottom>⚙️ Custom Fields</Typography>
-            <Box sx={{ mb: 2 }}>
-              {variantAttributes.customFields.map((field, index) => (
-                <Card key={index} sx={{ mb: 1, p: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="subtitle2">{field.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Type: {field.type}
-                        {field.options.length > 0 && ` | Options: ${field.options.join(', ')}`}
-                      </Typography>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteCustomField(index)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </Card>
-              ))}
-            </Box>
-
-            
-            <Paper sx={{ p: 2, bgcolor: '#f5f5f5' }}>
-              <Typography variant="subtitle2" gutterBottom>Add New Custom Field</Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <TextField
-                  size="small"
-                  label="Field Name"
-                  value={newCustomField.name}
-                  onChange={(e) => setNewCustomField({ ...newCustomField, name: e.target.value })}
-                  sx={{ flex: 1 }}
-                />
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>Field Type</InputLabel>
-                  <Select
-                    value={newCustomField.type}
-                    onChange={(e) => setNewCustomField({ ...newCustomField, type: e.target.value, options: [] })}
-                    label="Field Type"
-                  >
-                    <MenuItem value="text">Text</MenuItem>
-                    <MenuItem value="number">Number</MenuItem>
-                    <MenuItem value="select">Select</MenuItem>
-                    <MenuItem value="checkbox">Checkbox</MenuItem>
-                  </Select>
-                </FormControl>
-                {newCustomField.type === 'select' && (
-                  <TextField
-                    size="small"
-                    label="Options (comma separated)"
-                    placeholder="Option1, Option2, Option3"
-                    onChange={(e) => setNewCustomField({
-                      ...newCustomField,
-                      options: e.target.value.split(',').map(opt => opt.trim())
-                    })}
-                    sx={{ flex: 1 }}
-                  />
-                )}
-                <Button
-                  variant="contained"
-                  onClick={handleAddCustomField}
-                  disabled={!newCustomField.name}
-                >
-                  Add Field
-                </Button>
-              </Box>
-            </Paper>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAttributesModalOpen(false)}>Close</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              // Save attributes to localStorage or API
-              localStorage.setItem('variantAttributes', JSON.stringify(variantAttributes));
-              setAttributesModalOpen(false);
-              toast.success('Attributes saved successfully!');
-            }}
-          >
-            Save All Changes
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       {/* Attributes Management Modal - Simple Professional Design */}
       <Dialog
