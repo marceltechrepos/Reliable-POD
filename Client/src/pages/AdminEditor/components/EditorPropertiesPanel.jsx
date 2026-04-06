@@ -6,6 +6,7 @@ const EditorPropertiesPanel = ({
   operations,
   setShowGrid,
 }) => {
+  { console.log(selectedLayer, "<<<<< selectedLayer") }
   return (
     <div className={`${activePanel === 'properties' ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-gray-800 p-4 lg:p-6 space-y-4 lg:space-y-6 overflow-auto`}>
       <h2 className="text-lg lg:text-xl font-semibold text-gray-300 mb-2">Properties</h2>
@@ -121,7 +122,7 @@ const EditorPropertiesPanel = ({
                   onChange={(e) => operations.updateLayer(selectedLayer.id, { color: e.target.value })} />
               </div>
             </>
-          )} 
+          )}
 
           {selectedLayer.type === "image" && (
             <>
@@ -195,8 +196,8 @@ const EditorPropertiesPanel = ({
                       skewY: 0,
                       transformOrigin: "center center",
                       corners: selectedLayer.corners || [
-                        { x: 0, y: 0 },   
-                        { x: selectedLayer.width, y: 0 }, 
+                        { x: 0, y: 0 },
+                        { x: selectedLayer.width, y: 0 },
                         { x: selectedLayer.width, y: selectedLayer.height },
                         { x: 0, y: selectedLayer.height }
                       ]
@@ -208,7 +209,7 @@ const EditorPropertiesPanel = ({
               </div>
             </>
           )}
- 
+
           {selectedLayer.type === "printarea" && (
             <>
               <div className="pt-2 border-t border-gray-700">
@@ -276,6 +277,39 @@ const EditorPropertiesPanel = ({
                   <div className="space-y-4">
 
                     <button
+                      onClick={() => {
+                        // Reset perspective properties
+                        const defaultCorners = [
+                          { x: 0, y: 0 },
+                          { x: selectedLayer.width, y: 0 },
+                          { x: selectedLayer.width, y: selectedLayer.height },
+                          { x: 0, y: selectedLayer.height }
+                        ];
+
+                        operations.updateLayer(selectedLayer.id, {
+                          perspective: 0,
+                          rotateX: 0,
+                          rotateY: 0,
+                          rotateZ: 0,
+                          skewX: 0,
+                          skewY: 0,
+                          transformOrigin: "center center",
+                          corners: defaultCorners
+                        });
+
+                        // Force re-render of ThreeWarpedImage
+                        setTimeout(() => {
+                          operations.updateLayer(selectedLayer.id, {
+                            corners: [...defaultCorners] // Fresh array reference
+                          });
+                        }, 10);
+                      }}
+                      className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded transition"
+                    >
+                      Reset Perspective
+                    </button>
+
+                    {/* <button
                       onClick={() =>
                         operations.updateLayer(selectedLayer.id, {
                           perspective: 0,
@@ -296,7 +330,7 @@ const EditorPropertiesPanel = ({
                       className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded transition"
                     >
                       Reset Perspective
-                    </button>
+                    </button> */}
                   </div>
                 )}
 
