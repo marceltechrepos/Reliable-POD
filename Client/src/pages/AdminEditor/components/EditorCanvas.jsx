@@ -16,9 +16,9 @@ const EditorCanvas = ({
   innerCanvasRef,
   draggingCorner,
   operations,
-  activePanel, 
-  canvasOffset, 
-  setCanvasOffset, 
+  activePanel,
+  canvasOffset,
+  setCanvasOffset,
 }) => {
 
   const [resizeData, setResizeData] = useState({
@@ -33,7 +33,7 @@ const EditorCanvas = ({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = (e) => {
-    if (isPanning && e.button === 0) { 
+    if (isPanning && e.button === 0) {
       e.preventDefault();
       setPanStart({
         x: e.clientX - canvasOffset.x,
@@ -208,7 +208,7 @@ const EditorCanvas = ({
                       style={{
                         width: "100%",
                         height: "100%",
-                        objectFit: "fill",  
+                        objectFit: "fill",
                         display: "block",
                       }}
                     />
@@ -512,7 +512,7 @@ const EditorCanvas = ({
                     )}
 
                     {/* Perspective Handles - 4 points */}
-                    {showPerspectiveHandles && layer.corners && (
+                    {/* {showPerspectiveHandles && layer.corners && (
                       <>
                         {layer.corners.slice(0, 4).map((corner, index) => {
                           const scaleFactor = getCanvasSize().displayWidth / getCanvasSize().originalWidth;
@@ -539,7 +539,7 @@ const EditorCanvas = ({
                           );
                         })}
                       </>
-                    )}
+                    )} */}
                     {/* Rotation Handle */}
                     {showRotationHandle && (
                       <div
@@ -552,6 +552,54 @@ const EditorCanvas = ({
                 </Rnd>
               );
             })}
+
+            {/* Top overlay for perspective handles */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 999999,
+                pointerEvents: "none",
+              }}
+            >
+              {layers
+                .filter(
+                  (layer) =>
+                    selectedLayerId === layer.id &&
+                    layer.enablePerspective &&
+                    layer.corners &&
+                    layer.visible !== false
+                )
+                .map((layer) => {
+                  const scaleFactor =
+                    getCanvasSize().displayWidth / getCanvasSize().originalWidth;
+
+                  return layer.corners.slice(0, 4).map((corner, index) => {
+                    const displayX = (layer.x + corner.x) * scaleFactor;
+                    const displayY = (layer.y + corner.y) * scaleFactor;
+
+                    return (
+                      <div
+                        key={`${layer.id}-corner-${index}`}
+                        onMouseDown={(e) => operations.startCornerDrag(e, layer.id, index)}
+                        style={{
+                          position: "absolute",
+                          left: displayX - 6,
+                          top: displayY - 6,
+                          width: 12,
+                          height: 12,
+                          backgroundColor: "#f59e0b",
+                          borderRadius: "50%",
+                          border: "2px solid white",
+                          cursor: "move",
+                          zIndex: 1000000,
+                          pointerEvents: "auto",
+                        }}
+                      />
+                    );
+                  });
+                })}
+            </div>
           </div>
         </div>
       ) : (
