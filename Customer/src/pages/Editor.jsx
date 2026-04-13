@@ -29,11 +29,30 @@ const toNumber = (v, fallback = 0) => {
 };
 const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
 
+// const normalizeLayer = (layer) => {
+//     const width = clamp(toNumber(layer.width, 30), 5, 100);
+//     const height = clamp(toNumber(layer.height, 30), 5, 100);
+//     const positionX = toNumber(layer.positionX, 0);
+//     const positionY = toNumber(layer.positionY, 0);
+//     return {
+//         ...layer,
+//         width: round2(width),
+//         height: round2(height),
+//         positionX: round2(positionX),
+//         positionY: round2(positionY),
+//         rotation: round2(toNumber(layer.rotation, 0)),
+//         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1)
+//     };
+// };
+
+const MAX_LAYER_PERCENT = 300; // ya 500 bhi rakh sakte ho
+
 const normalizeLayer = (layer) => {
-    const width = clamp(toNumber(layer.width, 30), 5, 100);
-    const height = clamp(toNumber(layer.height, 30), 5, 100);
+    const width = clamp(toNumber(layer.width, 30), 5, MAX_LAYER_PERCENT);
+    const height = clamp(toNumber(layer.height, 30), 5, MAX_LAYER_PERCENT);
     const positionX = toNumber(layer.positionX, 0);
     const positionY = toNumber(layer.positionY, 0);
+
     return {
         ...layer,
         width: round2(width),
@@ -41,8 +60,14 @@ const normalizeLayer = (layer) => {
         positionX: round2(positionX),
         positionY: round2(positionY),
         rotation: round2(toNumber(layer.rotation, 0)),
-        opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1)
+        opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1),
     };
+};
+
+const getLayerAspectRatio = (layer) => {
+    const w = Math.max(toNumber(layer?.width, 30), 1);
+    const h = Math.max(toNumber(layer?.height, 30), 1);
+    return w / h;
 };
 
 const stripHtml = (html) => {
@@ -59,6 +84,7 @@ const Editor = () => {
     const productFromState = location.state?.product;
 
     // states
+    const [isShiftPressed, setIsShiftPressed] = useState(false);
     const [product, setProduct] = useState(productFromState || null);
     const [loading, setLoading] = useState(!productFromState);
     const [startDesigning, setStartDesigning] = useState(false);
@@ -132,6 +158,25 @@ const Editor = () => {
 
     const displayColors = productColors.length > 0 ? productColors : [];
     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
+
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Shift") setIsShiftPressed(true);
+        };
+
+        const handleKeyUp = (e) => {
+            if (e.key === "Shift") setIsShiftPressed(false);
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+        };
+    }, []);
 
     // Check existing custom product
     useEffect(() => {
@@ -696,6 +741,7 @@ const Editor = () => {
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
                                                             disableDragging={layer.locked}
                                                             enableResizing={!layer.locked}
+                                                            lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
                                                             onDragStart={() => handleDragStart(globalIndex)}
                                                             onDragStop={(e, d) => handleDragStop(printAreaLayer._id, globalIndex, d)}
                                                             onResizeStop={(e, dir, ref, delta, pos) =>

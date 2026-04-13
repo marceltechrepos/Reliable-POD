@@ -68,9 +68,9 @@ const Singlecatalogue = () => {
           >
             <Plus size={14} /> Create Print On Demand Product
           </button>
-          <button className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
+          {/* <button className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
             <ShoppingBag size={14} /> Create Personalised Product
-          </button>
+          </button> */}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -91,7 +91,7 @@ const Singlecatalogue = () => {
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-2">
               <p className="text-[13px] font-bold text-gray-400">
-                {productData?.fulfilmentCatalogID || "N/A"}
+                fulfilmentCatalogID: {productData?.fulfilmentCatalogID || "N/A"}
               </p>
               <h1 className="text-3xl font-black text-gray-900">
                 {productData?.productTitle || productData?.title}
@@ -131,9 +131,15 @@ const Singlecatalogue = () => {
               <h4 className="text-[11px] font-black uppercase text-gray-400">
                 Description
               </h4>
-              <p className="text-[14px] text-gray-600 leading-relaxed">
+              {/* <p className="text-[14px] text-gray-600 leading-relaxed">
                 {productData?.description || "No description available"}
-              </p>
+              </p> */}
+              <div
+                className="text-[14px] text-gray-600 leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: productData?.description || "No description available",
+                }}
+              />
             </div>
           </div>
         </div>

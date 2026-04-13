@@ -34,6 +34,7 @@ const SingleProduct = () => {
   const [selectedConfigColor, setSelectedConfigColor] = useState("Black");
   const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
   const [isAddStoreModalOpen, setIsAddStoreModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
 
@@ -94,9 +95,11 @@ const SingleProduct = () => {
   const customVariant = customProduct.customVariant || {};
   const selectedMockup = customProduct.selectedMockup || {};
   const customerLayers = customProduct.customerLayers || [];
+  const finalImage = customProduct?.customerDesign?.finalDesignImage || [];
 
   // Display image: custom variant image > mockup image > product thumbnail
-  const displayImage = selectedMockup.imageUrl ||
+  const displayImage = selectedImage ||
+    selectedMockup.imageUrl ||
     selectedMockup?.mockupImage?.url ||
     p?.thumbnail?.url ||
     image;
@@ -263,23 +266,43 @@ const SingleProduct = () => {
               />
 
               {/* Custom Variant Badge */}
-              {customVariant.enabled && (
+
+              {
+                customProduct.importedToShopify ? (
+                  <div className="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded">
+                    Imported
+                  </div>
+                ) :
+                  (
+                    customVariant.enabled && (
+                      <div className="absolute top-4 left-4 bg-[#f05a28] text-white text-xs font-bold px-3 py-1.5 rounded">
+                        Custom Design
+                      </div>
+                    )
+                  )
+              }
+
+              {/* {customVariant.enabled && (
                 <div className="absolute top-4 left-4 bg-[#f05a28] text-white text-xs font-bold px-3 py-1.5 rounded">
                   Custom Design
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Thumbnail Gallery */}
             <div className="grid grid-cols-4 gap-4">
               {/* Main image thumbnail */}
-              <div className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
-                <img src={displayImage} className="w-full h-full object-cover" />
+              <div
+                onClick={() => setSelectedImage(customProduct?.customerDesign?.finalDesignImage)}
+                className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
+                <img src={customProduct?.customerDesign?.finalDesignImage} className="w-full h-full object-cover" />
               </div>
 
               {/* Layer thumbnails */}
               {customerLayers.slice(0, 3).map((layer, idx) => (
-                <div key={idx} className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
+                <div
+                  onClick={() => setSelectedImage(layer.imageUrl)}
+                  key={idx} className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
                   <img src={layer.imageUrl} className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -305,7 +328,7 @@ const SingleProduct = () => {
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-2">
               <p className="text-[13px] font-bold text-gray-400">
-                {p?.fulfilmentCatalogID || "SKU: " + customProduct._id.slice(-8)}
+                fulfilmentCatalogID: {p?.fulfilmentCatalogID || "SKU: " + customProduct._id.slice(-8)}
               </p>
               <h1 className="text-3xl font-black text-gray-900">
                 {customVariant.name || p?.productTitle}
@@ -318,7 +341,13 @@ const SingleProduct = () => {
             {/* Custom Variant Details */}
             {customVariant.description && (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-700">{stripHtml(customVariant.description)}</p>
+                {/* <p className="text-sm text-gray-700">{stripHtml(customVariant.description)}</p> */}
+                <div
+                  className="text-[14px] text-gray-600 leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: customVariant?.description || "No description available",
+                  }}
+                />
               </div>
             )}
 
@@ -416,9 +445,15 @@ const SingleProduct = () => {
             {/* Base Product Description */}
             <div className="space-y-3">
               <h4 className="text-[11px] font-black uppercase text-gray-400">Description</h4>
-              <p className="text-[14px] text-gray-600 leading-relaxed">
+              {/* <p className="text-[14px] text-gray-600 leading-relaxed">
                 {p?.description?.replace(/<[^>]*>/g, '') || "No description available"}
-              </p>
+              </p> */}
+              <div
+                className="text-[14px] text-gray-600 leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: p?.description || "No description available",
+                }}
+              />
             </div>
 
             {/* Mockup Info */}
@@ -438,7 +473,7 @@ const SingleProduct = () => {
 
             {/* Modal Left: Product Preview */}
             <div className="w-full md:w-1/3 bg-[#f9fafb] p-8 flex flex-col items-center border-r border-gray-100">
-              <img src={p.image} alt="modal-preview" className="w-full h-auto mb-6" />
+              <img src={finalImage} alt="modal-preview" className="w-full h-auto mb-6" />
               <div className="text-center">
                 <h2 className="text-[16px] font-bold text-gray-800 uppercase italic">Test</h2>
                 <h3 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight leading-tight">
@@ -546,7 +581,7 @@ const SingleProduct = () => {
               {/* Left: Product Image Preview (Fixed width, non-scrollable) */}
               <div className="w-full md:w-1/2 p-6 flex justify-center items-start bg-white border-r border-gray-50">
                 <img
-                  src={p.image}
+                  src={finalImage}
                   alt="edit-preview"
                   className="w-full max-w-[320px] h-auto object-contain"
                 />
@@ -585,15 +620,21 @@ const SingleProduct = () => {
                     <div className="space-y-5 animate-in fade-in duration-200">
                       <div>
                         <label className="block text-[11px] font-bold text-gray-400 uppercase mb-2">Name</label>
-                        <input type="text" defaultValue={p.title} className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
+                        <input type="text" defaultValue={customProduct.customVariant?.name} className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-400 uppercase mb-2">Tags</label>
-                        <input type="text" placeholder="Add a tag" className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
+                        <input defaultValue={customProduct?.customVariant?.tags.map((v) => v)} type="text" placeholder="Add a tag" className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-[11px] font-bold text-gray-400 uppercase">Description</label>
-                        <textarea rows="5" className="w-full border border-gray-300 rounded px-3 py-3 text-[13px] text-gray-600 leading-relaxed focus:outline-none" defaultValue={p.description} />
+                        {/* <textarea rows="5" className="w-full border border-gray-300 rounded px-3 py-3 text-[13px] text-gray-600 leading-relaxed focus:outline-none" defaultValue={p.description} /> */}
+                        <div
+                          className="text-[14px] text-gray-600 leading-relaxed"
+                          dangerouslySetInnerHTML={{
+                            __html: customProduct?.customVariant?.description || "No description available",
+                          }}
+                        />
                       </div>
                     </div>
                   )}

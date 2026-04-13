@@ -52,6 +52,8 @@ export default function MyProducts() {
 
   const productList = useMemo(() => customProducts || [], [customProducts]);
 
+  console.log(productList , "<<<<<<< productList")
+
   const toggleSelect = (id, e) => {
     e.stopPropagation();
     setSelectedProducts(prev =>
@@ -112,22 +114,33 @@ export default function MyProducts() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <select
-              value={selectedStoreId}
-              onChange={(e) => setSelectedStoreId(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm"
-              disabled={importing}
-            >
-              {stores.map(store => (
-                <option key={store.id} value={store.id}>{store.name}</option>
-              ))}
-            </select>
+            {
+              stores.length > 0 ? (
+                <select
+                  value={selectedStoreId}
+                  onChange={(e) => setSelectedStoreId(e.target.value)}
+                  className="border rounded-lg px-3 py-2 text-sm"
+                  disabled={importing}
+                >
+                  {stores.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-sm text-gray-500">
+                  No stores connected
+                </span>
+              )
+            }
+
             <button
               onClick={handleImportToShopify}
               disabled={selectedProducts.length === 0 || importing || !selectedStoreId}
               className={`px-4 py-2 rounded-lg text-white transition ${selectedProducts.length > 0 && !importing && selectedStoreId
-                ? "bg-[#f05a28] hover:bg-[#e04a18]"
-                : "bg-gray-300 cursor-not-allowed"
+                  ? "bg-[#f05a28] hover:bg-[#e04a18]"
+                  : "bg-gray-300 cursor-not-allowed"
                 }`}
             >
               {importing ? "Importing..." : "Import to Shopify"}
@@ -149,7 +162,7 @@ export default function MyProducts() {
               const customDescription = item?.customVariant?.description;
               const customTags = item?.customVariant?.tags || [];
 
-              const displayImage = item?.selectedMockup?.mockupImage?.url ||
+              const displayImage = item?.customerDesign?.finalDesignImage ||
                 p?.thumbnail?.url ||
                 "https://via.placeholder.com/400x400?text=No+Image";
 
@@ -245,6 +258,6 @@ export default function MyProducts() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
