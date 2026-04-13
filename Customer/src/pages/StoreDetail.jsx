@@ -88,15 +88,18 @@ export default function StoreDetail() {
         const transformedProducts = data.data.map(product => ({
           id: product._id,
           name: product.customVariant?.name || product.baseProduct?.productTitle || "Unnamed Product",
-          price: product.baseProduct?.price ? `$${product.baseProduct.price}` : "$0",
-          // image: product.customVariant?.imageUrl || 
-          //        product.selectedMockup?.imageUrl || 
-          //        product.baseProduct?.thumbnail?.url || 
-          //        "https://via.placeholder.com/50x50?text=No+Image",
+
+          // ✅ FIXED PRICE
+          price: product.baseProduct?.Variants?.length
+            ? `$${product.baseProduct.Variants[0].basePrice}`
+            : "$0",
+
           image: product.customerDesign?.finalDesignImage,
-          description: product.customVariant?.description ||
+          description:
+            product.customVariant?.description ||
             product.baseProduct?.description ||
             "No description available",
+
           variants: product.selectedDefaultVariants || [],
           imported: product.importedToShopify,
           createdAt: product.createdAt,
@@ -362,13 +365,12 @@ export default function StoreDetail() {
                 {store.name} • {products.length} imported products
               </Typography>
             </Box>
-            <Button
+            {/* <Button
               variant="contained"
               startIcon={<ShoppingBag />}
-              onClick={() => window.open('http://localhost:8080/user/my-products', '_blank')}
             >
               Import More Products
-            </Button>
+            </Button> */}
           </Box>
 
           <Divider sx={{ mb: 3 }} />

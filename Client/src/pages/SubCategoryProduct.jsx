@@ -165,7 +165,12 @@ const SubCategoryProduct = () => {
 
                 <p className="text-sm text-gray-500">Internal: {p?.internalName || "—"}</p>
 
-                <p className="text-sm text-gray-600 line-clamp-2">{p?.description || "No description"}</p>
+                <p
+                  className="mt-4 text-gray-700"
+                  dangerouslySetInnerHTML={{
+                    __html: p.description || "No description"
+                  }}
+                />
 
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
@@ -242,7 +247,12 @@ const SubCategoryProduct = () => {
 
                 <p className="text-sm text-gray-500 mt-1">{selected.internalName || "—"}</p>
 
-                <p className="mt-4 text-gray-700">{selected.description || "No description"}</p>
+                <p
+                  className="mt-4 text-gray-700"
+                  dangerouslySetInnerHTML={{
+                    __html: selected.description || "No description"
+                  }}
+                />
 
                 <div className="mt-6">
                   <h3 className="font-semibold mb-2">Print Areas</h3>
