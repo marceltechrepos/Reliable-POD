@@ -191,31 +191,28 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => onAlignHorizontal('left')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.horizontalAlign === 'left'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.horizontalAlign === 'left'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignLeft size={14} /> Left
               </button>
               <button
                 onClick={() => onAlignHorizontal('center')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.horizontalAlign === 'center'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.horizontalAlign === 'center'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignCenter size={14} /> Center
               </button>
               <button
                 onClick={() => onAlignHorizontal('right')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.horizontalAlign === 'right'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.horizontalAlign === 'right'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignRight size={14} /> Right
               </button>
@@ -227,31 +224,28 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => onAlignVertical('top')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.verticalAlign === 'top'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.verticalAlign === 'top'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignJustify size={14} className="rotate-90" /> Top
               </button>
               <button
                 onClick={() => onAlignVertical('middle')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.verticalAlign === 'middle'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.verticalAlign === 'middle'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignCenter size={14} className="rotate-90" /> Mid
               </button>
               <button
                 onClick={() => onAlignVertical('bottom')}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${
-                  layer?.verticalAlign === 'bottom'
-                    ? 'bg-[#f05a28] text-white border-[#f05a28]'
-                    : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-                }`}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-xs font-medium transition ${layer?.verticalAlign === 'bottom'
+                  ? 'bg-[#f05a28] text-white border-[#f05a28]'
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
               >
                 <AlignJustify size={14} /> Bottom
               </button>
@@ -259,6 +253,59 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
           </div>
         </div>
       </Section>
+
+      {/* Perspective Section */}
+      <div className="border-t border-gray-200 pt-3 mt-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-gray-600">Perspective</span>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={layer.enablePerspective || false}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                const updates = { enablePerspective: checked };
+                if (checked && (!layer.corners || layer.corners.length === 0)) {
+                  updates.corners = [
+                    { x: 0, y: 0 },
+                    { x: layer.width, y: 0 },
+                    { x: layer.width, y: layer.height },
+                    { x: 0, y: layer.height }
+                  ];
+                }
+                onChange(updates);
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+          </label>
+        </div>
+        {layer.enablePerspective && (
+          <button
+            onClick={() => {
+              onChange({
+                enablePerspective: true, // Keep it enabled
+                corners: [
+                  { x: 0, y: 0 },
+                  { x: layer.width, y: 0 },
+                  { x: layer.width, y: layer.height },
+                  { x: 0, y: layer.height }
+                ],
+                perspective: 0,
+                rotateX: 0,
+                rotateY: 0,
+                rotateZ: 0,
+                skewX: 0,
+                skewY: 0,
+                transformOrigin: "center center"
+              });
+            }}
+            className="w-full text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded mt-2"
+          >
+            Reset Perspective
+          </button>
+        )}
+      </div>
 
       <div className="pt-1 text-[10px] text-gray-400">
         Tip: drag canvas items for fast editing

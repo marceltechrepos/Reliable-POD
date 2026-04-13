@@ -65,6 +65,30 @@ const layerSchema = new mongoose.Schema(
       default: 'center'
     },
 
+    enablePerspective: {
+      type: Boolean,
+      default: false
+    },
+    corners: {
+      type: [{
+        x: { type: Number, required: true },
+        y: { type: Number, required: true }
+      }],
+      default: []
+    },
+    fit: {
+      type: String,
+      enum: ['cover', 'contain', 'fill'],
+      default: 'cover'
+    },
+    perspective: { type: Number, default: 0 },
+    rotateX: { type: Number, default: 0 },
+    rotateY: { type: Number, default: 0 },
+    rotateZ: { type: Number, default: 0 },
+    skewX: { type: Number, default: 0 },
+    skewY: { type: Number, default: 0 },
+    transformOrigin: { type: String, default: 'center center' },
+
     verticalAlign: {
       type: String,
       enum: ['top', 'middle', 'bottom'],

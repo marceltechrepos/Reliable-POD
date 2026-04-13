@@ -5,6 +5,7 @@ import { ArrowLeft, Save, X, Loader2 } from "lucide-react";
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
 import LayerProperties from "../components/Admin/LayerProperties";
+import ThreeWarpedImage from "../components/Admin/ThreePerspectiveImage";
 import {
     uploadCustomerImage,
     saveCustomerDesign,
@@ -29,22 +30,6 @@ const toNumber = (v, fallback = 0) => {
 };
 const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
 
-// const normalizeLayer = (layer) => {
-//     const width = clamp(toNumber(layer.width, 30), 5, 100);
-//     const height = clamp(toNumber(layer.height, 30), 5, 100);
-//     const positionX = toNumber(layer.positionX, 0);
-//     const positionY = toNumber(layer.positionY, 0);
-//     return {
-//         ...layer,
-//         width: round2(width),
-//         height: round2(height),
-//         positionX: round2(positionX),
-//         positionY: round2(positionY),
-//         rotation: round2(toNumber(layer.rotation, 0)),
-//         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1)
-//     };
-// };
-
 const MAX_LAYER_PERCENT = 300; // ya 500 bhi rakh sakte ho
 
 const normalizeLayer = (layer) => {
@@ -53,7 +38,7 @@ const normalizeLayer = (layer) => {
     const positionX = toNumber(layer.positionX, 0);
     const positionY = toNumber(layer.positionY, 0);
 
-    return {
+    const normalized = {
         ...layer,
         width: round2(width),
         height: round2(height),
@@ -62,6 +47,19 @@ const normalizeLayer = (layer) => {
         rotation: round2(toNumber(layer.rotation, 0)),
         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1),
     };
+
+    // Initialize corners with absolute pixel values (same as admin)
+    if (normalized.enablePerspective) {
+        if (!normalized.corners || normalized.corners.length === 0) {
+            normalized.corners = [
+                { x: 0, y: 0 },
+                { x: width, y: 0 },
+                { x: width, y: height },
+                { x: 0, y: height }
+            ];
+        }
+    }
+    return normalized;
 };
 
 const getLayerAspectRatio = (layer) => {
@@ -84,6 +82,7 @@ const Editor = () => {
     const productFromState = location.state?.product;
 
     // states
+    const [draggingCorner, setDraggingCorner] = useState(null);
     const [isShiftPressed, setIsShiftPressed] = useState(false);
     const [product, setProduct] = useState(productFromState || null);
     const [loading, setLoading] = useState(!productFromState);
@@ -158,6 +157,83 @@ const Editor = () => {
 
     const displayColors = productColors.length > 0 ? productColors : [];
     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
+
+    const startCornerDrag = (e, layerIndex, cornerIndex, printAreaId) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const container = containerRefs.current[printAreaId];
+        const designContainer = designContainerRef.current;
+        if (!container || !designContainer) return;
+
+        const printAreaRect = container.getBoundingClientRect();
+        const designContainerRect = designContainer.getBoundingClientRect();
+
+        const layer = customerLayers[layerIndex];
+
+        // Calculate print area position relative to design container
+        const printAreaLeft = printAreaRect.left - designContainerRect.left;
+        const printAreaTop = printAreaRect.top - designContainerRect.top;
+        const printAreaWidth = printAreaRect.width;
+        const printAreaHeight = printAreaRect.height;
+
+        // Calculate layer dimensions in pixels
+        const layerWidthPx = (layer.width / 100) * printAreaWidth;
+        const layerHeightPx = (layer.height / 100) * printAreaHeight;
+
+        // Scale factor
+        const scaleFactor = layerWidthPx / layer.width;
+
+        const onMouseMove = (moveEvent) => {
+            moveEvent.preventDefault();
+
+            // Get mouse position relative to design container
+            const mouseX = moveEvent.clientX - designContainerRect.left;
+            const mouseY = moveEvent.clientY - designContainerRect.top;
+
+            // Calculate layer position in pixels (relative to design container)
+            const layerLeftPx = printAreaLeft + (layer.positionX / 100) * printAreaWidth;
+            const layerTopPx = printAreaTop + (layer.positionY / 100) * printAreaHeight;
+
+            // Mouse position relative to layer's top-left corner (in pixels)
+            const relativeX = mouseX - layerLeftPx;
+            const relativeY = mouseY - layerTopPx;
+
+            // Convert to original coordinate space
+            const originalX = relativeX / scaleFactor;
+            const originalY = relativeY / scaleFactor;
+
+            // Clamp to layer bounds
+            const clampedX = Math.max(0, Math.min(layer.width, originalX));
+            const clampedY = Math.max(0, Math.min(layer.height, originalY));
+
+            setCustomerLayers(prev => {
+                const updated = [...prev];
+                const currentLayer = updated[layerIndex];
+                if (currentLayer && currentLayer.corners) {
+                    const newCorners = [...currentLayer.corners];
+                    newCorners[cornerIndex] = { x: clampedX, y: clampedY };
+                    updated[layerIndex] = { ...currentLayer, corners: newCorners };
+                }
+                return updated;
+            });
+        };
+
+        const onMouseUp = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+
+            const updatedLayer = customerLayers[layerIndex];
+            if (updatedLayer?._id && hasSavedDesign) {
+                updateCustomerLayer(updatedLayer._id, {
+                    corners: updatedLayer.corners
+                }).catch(console.error);
+            }
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    };
 
 
     useEffect(() => {
@@ -289,16 +365,20 @@ const Editor = () => {
 
     const getPixelValues = (printAreaId, layer) => {
         const container = containerRefs.current[printAreaId];
-        if (!container) return { x: 0, y: 0, width: 100, height: 100 };
+        if (!container) return { x: 0, y: 0, width: 100, height: 100, scaleFactor: 1 };
         const rect = container.getBoundingClientRect();
         const cw = rect.width || 300;
         const ch = rect.height || 300;
         const safe = normalizeLayer(layer);
+
+        const scaleFactor = cw / 100; // Convert percentage to pixels
+
         return {
             x: (safe.positionX / 100) * cw,
             y: (safe.positionY / 100) * ch,
             width: (safe.width / 100) * cw,
-            height: (safe.height / 100) * ch
+            height: (safe.height / 100) * ch,
+            scaleFactor: scaleFactor
         };
     };
 
@@ -698,7 +778,7 @@ const Editor = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8">
                         <div className="relative bg-white shadow-xl border border-gray-200 overflow-hidden">
-                            <div ref={designContainerRef} className="aspect-square relative">
+                            <div onClick={() => setSelectedLayerIndex(null)} ref={designContainerRef} className="aspect-square relative">
                                 <img
                                     src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
                                     alt={product?.productTitle}
@@ -739,8 +819,8 @@ const Editor = () => {
                                                             key={`${layer._id || globalIndex}-${renderKey}`}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
-                                                            disableDragging={layer.locked}
-                                                            enableResizing={!layer.locked}
+                                                            disableDragging={layer.locked || layer.enablePerspective}
+                                                            enableResizing={!layer.locked && !layer.enablePerspective}
                                                             lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
                                                             onDragStart={() => handleDragStart(globalIndex)}
                                                             onDragStop={(e, d) => handleDragStop(printAreaLayer._id, globalIndex, d)}
@@ -748,14 +828,50 @@ const Editor = () => {
                                                                 handleResizeStop(printAreaLayer._id, globalIndex, ref, pos)
                                                             }
                                                             onMouseDown={() => setSelectedLayerIndex(globalIndex)}
+                                                            scale={1}
+                                                            style={{
+                                                                zIndex: layer.zIndex || 1,
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                            }}
                                                         >
-                                                            <div className={`relative group w-full h-full overflow-hidden ${selectedLayerIndex === globalIndex ? 'ring-2 ring-blue-500 ring-inset' : ''}`}>
-                                                                <img
-                                                                    src={layer?.imageUrl}
-                                                                    alt=""
-                                                                    className="w-full h-full object-cover pointer-events-none"
-                                                                    style={{ transform: `rotate(${layer.rotation || 0}deg)`, opacity: layer.opacity ?? 1 }}
-                                                                />
+                                                            <div onClick={(e) => e.stopPropagation()} className={`relative group w-full h-full overflow-hidden ${selectedLayerIndex === globalIndex ? 'ring-2 ring-blue-500 ring-inset' : ''}`}>
+                                                                {layer.enablePerspective && layer.corners ? (
+                                                                    <div style={{
+                                                                        width: "100%",
+                                                                        height: "100%",
+                                                                        position: "relative",
+                                                                    }}>
+                                                                        <div style={{
+                                                                            width: layer.width,
+                                                                            height: layer.height,
+                                                                            position: "relative",
+                                                                            transform: `scale(${pixelValues.width / layer.width})`,
+                                                                            transformOrigin: "0 0"
+                                                                        }}>
+                                                                            <ThreeWarpedImage
+                                                                                key={`${layer._id}-${JSON.stringify(layer.corners)}`}
+                                                                                src={layer.imageUrl}
+                                                                                corners={layer.corners}
+                                                                                width={layer.width}
+                                                                                height={layer.height}
+                                                                                fit={layer.fit || "cover"}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <img
+                                                                        src={layer?.imageUrl}
+                                                                        alt=""
+                                                                        className="w-full h-full object-cover pointer-events-none"
+                                                                        style={{
+                                                                            transform: `rotate(${layer.rotation || 0}deg)`,
+                                                                            opacity: layer.opacity ?? 1
+                                                                        }}
+                                                                    />
+                                                                )}
+
                                                                 {selectedLayerIndex === globalIndex && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleRemoveLayer(globalIndex); }}
@@ -772,6 +888,88 @@ const Editor = () => {
                                         </div>
                                     );
                                 })}
+
+                                {/* Perspective Handles Overlay */}
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        pointerEvents: "none",
+                                        zIndex: 1000
+                                    }}
+                                >
+                                    {customerLayers.map((layer, idx) => {
+                                        const printAreaId = layer.printArea?._id || layer.printArea;
+                                        if (
+                                            selectedLayerIndex === idx &&
+                                            layer.enablePerspective &&
+                                            layer.corners &&
+                                            layer.visible !== false
+                                        ) {
+                                            const container = containerRefs.current[printAreaId];
+                                            if (!container) return null;
+
+                                            // Get print area container position and dimensions
+                                            const printAreaRect = container.getBoundingClientRect();
+                                            const designContainerRect = designContainerRef.current?.getBoundingClientRect();
+
+                                            if (!designContainerRect) return null;
+
+                                            // Calculate print area position relative to design container
+                                            const printAreaLeft = printAreaRect.left - designContainerRect.left;
+                                            const printAreaTop = printAreaRect.top - designContainerRect.top;
+                                            const printAreaWidth = printAreaRect.width;
+                                            const printAreaHeight = printAreaRect.height;
+
+                                            // Calculate layer position within print area (as percentages)
+                                            const layerLeftPercent = layer.positionX / 100;
+                                            const layerTopPercent = layer.positionY / 100;
+                                            const layerWidthPercent = layer.width / 100;
+                                            const layerHeightPercent = layer.height / 100;
+
+                                            // Calculate layer position and dimensions in pixels (relative to design container)
+                                            const layerLeft = printAreaLeft + (layerLeftPercent * printAreaWidth);
+                                            const layerTop = printAreaTop + (layerTopPercent * printAreaHeight);
+                                            const layerWidth = layerWidthPercent * printAreaWidth;
+                                            const layerHeight = layerHeightPercent * printAreaHeight;
+
+                                            // Scale factor for corners (display pixels / original dimensions)
+                                            const scaleFactor = layerWidth / layer.width;
+
+                                            return layer.corners.map((corner, i) => {
+                                                // Calculate handle position
+                                                const handleX = layerLeft + (corner.x * scaleFactor);
+                                                const handleY = layerTop + (corner.y * scaleFactor);
+
+                                                return (
+                                                    <div
+                                                        key={`${layer._id || idx}-corner-${i}`}
+                                                        onMouseDown={(e) => startCornerDrag(e, idx, i, printAreaId)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{
+                                                            position: "absolute",
+                                                            left: handleX - 6,
+                                                            top: handleY - 6,
+                                                            width: 12,
+                                                            height: 12,
+                                                            backgroundColor: "#f59e0b",
+                                                            borderRadius: "50%",
+                                                            border: "2px solid white",
+                                                            cursor: "move",
+                                                            pointerEvents: "auto",
+                                                            zIndex: 1001,
+                                                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                                                        }}
+                                                    />
+                                                );
+                                            });
+                                        }
+                                        return null;
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -881,6 +1079,7 @@ const Editor = () => {
                                                                 : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
                                                                 }`}
                                                         >
+
                                                             <div className="flex items-center gap-3 min-w-0">
                                                                 <div className="w-10 h-10 overflow-hidden bg-gray-100 flex-shrink-0">
                                                                     <img src={layer?.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -917,6 +1116,7 @@ const Editor = () => {
                                                                     <Trash2 size={14} />
                                                                 </button>
                                                             </div>
+
                                                         </div>
                                                     ))
                                                 ) : (
@@ -963,6 +1163,7 @@ const Editor = () => {
                                                             Delete Layer
                                                         </button>
                                                     </div>
+
                                                 </div>
                                             </div>
                                         )}
