@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./index.css"
 // import ProtectedRoute from "./components/ProtectedRoute"
-import Signin from "./components/SignIn";
+import Signin from "./components/Signin";
 import Signup from "./components/Signup";
 import UserLayout from "../layout/User/UserLayout";
 import UserDashboard from "./pages/UserDashboard.jsx";

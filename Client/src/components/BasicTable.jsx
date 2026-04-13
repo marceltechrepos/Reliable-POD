@@ -296,14 +296,6 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
       toast.warn('Valid selling price is required');
       return;
     }
-    if (!formData.color) {
-      toast.warn('Please select a color');
-      return;
-    }
-    if (!formData.size) {
-      toast.warn('Please select a size');
-      return;
-    }
 
     // Collect custom fields data
     const customAttributes = {};
@@ -602,38 +594,42 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
               />
 
               {/* Size Dropdown */}
-              <TextField
-                label="Size"
-                name="size"
-                value={formData.size}
-                onChange={handleInputChange}
-                fullWidth
-                size="small"
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value="">Select Size</option>
-                {variantAttributes.sizes.map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </TextField>
+              {Array.isArray(variantAttributes.sizes) && variantAttributes.sizes.length > 0 && (
+                <TextField
+                  label="Size"
+                  name="size"
+                  value={formData.size}
+                  onChange={handleInputChange}
+                  fullWidth
+                  size="small"
+                  select
+                  SelectProps={{ native: true }}
+                >
+                  <option value="">Select Size</option>
+                  {variantAttributes.sizes.map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </TextField>
+              )}
 
               {/* Color Dropdown */}
-              <TextField
-                label="Color"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                fullWidth
-                size="small"
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value="">Select Color</option>
-                {Object.keys(variantAttributes.colors).map(color => (
-                  <option key={color} value={color}>{color}</option>
-                ))}
-              </TextField>
+              {variantAttributes.colors && Object.keys(variantAttributes.colors).length > 0 && (
+                <TextField
+                  label="Color"
+                  name="color"
+                  value={formData.color}
+                  onChange={handleInputChange}
+                  fullWidth
+                  size="small"
+                  select
+                  SelectProps={{ native: true }}
+                >
+                  <option value="">Select Color</option>
+                  {Object.keys(variantAttributes.colors).map(color => (
+                    <option key={color} value={color}>{color}</option>
+                  ))}
+                </TextField>
+              )}
 
               <TextField
                 label="Your Selling Price"
@@ -759,7 +755,14 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
               <Button
                 variant="contained"
                 onClick={handleSubmit}
-                sx={{ border: "1px solid skyblue" }}
+                sx={{
+                  backgroundColor: "skyblue",
+                  color: "#ffffff",
+                  "&:hover": {
+                    backgroundColor: "#5bbad5"
+                  }
+                }}
+
               >
                 Add Variant
               </Button>
