@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import image from "../assets/image/dummy.jpg";
 import { ShoppingBag, Plus } from "lucide-react";
 import { getProductById } from "../api/category.api";
+import { getLayersByProductId } from "../api/layer.api"; // 🔥 ADD THIS IMPORT
 
 const Singlecatalogue = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Singlecatalogue = () => {
 
   const [productData, setProductData] = useState(productFromState || null);
   const [loading, setLoading] = useState(!productFromState);
+  const [mockupLayers, setMockupLayers] = useState([]); // 🔥 ADD THIS STATE
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,6 +32,25 @@ const Singlecatalogue = () => {
       fetchProduct();
     }
   }, [productId]);
+
+  // 🔥 ADD THIS useEffect - Fetch mockup layers
+  useEffect(() => {
+    const fetchLayers = async () => {
+      if (!productData?.mockupIds?.length) return;
+      try {
+        const firstMockupId = productData.mockupIds[0];
+        const res = await getLayersByProductId(productData._id, firstMockupId);
+        if (res.data) {
+          setMockupLayers(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching mockup layers:", error);
+      }
+    };
+    if (productData) {
+      fetchLayers();
+    }
+  }, [productData]);
 
   if (loading) {
     return (
@@ -68,14 +89,13 @@ const Singlecatalogue = () => {
           >
             <Plus size={14} /> Create Print On Demand Product
           </button>
-          {/* <button className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
-            <ShoppingBag size={14} /> Create Personalised Product
-          </button> */}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <div className="lg:col-span-6 space-y-4">
+            {/* 🔥 UPDATE THIS DIV - Add relative positioning and mask layers */}
             <div className="relative aspect-square bg-white border border-gray-100 overflow-hidden shadow-sm">
+              {/* Base product thumbnail */}
               <img
                 src={productData?.thumbnail?.url || productData?.image || image}
                 alt={productData?.productTitle || productData?.title}
@@ -85,10 +105,39 @@ const Singlecatalogue = () => {
                   e.target.src = image;
                 }}
               />
+
+              {/* 🔥 ADD THIS BLOCK - Render mask/overlay images */}
+              {mockupLayers
+                .filter(layer => layer.type === "image" && layer.visible !== false)
+                .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+                .map((imageLayer) => (
+                  <div
+                    key={imageLayer._id}
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${imageLayer.x_percent || 0}%`,
+                      top: `${imageLayer.y_percent || 0}%`,
+                      width: `${imageLayer.width_percent || 100}%`,
+                      height: `${imageLayer.height_percent || 100}%`,
+                      transform: `rotate(${imageLayer.rotation || 0}deg)`,
+                      opacity: imageLayer.opacity ?? 1,
+                    }}
+                  >
+                    <img
+                      src={imageLayer.src}
+                      alt=""
+                      className="w-full h-full object-contain"
+                      style={{
+                        transform: `scaleX(${imageLayer.flipX ? -1 : 1}) scaleY(${imageLayer.flipY ? -1 : 1})`,
+                      }}
+                    />
+                  </div>
+                ))}
             </div>
           </div>
 
           <div className="lg:col-span-6 space-y-8">
+            {/* ... rest of your existing code (unchanged) ... */}
             <div className="space-y-2">
               <p className="text-[13px] font-bold text-gray-400">
                 fulfilmentCatalogID: {productData?.fulfilmentCatalogID || "N/A"}
@@ -131,9 +180,6 @@ const Singlecatalogue = () => {
               <h4 className="text-[11px] font-black uppercase text-gray-400">
                 Description
               </h4>
-              {/* <p className="text-[14px] text-gray-600 leading-relaxed">
-                {productData?.description || "No description available"}
-              </p> */}
               <div
                 className="text-[14px] text-gray-600 leading-relaxed"
                 dangerouslySetInnerHTML={{
