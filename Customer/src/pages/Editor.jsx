@@ -89,6 +89,7 @@ const Editor = () => {
     const [startDesigning, setStartDesigning] = useState(false);
     const [openMockupModal, setOpenMockupModal] = useState(false);
     const [adminLayers, setAdminLayers] = useState([]);
+    const [alladminLayers, setAllAdminLayers] = useState([]);
     const [customerLayers, setCustomerLayers] = useState([]);
     const [selectedMockup, setSelectedMockup] = useState(null);
     const [selectedPrintArea, setSelectedPrintArea] = useState(null);
@@ -110,6 +111,8 @@ const Editor = () => {
     const designContainerRef = useRef(null);
     const rndRefs = useRef({});
     const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
+
+    console.log(alladminLayers, "<<<<< alladminLayers")
 
     const colors = [
         { name: "Black", class: "bg-black" },
@@ -181,8 +184,11 @@ const Editor = () => {
         const layerWidthPx = (layer.width / 100) * printAreaWidth;
         const layerHeightPx = (layer.height / 100) * printAreaHeight;
 
-        // Scale factor
-        const scaleFactor = layerWidthPx / layer.width;
+        // 🔥 Fix: Use admin dimensions for proper corner dragging
+        const printArea = adminLayers.find(pa => pa._id === printAreaId);
+        const adminWidth = printArea?.width || 500;
+        const adminHeight = printArea?.height || 500;
+        const scaleFactor = layerWidthPx / adminWidth; // Changed from layer.width to adminWidth
 
         const onMouseMove = (moveEvent) => {
             moveEvent.preventDefault();
@@ -199,13 +205,13 @@ const Editor = () => {
             const relativeX = mouseX - layerLeftPx;
             const relativeY = mouseY - layerTopPx;
 
-            // Convert to original coordinate space
+            // Convert to original coordinate space (admin pixel space)
             const originalX = relativeX / scaleFactor;
             const originalY = relativeY / scaleFactor;
 
-            // Clamp to layer bounds
-            const clampedX = Math.max(0, Math.min(layer.width, originalX));
-            const clampedY = Math.max(0, Math.min(layer.height, originalY));
+            // 🔥 FIX: Clamp to admin dimensions (not layer.width percentage)
+            const clampedX = Math.max(0, Math.min(adminWidth, originalX));
+            const clampedY = Math.max(0, Math.min(adminHeight, originalY));
 
             setCustomerLayers(prev => {
                 const updated = [...prev];
@@ -320,6 +326,7 @@ const Editor = () => {
                     if (res.data) {
                         const areas = res.data.filter(l => l.type === "printarea");
                         setAdminLayers(areas);
+                        setAllAdminLayers(res.data);
                     }
                 } catch (e) {
                     console.error("admin layers:", e);
@@ -350,7 +357,7 @@ const Editor = () => {
                         setCustomerLayers(loadedLayers);
                         setTimeout(() => {
                             setRenderKey(prev => prev + 1);
-                            setContainersReady(false);
+                            // setContainersReady(false); // ⬅️ Is line ko remove/hata do
                         }, 100);
                     }
                 } catch (error) {
@@ -715,13 +722,17 @@ const Editor = () => {
             positionY: defaultPrintArea.y_percent || 20,
             width: defaultPrintArea.width_percent || 30,
             height: defaultPrintArea.height_percent || 30,
-            rotation: 0,
-            opacity: 1,
+            rotation: defaultPrintArea.rotation || 0,
+            opacity: defaultPrintArea.opacity || 1,
             visible: true,
             zIndex: customerLayers.length + 1,
             locked: false,
             horizontalAlign: 'center',
-            verticalAlign: 'middle'
+            verticalAlign: 'middle',
+            // 🔥 Add these 3 lines for perspective support
+            enablePerspective: defaultPrintArea.enablePerspective || false,
+            corners: defaultPrintArea.enablePerspective && defaultPrintArea.corners ? JSON.parse(JSON.stringify(defaultPrintArea.corners)) : undefined,
+            fit: defaultPrintArea.fit || 'cover'
         };
         setCustomerLayers(prev => [...prev, normalizeLayer(newLayerData)]);
         setSelectedLayerIndex(customerLayers.length);
@@ -784,6 +795,36 @@ const Editor = () => {
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
                                 />
+
+                                {/* 🔥 ADD THIS BLOCK - Admin Image Layers (Mask, Overlays) */}
+                                {alladminLayers
+                                    .filter(layer => layer.type === "image" && layer.visible !== false)
+                                    .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+                                    .map((imageLayer) => (
+                                        <div
+                                            key={imageLayer._id}
+                                            className="absolute pointer-events-none"
+                                            style={{
+                                                left: `${imageLayer.x_percent || 0}%`,
+                                                top: `${imageLayer.y_percent || 0}%`,
+                                                width: `${imageLayer.width_percent || 100}%`,
+                                                height: `${imageLayer.height_percent || 100}%`,
+                                                transform: `rotate(${imageLayer.rotation || 0}deg)`,
+                                                opacity: imageLayer.opacity ?? 1,
+                                                zIndex: 5,
+                                            }}
+                                        >
+                                            <img
+                                                src={imageLayer.src}
+                                                alt=""
+                                                className="w-full h-full object-contain"
+                                                style={{
+                                                    transform: `scaleX(${imageLayer.flipX ? -1 : 1}) scaleY(${imageLayer.flipY ? -1 : 1})`,
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+
                                 {startDesigning && adminLayers.map((printAreaLayer) => {
                                     const areaLayers = customerLayers.filter(
                                         l => (l.printArea?._id || l.printArea) === printAreaLayer._id
@@ -838,28 +879,37 @@ const Editor = () => {
                                                         >
                                                             <div onClick={(e) => e.stopPropagation()} className={`relative group w-full h-full overflow-hidden ${selectedLayerIndex === globalIndex ? 'ring-2 ring-blue-500 ring-inset' : ''}`}>
                                                                 {layer.enablePerspective && layer.corners ? (
-                                                                    <div style={{
-                                                                        width: "100%",
-                                                                        height: "100%",
-                                                                        position: "relative",
-                                                                    }}>
-                                                                        <div style={{
-                                                                            width: layer.width,
-                                                                            height: layer.height,
-                                                                            position: "relative",
-                                                                            transform: `scale(${pixelValues.width / layer.width})`,
-                                                                            transformOrigin: "0 0"
-                                                                        }}>
-                                                                            <ThreeWarpedImage
-                                                                                key={`${layer._id}-${JSON.stringify(layer.corners)}`}
-                                                                                src={layer.imageUrl}
-                                                                                corners={layer.corners}
-                                                                                width={layer.width}
-                                                                                height={layer.height}
-                                                                                fit={layer.fit || "cover"}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
+                                                                    (() => {
+                                                                        // Get the original admin print area dimensions (stored in adminLayers)
+                                                                        const printArea = adminLayers.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
+                                                                        const adminWidth = printArea?.width || 500;
+                                                                        const adminHeight = printArea?.height || 500;
+
+                                                                        // Scale corners from admin coordinate space to current display pixel size
+                                                                        const scaleX = pixelValues.width / adminWidth;
+                                                                        const scaleY = pixelValues.height / adminHeight;
+                                                                        const scaledCorners = layer.corners.map(c => ({
+                                                                            x: c.x * scaleX,
+                                                                            y: c.y * scaleY
+                                                                        }));
+
+                                                                        return (
+                                                                            <div style={{
+                                                                                width: "100%",
+                                                                                height: "100%",
+                                                                                position: "relative",
+                                                                            }}>
+                                                                                <ThreeWarpedImage
+                                                                                    key={`${layer._id}-${pixelValues.width}x${pixelValues.height}`}
+                                                                                    src={layer.imageUrl}
+                                                                                    corners={scaledCorners}
+                                                                                    width={pixelValues.width}
+                                                                                    height={pixelValues.height}
+                                                                                    fit={layer.fit || "cover"}
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    })()
                                                                 ) : (
                                                                     <img
                                                                         src={layer?.imageUrl}
@@ -936,13 +986,16 @@ const Editor = () => {
                                             const layerWidth = layerWidthPercent * printAreaWidth;
                                             const layerHeight = layerHeightPercent * printAreaHeight;
 
-                                            // Scale factor for corners (display pixels / original dimensions)
-                                            const scaleFactor = layerWidth / layer.width;
+                                            const printArea = adminLayers.find(pa => pa._id === printAreaId);
+                                            const adminWidth = printArea?.width || 500;
+                                            const adminHeight = printArea?.height || 500;
+                                            const scaleX = layerWidth / adminWidth;
+                                            const scaleY = layerHeight / adminHeight;
 
                                             return layer.corners.map((corner, i) => {
-                                                // Calculate handle position
-                                                const handleX = layerLeft + (corner.x * scaleFactor);
-                                                const handleY = layerTop + (corner.y * scaleFactor);
+                                                // Calculate handle position with proper scaling
+                                                const handleX = layerLeft + (corner.x * scaleX);
+                                                const handleY = layerTop + (corner.y * scaleY);
 
                                                 return (
                                                     <div
