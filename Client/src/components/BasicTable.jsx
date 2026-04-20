@@ -542,14 +542,14 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
   ];
 
   const handlePrintAreaSubmit = () => {
-    if (!printAreaData.key || !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
+    if ( !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
       toast.warn('Please fill all fields!');
       return;
     }
     const newPrintArea = {
       id: Date.now(),
       tib: printAreaData.tib || generateTIB(),
-      key: printAreaData.key,
+      // key: printAreaData.key,
       displayName: printAreaData.displayName,
       width: printAreaData.width,
       height: printAreaData.height,
@@ -982,7 +982,7 @@ export default function BasicTable({ showForm, onFormClose, deleteSelectedTrigge
         <DialogContent>
           <div className='space-y-4 mt-2'>
             <TextField fullWidth label='Variant ID' value={printAreaData.tib || 'Will be auto-generated'} variant='outlined' size='small' InputProps={{ readOnly: true }} helperText="Auto-generated unique identifier" InputLabelProps={{ required: false }} />
-            <TextField fullWidth label='Fulfill Key' name='key' value={printAreaData.key} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Fulfill Key (e.g., Front, Back)' InputLabelProps={{ required: false }} />
+            {/* <TextField fullWidth label='Fulfill Key' name='key' value={printAreaData.key} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Fulfill Key (e.g., Front, Back)' InputLabelProps={{ required: false }} />   */}
             <TextField fullWidth label='Display Name' name='displayName' value={printAreaData.displayName} onChange={handlePrintAreaChange} variant='outlined' size='small' required placeholder='Enter Display Name' InputLabelProps={{ required: false }} />
             <div className='grid grid-cols-2 gap-4'>
               <TextField label='Width (px)' name='width' value={printAreaData.width} onChange={handlePrintAreaChange} variant='outlined' size='small' type='number' required placeholder='e.g., 1314' />

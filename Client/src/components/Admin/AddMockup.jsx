@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {toast} from "react-toastify"
+import { toast } from "react-toastify"
 
 import { getMockups, uploadMockupImage } from '../../api/mockupApi';
 import { addMockupsToProduct } from '../../api/product.api';
@@ -114,7 +114,12 @@ export default function AddMockup({ open, onClose, onSelect, productId }) {
 
     const handleSelect = async () => {
 
-        const selected = selectedMockups.map(item => item.id);
+        // ✅ Filter out any temp IDs or invalid IDs
+        const selected = selectedMockups
+            .filter(item => item.id && !String(item.id).startsWith('temp-'))
+            .map(item => String(item.id));
+
+              console.log("Selected IDs:", selected); // Debug
 
         // if productId provided, save to product
         if (productId) {

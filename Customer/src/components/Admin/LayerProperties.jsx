@@ -93,6 +93,7 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
   const [posY, setPosY] = useState(layer?.positionY ?? 0);
   const [rotation, setRotation] = useState(layer?.rotation ?? 0);
 
+  const isTextLayer = layer?.type === "text";
   useEffect(() => {
     setWidth(layer?.width ?? 30);
     setHeight(layer?.height ?? 30);
@@ -115,6 +116,95 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
 
   return (
     <div className="space-y-3">
+
+
+      {/* Text Section - Sirf tab show hoga jab layer type "text" ho */}
+      {isTextLayer && (
+        <Section title="Text Settings" defaultOpen={true}>
+          <div className="space-y-3">
+            {/* Text Content (jo likhna hai) */}
+            <div>
+              <label className="text-[11px] text-gray-500 block mb-1">Text Content</label>
+              <textarea
+                value={layer.text || ""}
+                onChange={(e) => onChange({ text: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#f05a28]/20 focus:border-[#f05a28] outline-none transition bg-white resize-none"
+                placeholder="Apna text likhein..."
+              />
+            </div>
+
+            {/* Font Size */}
+            <div>
+              <label className="text-[11px] text-gray-500 block mb-1">Font Size (px)</label>
+              <input
+                type="number"
+                min={8}
+                max={200}
+                value={layer.fontSize || 24}
+                onChange={(e) => onChange({ fontSize: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
+              />
+            </div>
+
+            {/* Text Color */}
+            <div>
+              <label className="text-[11px] text-gray-500 block mb-1">Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={layer.fill || "#000000"}
+                  onChange={(e) => onChange({ fill: e.target.value })}
+                  className="w-10 h-10 p-0.5 border border-gray-200 rounded-lg cursor-pointer"
+                />
+                <span className="text-xs text-gray-500">{layer.fill || "#000000"}</span>
+              </div>
+            </div>
+
+            {/* Font Family Selection */}
+            <div>
+              <label className="text-[11px] text-gray-500 block mb-1">Font</label>
+              <select
+                value={layer.fontFamily || "Arial"}
+                onChange={(e) => onChange({ fontFamily: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
+              >
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Impact">Impact</option>
+              </select>
+            </div>
+
+            {/* Bold / Italic Buttons */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onChange({ fontWeight: layer.fontWeight === "bold" ? "normal" : "bold" })}
+                className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-lg border ${layer.fontWeight === "bold"
+                  ? "bg-[#f05a28] text-white border-[#f05a28]"
+                  : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                Bold
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ fontStyle: layer.fontStyle === "italic" ? "normal" : "italic" })}
+                className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-lg border ${layer.fontStyle === "italic"
+                  ? "bg-[#f05a28] text-white border-[#f05a28]"
+                  : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                Italic
+              </button>
+            </div>
+          </div>
+        </Section>
+      )}
       <Section title="Quick Scale" defaultOpen={true}>
         <div className="grid grid-cols-2 gap-3">
           <CompactSlider
@@ -183,6 +273,7 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
           />
         </div>
       </Section>
+
 
       <Section title="Alignment" defaultOpen={false}>
         <div className="space-y-3">
@@ -253,63 +344,6 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
           </div>
         </div>
       </Section>
-
-      {/* Perspective Section */}
-      <div className="border-t border-gray-200 pt-3 mt-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">Perspective</span>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={layer.enablePerspective || false}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                const updates = { enablePerspective: checked };
-                if (checked && (!layer.corners || layer.corners.length === 0)) {
-                  updates.corners = [
-                    { x: 0, y: 0 },
-                    { x: layer.width, y: 0 },
-                    { x: layer.width, y: layer.height },
-                    { x: 0, y: layer.height }
-                  ];
-                }
-                onChange(updates);
-              }}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-          </label>
-        </div>
-        {layer.enablePerspective && (
-          <button
-            onClick={() => {
-              onChange({
-                enablePerspective: true, // Keep it enabled
-                corners: [
-                  { x: 0, y: 0 },
-                  { x: layer.width, y: 0 },
-                  { x: layer.width, y: layer.height },
-                  { x: 0, y: layer.height }
-                ],
-                perspective: 0,
-                rotateX: 0,
-                rotateY: 0,
-                rotateZ: 0,
-                skewX: 0,
-                skewY: 0,
-                transformOrigin: "center center"
-              });
-            }}
-            className="w-full text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded mt-2"
-          >
-            Reset Perspective
-          </button>
-        )}
-      </div>
-
-      <div className="pt-1 text-[10px] text-gray-400">
-        Tip: drag canvas items for fast editing
-      </div>
     </div>
   );
 };

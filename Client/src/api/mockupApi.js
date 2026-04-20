@@ -79,3 +79,30 @@ export const deleteMockupImage = async (id) => {
         };
     }
 }
+
+export const duplicateMockupApi = async (mockupId, productId) => {
+    try {
+        const res = await authFetch(`${BASE_URL}/api/duplicate-mockup/${mockupId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId }) // optional
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            return {
+                success: false,
+                message: data.message || "Duplication failed"
+            };
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Duplicate mockup error:", error);
+        return {
+            success: false,
+            message: "Network error occurred"
+        };
+    }
+};
