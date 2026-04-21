@@ -77,18 +77,19 @@ const deleteProductById = async (productId) => {
 export const getProductsByCategory = async (categoryId) => {
     try {
         const token = localStorage.getItem("token");
+
         const res = await fetch(`${BASE_URL}/api/get-product-by-category/${categoryId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         });
 
-        const data = await res.json();
-
         if (!res.ok) {
             console.warn(data.message);
             return [];
         }
+        const data = await res.json();
+
 
         return data.success ? data.data : [];
     } catch (error) {

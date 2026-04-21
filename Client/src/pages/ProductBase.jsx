@@ -420,34 +420,70 @@ function ProductBase() {
 
   const handleMockupSelect = async (selectedData) => {
     try {
-      const updatedMockups = [...selectedMockups, ...selectedData];
-      setSelectedMockups(updatedMockups);
-      saveMockupsToStorage(updatedMockups);
+      const ids = selectedData
+        .map(item => item.id || item._id)
+        .filter(Boolean);
 
-      // ✅ IDs nikal lo aur ensure karo ke strings hain
-      const ids = selectedData.map(item => String(item.id)).filter(id => id && id !== 'undefined');
+      if (!productId || ids.length === 0) return;
 
-       console.log("Sending IDs:", ids); // Debug ke liye
+      // ❌ Yaha pe pehle tum duplicate API call kar rahe the
+      // ❌ Aur optimistic update bhi kar rahe the jisse UI bigad raha tha
 
-      if (productId && ids.length > 0) {
-        const res = await addMockupsToProduct(productId, ids);
-
-        if (!res?.success) {
-          toast.success("Selected Mockup Added...");
-          setTimeout(() => {
-            fetchProductByProductId(productId);
-          }, 500);
-        } else {
-          console.log("Mockups saved to product DB");
-          fetchProductByProductId(productId); // refresh product
-        }
-      }
-
+      // ✅ Ab sirf modal band karo aur backend se fresh data lao
+      setOpenMockupModal(false);
+      await fetchProductByProductId(productId);
+      toast.success("Mockup added successfully!");
     } catch (error) {
       console.error("Mockup save error:", error);
       toast.error("Failed to save mockups");
     }
   };
+
+
+  // const handleMockupSelect = async (selectedData) => {
+  //   try {
+  //     const ids = selectedData
+  //       .map(item => item.id || item._id)
+  //       .filter(Boolean);
+
+  //     if (!productId || ids.length === 0) return;
+
+  //     // ✅ 1. UI ko turant update karo
+  //     setEditProductById(prev => ({
+  //       ...prev,
+  //       mockupIds: [
+  //         ...(prev?.mockupIds || []),
+  //         ...selectedData.map(item => ({
+  //           _id: item._id || item.id,
+  //           name: item.name || "Mockup",
+  //           mockupImage: {
+  //             url: item.url || item.mockupImage?.url
+  //           },
+  //           size: item.size,
+  //           category: item.category
+  //         }))
+  //       ]
+  //     }));
+
+  //     // ✅ 2. Backend call (background me)
+  //     const res = await addMockupsToProduct(productId, ids);
+
+  //     if (res?.success) {
+  //       toast.success("Selected Mockup Added...");
+  //       setOpenMockupModal(false);
+  //     }
+
+
+
+  //     if (!res?.success) {
+  //       toast.error("Failed to sync with server");
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Mockup save error:", error);
+  //     toast.error("Failed to save mockups");
+  //   }
+  // };
 
   const removeMockup = async (mockupId) => {
     try {

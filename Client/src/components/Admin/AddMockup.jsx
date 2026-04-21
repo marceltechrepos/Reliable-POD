@@ -216,3 +216,179 @@ const categoryStyle = (active) => ({
     bgcolor: active ? '#e3f2fd' : 'transparent',
     fontWeight: active ? 600 : 400,
 });
+
+// --------------------------------------------------------------
+
+// import React, { useEffect, useMemo, useRef, useState } from 'react';
+// import {
+//     Modal,
+//     Box,
+//     Grid,
+//     Typography,
+//     Button,
+//     TextField,
+//     Checkbox,
+//     Stack,
+//     Divider,
+// } from '@mui/material';
+// import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+// import RefreshIcon from '@mui/icons-material/Refresh';
+// import { toast } from "react-toastify"
+
+// import { getMockups, uploadMockupImage } from '../../api/mockupApi';
+
+// export default function AddMockup({ open, onClose, onSelect }) {
+//     const fileInputRef = useRef(null);
+//     const [mockups, setMockups] = useState([]);
+//     const [uploadedPreviews, setUploadedPreviews] = useState([]);
+//     const [selectedMockups, setSelectedMockups] = useState([]);
+//     const [searchQuery, setSearchQuery] = useState('');
+
+//     const categoryObjectId = "694917d1d0a3a403cf06aaac";
+
+//     useEffect(() => {
+//         if (open) {
+//             resetModalState();
+//             loadMockups();
+//         }
+//     }, [open]);
+
+//     const resetModalState = () => {
+//         setUploadedPreviews([]);
+//         setSelectedMockups([]);
+//         setSearchQuery('');
+//     };
+
+//     const loadMockups = async () => {
+//         const data = await getMockups();
+//         setMockups(data || []);
+//     };
+
+//     const handleFiles = async (files) => {
+//         for (const file of Array.from(files)) {
+//             const tempId = `temp-${Date.now()}`;
+
+//             const preview = {
+//                 _id: tempId,
+//                 url: URL.createObjectURL(file),
+//                 name: file.name,
+//                 status: 'uploading'
+//             };
+
+//             setUploadedPreviews(prev => [...prev, preview]);
+
+//             const res = await uploadMockupImage(file, categoryObjectId);
+
+//             if (res?.success) {
+//                 const uploaded = {
+//                     _id: res.data._id,
+//                     url: res.data.mockupImage.url,
+//                     name: res.data.name,
+//                 };
+
+//                 setUploadedPreviews(prev => prev.filter(p => p._id !== tempId));
+//                 setMockups(prev => [uploaded, ...prev]);
+//             }
+//         }
+//     };
+
+//     const handleCheckboxChange = (item) => {
+//         setSelectedMockups(prev =>
+//             prev.some(i => i._id === item._id)
+//                 ? prev.filter(i => i._id !== item._id)
+//                 : [...prev, item]
+//         );
+//     };
+
+//     const filteredMockups = useMemo(() => {
+//         let all = [...mockups, ...uploadedPreviews];
+
+//         if (searchQuery.trim()) {
+//             all = all.filter(i =>
+//                 (i.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+//             );
+//         }
+
+//         return all;
+//     }, [mockups, uploadedPreviews, searchQuery]);
+
+//     const handleSelect = () => {
+//         if (selectedMockups.length === 0) {
+//             toast.error("Select at least one mockup");
+//             return;
+//         }
+
+//         // ✅ IMPORTANT: full objects send karo
+//         onSelect(selectedMockups);
+
+//         onClose();
+//     };
+
+//     return (
+//         <Modal open={open} onClose={onClose}>
+//             <Box sx={{ position: 'absolute', inset: 40, bgcolor: '#fff', borderRadius: 2, display: 'flex' }}>
+//                 <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
+
+//                     {/* Upload */}
+//                     <Box
+//                         onClick={() => fileInputRef.current.click()}
+//                         onDrop={(e) => {
+//                             e.preventDefault();
+//                             handleFiles(e.dataTransfer.files);
+//                         }}
+//                         onDragOver={(e) => e.preventDefault()}
+//                         sx={{ border: '2px dashed #ddd', borderRadius: 2, py: 4, textAlign: 'center', mb: 3, cursor: 'pointer' }}
+//                     >
+//                         <CloudUploadOutlinedIcon />
+//                         <Typography>Drag & drop or click</Typography>
+//                         <input hidden multiple type="file" accept="image/*" ref={fileInputRef} onChange={(e) => handleFiles(e.target.files)} />
+//                     </Box>
+
+//                     {/* Search */}
+//                     <Stack direction="row" spacing={2} mb={2}>
+//                         <TextField
+//                             size="small"
+//                             placeholder="Search..."
+//                             value={searchQuery}
+//                             onChange={e => setSearchQuery(e.target.value)}
+//                         />
+//                         <Button startIcon={<RefreshIcon />} onClick={loadMockups}>
+//                             Reload
+//                         </Button>
+//                     </Stack>
+
+//                     {/* Grid */}
+//                     <Grid container spacing={2} sx={{ flex: 1, overflowY: 'auto' }}>
+//                         {filteredMockups.map(item => (
+//                             <Grid item xs={6} md={3} key={item._id}>
+//                                 <Box sx={{ border: '1px solid #ddd', p: 1, borderRadius: 2 }}>
+
+//                                     <Checkbox
+//                                         checked={selectedMockups.some(i => i._id === item._id)}
+//                                         onChange={() => handleCheckboxChange(item)}
+//                                     />
+
+//                                     <Box
+//                                         component="img"
+//                                         src={item.url}
+//                                         sx={{ width: '100%', height: 160, objectFit: 'cover' }}
+//                                     />
+
+//                                     <Typography noWrap>{item.name}</Typography>
+//                                 </Box>
+//                             </Grid>
+//                         ))}
+//                     </Grid>
+
+//                     <Divider sx={{ my: 2 }} />
+
+//                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+//                         <Button variant="contained" onClick={handleSelect}>
+//                             Select
+//                         </Button>
+//                     </Box>
+//                 </Box>
+//             </Box>
+//         </Modal>
+//     );
+// }
