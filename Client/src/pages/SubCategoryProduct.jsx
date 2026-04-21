@@ -34,6 +34,14 @@ const SubCategoryProduct = () => {
     const fetchProducts = async () => {
       try {
         const result = await getProductsByCategory(subCategoryId);
+
+        if (!result) {
+          if (!mounted) return;
+          setError("Failed to load products. Try again later.");
+          setProducts([]);
+          return;
+        }
+
         const arrRaw = Array.isArray(result) ? result : Array.isArray(result?.data) ? result.data : [];
 
         const normalized = arrRaw.map((r) => {

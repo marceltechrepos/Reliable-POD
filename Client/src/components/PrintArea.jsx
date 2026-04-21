@@ -68,7 +68,7 @@ function PrintArea({ productId }) {
   };
 
   const handleAddClick = async () => {
-    if (!formData.key || !formData.displayName || !formData.width || !formData.height) {
+    if ( !formData.displayName || !formData.width || !formData.height) {
       toast.warn('Please fill all fields!');
       return;
     }
@@ -112,7 +112,7 @@ function PrintArea({ productId }) {
   };
 
   const handleSaveEdit = async areaId => {
-    if (!editFormData.key || !editFormData.displayName || !editFormData.width || !editFormData.height) {
+    if (!editFormData.displayName || !editFormData.width || !editFormData.height) {
       toast.warn("Please fill all fields!");
       return;
     }
@@ -179,7 +179,7 @@ function PrintArea({ productId }) {
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Add New Print Area</h3>
           <div className="grid md:grid-cols-5 gap-4 mb-4 items-end">
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fulfill Key *</label>
               <input
                 type="text"
@@ -189,7 +189,7 @@ function PrintArea({ productId }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ocean"
                 placeholder="Enter fulfill key"
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Display Name *</label>
               <input
@@ -245,7 +245,7 @@ function PrintArea({ productId }) {
           <>
             <ul className="grid grid-cols-6 font-semibold border-b border-gray-200 pb-2">
               <li>Variant ID</li>
-              <li>Fulfill Key</li>
+              {/* <li>Fulfill Key</li> */}
               <li>Display Name</li>
               <li>Width (px)</li>
               <li>Height (px)</li>
@@ -263,14 +263,14 @@ function PrintArea({ productId }) {
                         className="w-full px-2 py-1 border border-gray-300 rounded text-ocean"
                       />
                     </li>
-                    <li>
+                    {/* <li>
                       <input
                         name="key"
                         value={editFormData.key}
                         onChange={handleEditInputChange}
                         className="w-full px-2 py-1 border border-gray-300 rounded text-ocean"
                       />
-                    </li>
+                    </li> */}
                     <li>
                       <input
                         name="displayName"
@@ -313,7 +313,7 @@ function PrintArea({ productId }) {
                 ) : (
                   <ul className="grid grid-cols-6 items-center border-b border-gray-200 py-2">
                     <li className='text-ocean'>{area.tib}</li>
-                    <li className='text-ocean'>{area.key}</li>
+                    {/* <li className='text-ocean'>{area.key}</li> */}
                     <li className='text-ocean'>{area.displayName}</li>
                     <li className='text-ocean'>{area.width}</li>
                     <li className='text-ocean'>{area.height}</li>
@@ -372,7 +372,7 @@ function PrintArea({ productId }) {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
                       />
                     </div>
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700">Fulfill Key</label>
                       <input
                         name="key"
@@ -380,7 +380,7 @@ function PrintArea({ productId }) {
                         onChange={handleEditInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       />
-                    </div>
+                    </div> */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700">Display Name</label>
                       <input
@@ -459,10 +459,10 @@ function PrintArea({ productId }) {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-ocean">
-                      <div>
+                      {/* <div>
                         <p className="text-sm text-gray-500">Fulfill Key</p>
                         <p className="font-medium">{area.key}</p>
-                      </div>
+                      </div> */}
                       <div>
                         <p className="text-sm text-gray-500">Display Name</p>
                         <p className="font-medium">{area.displayName}</p>

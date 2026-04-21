@@ -22,7 +22,7 @@ import AddProviderModal from '../components/Admin/AddProviderModal';
 import AddCategoryModal from '../components/Admin/AddCategoryModal';
 import AddMockup from '../components/Admin/AddMockup';
 import { Typography } from '@mui/material';
-import { deleteMockupImage } from '../api/mockupApi';
+import { deleteMockupImage, duplicateMockupApi } from '../api/mockupApi';
 import RichTextEditor from '../components/RichTextEditor';
 import { toast } from 'react-toastify';
 import { showConfirmationToast } from './AdminEditor/helper/confirmation';
@@ -280,6 +280,36 @@ function ProductBase() {
     }
   }, [editProductById, categoriesLoaded]);
 
+  const duplicateMockup = async (mockup) => {
+    try {
+      const toastId = toast.loading("Duplicating mockup...");
+
+      const data = await duplicateMockupApi(mockup._id, productId);
+
+      if (data.success) {
+        // New mockup created, now add its ID to current product
+        const newMockupId = data.data.mockup._id;
+
+        // Add to product's mockupIds
+        await addMockupsToProduct(productId, [newMockupId]);
+
+        toast.update(toastId, {
+          render: "Mockup duplicated successfully!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000
+        });
+
+        // Refresh product data
+        fetchProductByProductId(productId);
+      } else {
+        throw new Error(data.message || "Duplication failed");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const [open, setOpen] = useState(false);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
   const [selectedMockups, setSelectedMockups] = useState(() => loadMockupsFromStorage());
@@ -390,32 +420,70 @@ function ProductBase() {
 
   const handleMockupSelect = async (selectedData) => {
     try {
-      const updatedMockups = [...selectedMockups, ...selectedData];
-      setSelectedMockups(updatedMockups);
-      saveMockupsToStorage(updatedMockups);
+      const ids = selectedData
+        .map(item => item.id || item._id)
+        .filter(Boolean);
 
-      // 👇 IDs nikal lo
-      const ids = selectedData.map(item => item.id);
+      if (!productId || ids.length === 0) return;
 
-      if (productId && ids.length > 0) {
-        const res = await addMockupsToProduct(productId, ids);
+      // ❌ Yaha pe pehle tum duplicate API call kar rahe the
+      // ❌ Aur optimistic update bhi kar rahe the jisse UI bigad raha tha
 
-        if (!res?.success) {
-          toast.success("Selected Mockup Added...");
-          setTimeout(() => {
-            fetchProductByProductId(productId);
-          }, 500);
-        } else {
-          console.log("Mockups saved to product DB");
-          fetchProductByProductId(productId); // refresh product
-        }
-      }
-
+      // ✅ Ab sirf modal band karo aur backend se fresh data lao
+      setOpenMockupModal(false);
+      await fetchProductByProductId(productId);
+      toast.success("Mockup added successfully!");
     } catch (error) {
       console.error("Mockup save error:", error);
       toast.error("Failed to save mockups");
     }
   };
+
+
+  // const handleMockupSelect = async (selectedData) => {
+  //   try {
+  //     const ids = selectedData
+  //       .map(item => item.id || item._id)
+  //       .filter(Boolean);
+
+  //     if (!productId || ids.length === 0) return;
+
+  //     // ✅ 1. UI ko turant update karo
+  //     setEditProductById(prev => ({
+  //       ...prev,
+  //       mockupIds: [
+  //         ...(prev?.mockupIds || []),
+  //         ...selectedData.map(item => ({
+  //           _id: item._id || item.id,
+  //           name: item.name || "Mockup",
+  //           mockupImage: {
+  //             url: item.url || item.mockupImage?.url
+  //           },
+  //           size: item.size,
+  //           category: item.category
+  //         }))
+  //       ]
+  //     }));
+
+  //     // ✅ 2. Backend call (background me)
+  //     const res = await addMockupsToProduct(productId, ids);
+
+  //     if (res?.success) {
+  //       toast.success("Selected Mockup Added...");
+  //       setOpenMockupModal(false);
+  //     }
+
+
+
+  //     if (!res?.success) {
+  //       toast.error("Failed to sync with server");
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Mockup save error:", error);
+  //     toast.error("Failed to save mockups");
+  //   }
+  // };
 
   const removeMockup = async (mockupId) => {
     try {
@@ -789,6 +857,26 @@ function ProductBase() {
                             )}
 
                             <div className='flex items-center gap-2 mt-3'>
+                              {/* DUPLICATE BUTTON */}
+                              <Button
+                                variant="contained"
+                                sx={{
+                                  display: "inline-flex",
+                                  minWidth: "auto",
+                                  bgcolor: '#4caf50',        // Green color
+                                  padding: "8px",
+                                  fontSize: "12px",
+                                  textTransform: "none",
+                                  '&:hover': { bgcolor: '#388e3c' }
+                                }}
+                                onClick={() => duplicateMockup(mockup)}
+                                title="Duplicate Mockup"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                  <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+                                </svg>
+                              </Button>
+
                               {/* EDIT */}
                               <Button
                                 variant="contained"
@@ -826,6 +914,8 @@ function ProductBase() {
                                   <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
                                 </svg>
                               </Button>
+
+
                             </div>
                           </div>
                         </div>

@@ -33,24 +33,32 @@ const Singlecatalogue = () => {
     }
   }, [productId]);
 
+
+  console.log(productData, "<<< productData")
+
   // 🔥 ADD THIS useEffect - Fetch mockup layers
-  useEffect(() => {
+useEffect(() => {
     const fetchLayers = async () => {
-      if (!productData?.mockupIds?.length) return;
-      try {
-        const firstMockupId = productData.mockupIds[0];
-        const res = await getLayersByProductId(productData._id, firstMockupId);
-        if (res.data) {
-          setMockupLayers(res.data);
+        if (!productData?.mockupIds?.length) return;
+        try {
+            const firstMockup = productData.mockupIds[0];
+            console.log(firstMockup ,  "<<<< firstMockup")
+            const mockupId = firstMockup?._id || firstMockup; // ✅ String ID lo
+            
+            console.log("Mockup ID:", mockupId); // Debug ke liye
+            
+            const res = await getLayersByProductId(productData._id, mockupId);
+            if (res.data) {
+                setMockupLayers(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching mockup layers:", error);
         }
-      } catch (error) {
-        console.error("Error fetching mockup layers:", error);
-      }
     };
     if (productData) {
-      fetchLayers();
+        fetchLayers();
     }
-  }, [productData]);
+}, [productData]);
 
   if (loading) {
     return (

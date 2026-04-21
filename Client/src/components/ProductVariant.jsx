@@ -84,7 +84,7 @@ function ProductVariant() {
   // Handle print area form submit
   const handlePrintAreaSubmit = () => {
     // Basic validation
-    if (!printAreaData.key || !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
+    if ( !printAreaData.displayName || !printAreaData.width || !printAreaData.height) {
       toast.warn('Please fill all fields!');
       return;
     }
@@ -303,7 +303,7 @@ function ProductVariant() {
               />
 
               {/* Fulfill Key Field */}
-              <TextField
+              {/* <TextField
                 fullWidth
                 label='Fulfill Key'
                 name='key'
@@ -315,7 +315,7 @@ function ProductVariant() {
                 placeholder='Enter Fulfill Key (e.g., Front, Back)'
                 margin='dense'
                 InputLabelProps={{ required: false }}
-              />
+              /> */}
 
               {/* Display Name Field */}
               <TextField

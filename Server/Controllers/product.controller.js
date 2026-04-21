@@ -300,11 +300,6 @@ export const addPrintArea = async (req, res) => {
     // Validate print area data
     const printAreaValidations = [
       {
-        field: "fulfiledKey",
-        required: true,
-        errorMessage: "Fulfilled key is required",
-      },
-      {
         field: "displayName",
         required: true,
         errorMessage: "Display name is required",
@@ -468,7 +463,6 @@ export const updatePrintArea = async (req, res) => {
 
     // Validate required fields if they're being updated
     const validationRules = [
-      { field: "fulfiledKey", errorMessage: "Fulfilled key is required" },
       { field: "displayName", errorMessage: "Display name is required" },
       { field: "width", errorMessage: "Width is required" },
       { field: "height", errorMessage: "Height is required" },

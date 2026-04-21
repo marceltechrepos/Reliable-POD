@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createMockupImage,
   deleteMockupImage,
+  duplicateMockup,
   getAllMockupImage,
   uploadMockupImage,
 } from "../Controllers/mockupImage.controller.js";
@@ -21,5 +22,6 @@ router.put(
   uploadMockupImage
 );
 router.delete("/delete-mockup-image/:id", deleteMockupImage);
+router.post("/duplicate-mockup/:mockupId", duplicateMockup);
 
 export default router;

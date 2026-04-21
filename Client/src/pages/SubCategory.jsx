@@ -95,7 +95,7 @@ const SubCategoryPage = () => {
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {subCategories.map((sub) => (
-          <Link to={`/admin/sub-category/${sub.id}`}>
+          <Link key={sub.id}  to={`/admin/sub-category/${sub.id}`}>
             <div
               key={sub.id}
               className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden border cursor-pointer"

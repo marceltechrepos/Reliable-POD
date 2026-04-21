@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import "./index.css"
+import "./index.css";
 // import ProtectedRoute from "./components/ProtectedRoute"
 import Signin from "./components/Signin";
 import Signup from "./components/Signup";
@@ -19,22 +19,18 @@ import DynamicDesignTool from "./pages/DynamicDesignTool.jsx";
 import Productcatalogue from "./pages/Productcatalogue";
 import Singlecatalogue from "./pages/Singlecatalogue.jsx";
 import Editor from "./pages/Editor.jsx";
-import { ToastContainer } from 'react-toastify'
+import { ToastContainer } from "react-toastify";
 import DesignVariants from "./components/Admin/DesignVariants.jsx";
-
-
 
 function App() {
   // const token = localStorage.getItem("token");
   return (
-
     <Router>
       <Routes>
-
         {/* ADMIN ROUTES */}
         {/* <Route element={<ProtectedRoute adminOnly={true}fs />}> */}
         <Route path="/user" element={<UserLayout />}>
-          <Route path="dashboard" element={< UserDashboard />} />
+          <Route path="dashboard" element={<UserDashboard />} />
           <Route path="orders" element={<Orders />} />
           <Route path="products/:ProductId?" element={<MyProducts />} />
           <Route path="catalogue" element={<Catalogue />} />
@@ -44,13 +40,25 @@ function App() {
           <Route path="stores/:id" element={<StoreDetail />} />
           <Route path="settings" element={<Settings />} />
           <Route path="contact" element={<ContactUs />} />
-          <Route path="sub-catalogue/:subCategoryId" element={<Subcatalogue />} />
-          <Route path="/user/detail-product/:customProductId" element={<SingleProduct />} />
+          <Route
+            path="sub-catalogue/:subCategoryId"
+            element={<Subcatalogue />}
+          />
+          <Route
+            path="/user/detail-product/:customProductId"
+            element={<SingleProduct />}
+          />
           <Route path="dynamicDesignTool" element={<DynamicDesignTool />} />
           <Route path="Productcatalogue" element={<Productcatalogue />} />
 
-          <Route path="single-catalogue/:productId" element={<Singlecatalogue />} />
-          <Route path="design-variants/:productId" element={<DesignVariants />} />
+          <Route
+            path="single-catalogue/:productId"
+            element={<Singlecatalogue />}
+          />
+          <Route
+            path="design-variants/:productId"
+            element={<DesignVariants />}
+          />
           {/* <Route path="order" element={<Order />} /> */}
           {/* <Route path="product/:id?" element={<ProductBase />} /> */}
           {/* <Route path="category" element={<Category />} /> */}
@@ -73,13 +81,13 @@ function App() {
     //     <Route path="/" element={<Signin />} />
     //     <Route path="/signup" element={<Signup />} />
 
-    //     <Route  path="/user"> 
+    //     <Route  path="/user">
 
     //     </Route>
     //     <Route path="/signup" element={<Signup />} />
     //   </Routes>
     // </Router>
-  )
+  );
 }
 
-export default App
+export default App;
