@@ -15,6 +15,7 @@ import {
     BRAND, FIELDS_CONFIG, buildDefaultUser, userInfoSample, providersSample, categoriesSample
 } from "../utils/data.js"
 import AddProviderModal from "../components/Admin/AddProviderModal.jsx";
+import { toast } from "react-toastify"
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("user");
@@ -146,7 +147,7 @@ export default function Settings() {
             setProvider(res.data._id);
             setNewProvider('');
             setOpen(false);
-            alert("Provider Added");
+            toast.success("Provider Added");
         }
     };
 
@@ -249,7 +250,7 @@ export default function Settings() {
                 setEditingProviderId(null);
                 setEditProviderData({ name: "", description: "" });
             } else {
-                alert("Failed to update provider");
+                toast.error("Failed to update provider");
             }
         } catch (err) {
             console.error(err);
@@ -259,10 +260,12 @@ export default function Settings() {
         try {
             const res = await deleteProvider(id);
             if (res.success) {
+                toast.success("Provider Deleted");
                 setProviders((prev) => prev.filter((p) => p._id !== id));
                 if (openProvider === id) setOpenProvider(null);
+
             } else {
-                alert("Failed to delete provider");
+                toast.error("Failed to delete provider");
             }
         } catch (err) {
             console.error(err);

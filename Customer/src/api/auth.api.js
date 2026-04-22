@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+import { toast } from 'react-toastify';
 
 export const registerAPi = async (payload, setLoading, navigate) => {
     try {
@@ -15,10 +16,10 @@ export const registerAPi = async (payload, setLoading, navigate) => {
         setLoading(false)
 
         if (data.success === true) {
-            alert(data.message);
+            toast.success(data.message);
             navigate("/")
         } else {
-            alert(data.message || "something went wrong");
+            toast.error(data.message || "something went wrong");
         }
 
     } catch (error) {
@@ -43,11 +44,11 @@ export const loginApi = async (payload, setLoading, navigate) => {
         const data = await res.json();
 
         if (!data.success) {
-            alert(data.message || "invalid credentials");
+            toast.error(data.message || "invalid credentials");
             setLoading(false);
             return;
         } else {
-            alert(data.message)
+            toast.success(data.message)
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             setLoading(false);
@@ -58,7 +59,7 @@ export const loginApi = async (payload, setLoading, navigate) => {
 
     } catch (error) {
         console.log(error, "<<<< error");
-        alert("server error");
+        toast.error("server error");
     } finally {
         setLoading(false);
     }
@@ -108,16 +109,16 @@ export const userInfoApi = async (payload, setLoading, profileImageFile) => {
         const data = await res.json();
 
         if (!data.success) {
-            alert(data.message || "Failed to update user info");
+            toast.error(data.message || "Failed to update user info");
             return null;
         }
 
-        alert(data.message || "User info updated successfully");
+        toast.success(data.message || "User info updated successfully");
         return data.user;
 
     } catch (error) {
         console.log(error);
-        alert("Server error");
+        toast.error("Server error");
         return null;
     } finally {
         setLoading(false);

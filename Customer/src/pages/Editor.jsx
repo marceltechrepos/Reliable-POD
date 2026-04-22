@@ -1547,6 +1547,13 @@ const normalizeLayer = (layer) => {
         rotation: round2(toNumber(layer.rotation, 0)),
         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1),
     };
+
+
+    // 🔥 YAHI MAIN FIX HAI
+    // if (normalized._id && String(normalized._id).startsWith("temp_")) {
+    //     delete normalized._id;
+    // }
+
     return normalized;
 };
 
@@ -1849,7 +1856,7 @@ const Editor = () => {
             }
             return updated;
         });
-        setTimeout(() => setRenderKey((k) => k + 1), 5);
+        // setTimeout(() => setRenderKey((k) => k + 1), 5);
     };
 
     const handleDragStart = (layerIndex) => setSelectedLayerIndex(layerIndex);
@@ -1892,11 +1899,30 @@ const Editor = () => {
         );
     };
 
+    // const handleDuplicateLayer = (index) => {
+    //     const updated = layerHelpers.duplicateLayer(customerLayers, index);
+    //     setCustomerLayers(updated.map((l) => normalizeLayer(l)));
+    //     setSelectedLayerIndex(updated.length - 1);
+    //     setRenderKey((k) => k + 1);
+    // };
+
+
     const handleDuplicateLayer = (index) => {
-        const updated = layerHelpers.duplicateLayer(customerLayers, index);
-        setCustomerLayers(updated.map((l) => normalizeLayer(l)));
-        setSelectedLayerIndex(updated.length - 1);
-        setRenderKey((k) => k + 1);
+        const originalLayer = customerLayers[index];
+        const clientKey = `dup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const duplicatedLayer = {
+            ...originalLayer,
+            clientKey,                           // ✅ unique clientKey
+            _id: undefined,                      // backend new ID assign karega
+            positionX: (originalLayer.positionX || 0) + 5,
+            positionY: (originalLayer.positionY || 0) + 5,
+            zIndex: customerLayers.length + 1,
+        };
+
+        setCustomerLayers(prev => [...prev, normalizeLayer(duplicatedLayer)]);
+        setSelectedLayerIndex(customerLayers.length);
+        // setRenderKey(k => k + 1);  // optional rakh sakte ho, lekin zaroori nahi
     };
 
     const handleToggleLock = (index) => {
@@ -1911,6 +1937,10 @@ const Editor = () => {
         try {
             setSaving(true);
             const normalized = customerLayers.map((l) => normalizeLayer(l));
+            // const normalized = customerLayers.map(l => {
+            //     const { clientKey, ...cleanLayer } = normalizeLayer(l);
+            //     return cleanLayer;
+            // });
             let res;
             let designId = null;
             if (isEditing && existingCustomProduct?._id) {
@@ -2121,6 +2151,52 @@ const Editor = () => {
         updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
     };
 
+    // const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
+    //     if (!file) return;
+    //     try {
+    //         setSaving(true);
+    //         const uploadRes = await uploadCustomerImage(file);
+    //         if (!uploadRes.success) throw new Error(uploadRes.message);
+    //         const { imageUrl, publicId } = uploadRes.data;
+
+    //         const fullPrintArea = adminLayers.find(
+    //             (pa) => pa._id === printAreaLayer._id,
+    //         );
+
+    //         const newLayer = {
+    //             printArea: printAreaLayer._id,
+    //             imageUrl,
+    //             publicId,
+    //             positionX: 0,
+    //             positionY: 0,
+    //             width: 100, // default full size of print area
+    //             height: 100,
+    //             rotation: 0,
+    //             opacity: 1,
+    //             visible: true,
+    //             zIndex: customerLayers.length + 1,
+    //             locked: false,
+    //             horizontalAlign: "center",
+    //             verticalAlign: "middle",
+    //             enablePerspective: fullPrintArea?.enablePerspective || false,
+    //             corners:
+    //                 fullPrintArea?.enablePerspective && fullPrintArea.corners
+    //                     ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+    //                     : undefined,
+    //             fit: fullPrintArea?.fit || "cover",
+    //         };
+    //         setCustomerLayers((prev) => [...prev, normalizeLayer(newLayer)]);
+    //         setSelectedLayerIndex(customerLayers.length);
+    //         setTimeout(() => setRenderKey((k) => k + 1), 10);
+    //         toast.success("Image uploaded");
+    //     } catch (e) {
+    //         console.error("upload err", e);
+    //         toast.error("Upload failed");
+    //     } finally {
+    //         setSaving(false);
+    //     }
+    // };
+
     const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
         if (!file) return;
         try {
@@ -2133,13 +2209,17 @@ const Editor = () => {
                 (pa) => pa._id === printAreaLayer._id,
             );
 
+            // ✅ Temporary unique ID
+            const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
             const newLayer = {
+                clientKey,                     // ✅ temporary ID
                 printArea: printAreaLayer._id,
                 imageUrl,
                 publicId,
                 positionX: 0,
                 positionY: 0,
-                width: 100, // default full size of print area
+                width: 100,
                 height: 100,
                 rotation: 0,
                 opacity: 1,
@@ -2149,15 +2229,19 @@ const Editor = () => {
                 horizontalAlign: "center",
                 verticalAlign: "middle",
                 enablePerspective: fullPrintArea?.enablePerspective || false,
-                corners:
-                    fullPrintArea?.enablePerspective && fullPrintArea.corners
-                        ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-                        : undefined,
+                corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+                    ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+                    : undefined,
                 fit: fullPrintArea?.fit || "cover",
             };
-            setCustomerLayers((prev) => [...prev, normalizeLayer(newLayer)]);
-            setSelectedLayerIndex(customerLayers.length);
-            setTimeout(() => setRenderKey((k) => k + 1), 10);
+
+            setCustomerLayers(prev => {
+                const updated = [...prev, normalizeLayer(newLayer)];
+                setSelectedLayerIndex(updated.length - 1);
+                return updated;
+            });
+
+            setRenderKey(k => k + 1);
             toast.success("Image uploaded");
         } catch (e) {
             console.error("upload err", e);
@@ -2167,47 +2251,133 @@ const Editor = () => {
         }
     };
 
+    const jawad = "jawad"
+
     // Yeh function naya text layer banata hai
+    // const handleAddTextLayer = () => {
+    //     // Agar koi print area select nahi hai toh pehla wala le lo
+    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
+    //     if (!defaultPrintArea) {
+    //         toast.error("Koi print area mojood nahi hai");
+    //         return;
+    //     }
+
+    //     // Naye layer ka data
+    //     const newTextLayer = {
+    //         printArea: defaultPrintArea._id,
+    //         type: "text", // Yeh batata hai ke yeh text hai, image nahi
+    //         text: "New Text", // Default text jo start mein show hoga
+    //         fontSize: 30, // Font ka size
+    //         fontFamily: "Arial", // Font family
+    //         fontWeight: "normal", // Bold ya normal
+    //         fill: "#000000", // Text ka color (kala)
+    //         positionX: 15, // Canvas par X position (%)
+    //         positionY: 15, // Canvas par Y position (%)
+    //         width: 50, // Width percentage
+    //         height: 30, // Height percentage
+    //         rotation: 0, // Rotation angle
+    //         opacity: 1, // Full visible
+    //         visible: true,
+    //         zIndex: customerLayers.length + 1, // Sab se upar dikhe
+    //         locked: false, // Locked nahi hai
+    //         horizontalAlign: "center",
+    //         verticalAlign: "middle",
+    //         enablePerspective: false, // Text par perspective apply nahi karna
+    //         align: "center", // Text alignment
+    //         lineHeight: 1.2,
+    //     };
+
+    //     // Customer layers ki list mein naya layer add karo
+    //     setCustomerLayers((prev) => [...prev, normalizeLayer(newTextLayer)]);
+    //     // Naye layer ko select kar lo
+    //     setSelectedLayerIndex(customerLayers.length);
+    //     // Canvas ko refresh karo
+    //     setTimeout(() => setRenderKey((k) => k + 1), 10);
+    // };
+
     const handleAddTextLayer = () => {
-        // Agar koi print area select nahi hai toh pehla wala le lo
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
         if (!defaultPrintArea) {
             toast.error("Koi print area mojood nahi hai");
             return;
         }
 
-        // Naye layer ka data
+        // ✅ Temporary unique ID generate karo
+        const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const newTextLayer = {
+            clientKey,                         // ✅ temporary ID
             printArea: defaultPrintArea._id,
-            type: "text", // Yeh batata hai ke yeh text hai, image nahi
-            text: "New Text", // Default text jo start mein show hoga
-            fontSize: 30, // Font ka size
-            fontFamily: "Arial", // Font family
-            fontWeight: "normal", // Bold ya normal
-            fill: "#000000", // Text ka color (kala)
-            positionX: 15, // Canvas par X position (%)
-            positionY: 15, // Canvas par Y position (%)
-            width: 50, // Width percentage
-            height: 30, // Height percentage
-            rotation: 0, // Rotation angle
-            opacity: 1, // Full visible
+            type: "text",
+            text: "New Text",
+            fontSize: 30,
+            fontFamily: "Arial",
+            fontWeight: "normal",
+            fill: "#000000",
+            positionX: 15,
+            positionY: 15,
+            width: 50,
+            height: 30,
+            rotation: 0,
+            opacity: 1,
             visible: true,
-            zIndex: customerLayers.length + 1, // Sab se upar dikhe
-            locked: false, // Locked nahi hai
+            zIndex: customerLayers.length + 1,
+            locked: false,
             horizontalAlign: "center",
             verticalAlign: "middle",
-            enablePerspective: false, // Text par perspective apply nahi karna
-            align: "center", // Text alignment
+            enablePerspective: false,
+            align: "center",
             lineHeight: 1.2,
         };
 
-        // Customer layers ki list mein naya layer add karo
-        setCustomerLayers((prev) => [...prev, normalizeLayer(newTextLayer)]);
-        // Naye layer ko select kar lo
-        setSelectedLayerIndex(customerLayers.length);
-        // Canvas ko refresh karo
-        setTimeout(() => setRenderKey((k) => k + 1), 10);
+        // ✅ Functional update se naya array lo aur index sahi set karo
+        setCustomerLayers(prev => {
+            const updated = [...prev, normalizeLayer(newTextLayer)];
+            setSelectedLayerIndex(updated.length - 1);
+            return updated;
+        });
+
+        setRenderKey(k => k + 1);
     };
+
+    // const handleImageFromModal = (image) => {
+    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
+    //     if (!defaultPrintArea) {
+    //         toast.error("No print area found");
+    //         return;
+    //     }
+
+    //     const fullPrintArea = adminLayers.find(
+    //         (pa) => pa._id === defaultPrintArea._id,
+    //     );
+
+    //     const newLayerData = {
+    //         printArea: defaultPrintArea._id,
+    //         imageUrl: image.url,
+    //         publicId: image.id || null,
+    //         positionX: 0,
+    //         positionY: 0,
+    //         width: 100,
+    //         height: 100,
+    //         rotation: defaultPrintArea.rotation || 0,
+    //         opacity: defaultPrintArea.opacity || 1,
+    //         visible: true,
+    //         zIndex: customerLayers.length + 1,
+    //         locked: false,
+    //         horizontalAlign: "center",
+    //         verticalAlign: "middle",
+    //         enablePerspective: fullPrintArea?.enablePerspective || false,
+    //         corners:
+    //             fullPrintArea?.enablePerspective && fullPrintArea.corners
+    //                 ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+    //                 : undefined,
+    //         fit: fullPrintArea?.fit || "cover",
+    //     };
+    //     setCustomerLayers((prev) => [...prev, normalizeLayer(newLayerData)]);
+    //     setSelectedLayerIndex(customerLayers.length);
+    //     setOpenMockupModal(false);
+    //     setTimeout(() => setRenderKey((k) => k + 1), 10);
+    // };
 
     const handleImageFromModal = (image) => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
@@ -2220,7 +2390,11 @@ const Editor = () => {
             (pa) => pa._id === defaultPrintArea._id,
         );
 
+        // ✅ Temporary unique ID
+        const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const newLayerData = {
+            clientKey,                         // ✅ temporary ID
             printArea: defaultPrintArea._id,
             imageUrl: image.url,
             publicId: image.id || null,
@@ -2236,16 +2410,20 @@ const Editor = () => {
             horizontalAlign: "center",
             verticalAlign: "middle",
             enablePerspective: fullPrintArea?.enablePerspective || false,
-            corners:
-                fullPrintArea?.enablePerspective && fullPrintArea.corners
-                    ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-                    : undefined,
+            corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+                ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+                : undefined,
             fit: fullPrintArea?.fit || "cover",
         };
-        setCustomerLayers((prev) => [...prev, normalizeLayer(newLayerData)]);
-        setSelectedLayerIndex(customerLayers.length);
+
+        setCustomerLayers(prev => {
+            const updated = [...prev, normalizeLayer(newLayerData)];
+            setSelectedLayerIndex(updated.length - 1);
+            return updated;
+        });
+
         setOpenMockupModal(false);
-        setTimeout(() => setRenderKey((k) => k + 1), 10);
+        setRenderKey(k => k + 1);
     };
 
     const handleRemoveLayer = async (index) => {
@@ -2259,7 +2437,7 @@ const Editor = () => {
         }
         setCustomerLayers((prev) => prev.filter((_, i) => i !== index));
         setSelectedLayerIndex(null);
-        setTimeout(() => setRenderKey((k) => k + 1), 10);
+        // setTimeout(() => setRenderKey((k) => k + 1), 10);
     };
 
     if (loading)
@@ -2403,7 +2581,8 @@ const Editor = () => {
                                                         return (
                                                             <Rnd
                                                                 dragAxis="both"
-                                                                key={`${layer._id || globalIndex}-${renderKey}`}
+                                                                // key={`${layer.clientKey || layer._id || globalIndex}-${renderKey}`}
+                                                                key={layer.clientKey || layer._id || `layer-${globalIndex}`}
                                                                 size={{
                                                                     width: pixelValues.width,
                                                                     height: pixelValues.height,

@@ -107,7 +107,7 @@ function ProductBase() {
 
   const updateThumbnailHandler = async () => {
     if (!thumbnail) {
-      alert("Please select an image first");
+      toast.error("Please select an image first");
       return;
     }
 
@@ -118,16 +118,16 @@ function ProductBase() {
       const data = await updateProduct(productId, formData);
 
       if (data?.success) {
-        alert("Thumbnail updated successfully!");
+        toast.success("Thumbnail updated successfully!");
         setIsThumbnailModalOpen(false);
         fetchProductByProductId(productId); // Refresh data
         setThumbnail(null); // Reset thumbnail state
       } else {
-        alert(data?.message || "Failed to update thumbnail");
+        toast.error(data?.message || "Failed to update thumbnail");
       }
     } catch (error) {
       console.error("Error updating thumbnail:", error);
-      alert("Failed to update thumbnail");
+      toast.error("Failed to update thumbnail");
     }
   };
 
@@ -146,14 +146,14 @@ function ProductBase() {
         if (data?.success) {
           setThumbnail(null);
           setPreview(null);
-          alert("Thumbnail removed successfully!");
+          toast.success("Thumbnail removed successfully!");
           fetchProductByProductId(productId);
         } else {
-          alert(data?.message || "Failed to remove thumbnail");
+          toast.error(data?.message || "Failed to remove thumbnail");
         }
       } catch (error) {
         console.error("Remove thumbnail error:", error);
-        alert("Failed to remove thumbnail");
+        toast.error("Failed to remove thumbnail");
       }
     }
   };
@@ -161,7 +161,7 @@ function ProductBase() {
   // Update Product Handler - Fixed
   const updateProductHandler = async () => {
     if (!subCategory) {
-      alert("Please select a sub category");
+      toast.error("Please select a sub category");
       return;
     }
 
@@ -177,12 +177,12 @@ function ProductBase() {
     try {
       const data = await updateProduct(productId, payload);
       if (data?.success) {
-        alert("Product updated successfully!");
+        toast.success("Product updated successfully!");
         fetchProductByProductId(productId);
       }
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to update product");
+      toast.error("Failed to update product");
     }
   };
 
@@ -351,7 +351,7 @@ function ProductBase() {
       setProvider(res.data._id);
       setNewProvider('');
       setOpen(false);
-      alert("Provider Added");
+      toast.success("Provider Added");
     }
   };
 
@@ -374,14 +374,14 @@ function ProductBase() {
       setCategoryThumbnail(null);
       setCategoryThumbnailPreview('');
       setOpenCategoryModal(false);
-      alert("Category Added");
+      toast.success("Category Added");
     }
   };
 
   const saveProductHandler = async () => {
 
     if (!subCategory) {
-      alert("Please select a sub category");
+      toast.error("Please select a sub category");
       return;
     }
 
@@ -803,11 +803,11 @@ function ProductBase() {
                                     const data = await updateProduct(productId, formData);
 
                                     if (data?.success) {
-                                      alert("Mockup removed!");
+                                      toast.success("Mockup removed!");
                                       fetchProductByProductId(productId);
                                     }
                                   } catch (error) {
-                                    alert("Failed to remove mockup");
+                                    toast.error("Failed to remove mockup");
                                   }
                                 }
                               }}
@@ -847,14 +847,14 @@ function ProductBase() {
                               </Typography>
                             )}
 
-                            {mockup?.category && (
+                            {/* {mockup?.category && (
                               <Typography
                                 variant="caption"
                                 sx={{ display: 'block', color: 'primary.main', mt: 0.5 }}
                               >
                                 Category: {mockup.category}
                               </Typography>
-                            )}
+                            )} */}
 
                             <div className='flex items-center gap-2 mt-3'>
                               {/* DUPLICATE BUTTON */}
@@ -960,10 +960,10 @@ function ProductBase() {
                             setSelectedMockups([]);
                             localStorage.removeItem('selectedMockups');
 
-                            alert("All mockups cleared!");
+                            toast.success("All mockups cleared!");
                             fetchProductByProductId(productId);
                           } catch (error) {
-                            alert("Failed to clear mockups");
+                            toast.error("Failed to clear mockups");
                           }
                         }
                       }}

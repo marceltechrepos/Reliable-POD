@@ -1,5 +1,6 @@
 import { Upload, Trash2, Pencil, X } from "lucide-react";
 import { useState } from "react";
+import {toast} from "react-toastify"
 
 const ThumbnailModal = ({
   open,
@@ -26,7 +27,7 @@ const ThumbnailModal = ({
 
   const handleUpdateThumbnail = async () => {
     if (!thumbnail && !preview) {
-      alert("Please select an image first");
+      toast.error("Please select an image first");
       return;
     }
 
