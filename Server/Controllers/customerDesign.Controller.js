@@ -288,6 +288,85 @@ const getcustomerDesignByuserId = async (req, res) => {
     }
 }
 
+
+// =================================================
+
+// ✅ NEW: Upload image for a specific mockup
+const uploadMockupImage = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const { mockupId } = req.body;
+        const userId = req.user._id;
+
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file provided' });
+        }
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'customer_final_designs',
+        });
+
+        // Delete temporary file after upload (optional)
+        // fs.unlinkSync(req.file.path);
+
+        res.json({
+            success: true,
+            data: {
+                imageUrl: result.secure_url,
+                publicId: result.public_id,
+                mockupId: mockupId
+            }
+        });
+    } catch (error) {
+        console.error('uploadMockupImage error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ✅ NEW: Update design with all mockup images array
+const updateMockupImages = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const { finalDesignImages } = req.body;
+        const userId = req.user._id;
+
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
+
+        // Update with new images array
+        design.finalDesignImages = finalDesignImages;
+
+        // Also keep first image as main for backward compatibility
+        if (finalDesignImages && finalDesignImages.length > 0) {
+            design.finalDesignImage = finalDesignImages[0].imageUrl;
+        }
+
+        await design.save();
+
+        res.json({
+            success: true,
+            message: 'Mockup images updated successfully',
+            data: {
+                finalDesignImages: design.finalDesignImages,
+                finalDesignImage: design.finalDesignImage
+            }
+        });
+    } catch (error) {
+        console.error('updateMockupImages error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export {
     uploadImage,
     saveDesign,
@@ -295,5 +374,7 @@ export {
     deleteLayer,
     updateLayer,
     getcustomerDesignByuserId,
-    uploadFinalImage
+    uploadFinalImage,
+    uploadMockupImage,
+    updateMockupImages
 }

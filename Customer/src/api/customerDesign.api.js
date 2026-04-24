@@ -157,3 +157,43 @@ export const updateCustomerDesign = async (designId, data) => {
     return { success: false, message: "Network error" };
   }
 };
+
+
+// ==================================================================
+
+// Upload image for a specific mockup
+export const uploadMockupImage = async (designId, imageFile, mockupId) => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('mockupId', mockupId);
+
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${BASE_URL}/api/customer/designs/${designId}/mockup-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData
+  });
+  return await res.json();
+};
+
+// Update design with all mockup images
+export const updateDesignMockupImages = async (designId, finalDesignImages) => {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${BASE_URL}/api/customer/designs/${designId}/mockup-images`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ finalDesignImages })
+  });
+  return await res.json();
+};
+
+export const getMockupById = async (mockupId) => {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${BASE_URL}/api/get-single-mockup/${mockupId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return await res.json();
+};

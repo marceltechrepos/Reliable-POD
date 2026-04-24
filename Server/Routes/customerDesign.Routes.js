@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../Middlewares/Multer/multer.js";
-import { deleteLayer, getcustomerDesignByuserId, getDesign, saveDesign, updateLayer, uploadFinalImage, uploadImage } from "../Controllers/customerDesign.Controller.js";
+import { deleteLayer, getcustomerDesignByuserId, getDesign, saveDesign, updateLayer, updateMockupImages, uploadFinalImage, uploadImage, uploadMockupImage } from "../Controllers/customerDesign.Controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const customerRoute = Router();
@@ -12,5 +12,10 @@ customerRoute.get('/:productId', isLogin, getDesign);
 customerRoute.delete('/layer/:layerId', isLogin, deleteLayer);
 customerRoute.put("/layer/:layerId", isLogin, updateLayer);
 customerRoute.get("/user/:userId", isLogin, getcustomerDesignByuserId)
+
+
+// ✅ NEW ROUTES FOR MULTIPLE MOCKUP IMAGES
+customerRoute.post('/:designId/mockup-image', isLogin, upload.single('image'), uploadMockupImage);
+customerRoute.put('/:designId/mockup-images', isLogin, updateMockupImages);
 
 export default customerRoute;

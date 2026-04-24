@@ -268,6 +268,38 @@ export const uploadMockupImage = async (req, res) => {
   }
 };
 
+export const getSingleMockupImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid mockup ID"
+      });
+    }
+    
+    const mockup = await mockupImageModel.findById(id);
+    
+    if (!mockup) {
+      return res.status(404).json({
+        success: false,
+        message: "Mockup not found"
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: mockup
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 export const deleteMockupImage = async (req, res) => {
   const { id } = req.params;
   try {

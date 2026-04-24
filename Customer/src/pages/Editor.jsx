@@ -1,1503 +1,9 @@
-// ===============================WORKING================================================================
 
-// import React, { useEffect, useState, useRef, useCallback } from "react";
-// import { useNavigate, useParams, useLocation } from "react-router-dom";
-// import image from "../assets/image/dummy.jpg";
-// import { ArrowLeft, Save, X, Loader2 } from "lucide-react";
-// import { getProductById } from "../api/category.api";
-// import { getLayersByProductId } from "../api/layer.api";
-// import LayerProperties from "../components/Admin/LayerProperties";
-// import ThreeWarpedImage from "../components/Admin/ThreePerspectiveImage";
-// import {
-//     uploadCustomerImage,
-//     saveCustomerDesign,
-//     getCustomerDesign,
-//     deleteCustomerLayer,
-//     updateCustomerLayer,
-// } from "../api/customerDesign.api";
-// import AddMockup from "../components/Admin/AddMockup";
-// import IMG from "../assets/image/img.svg";
-// import { Rnd } from "react-rnd";
-// import { Pencil, Copy, Lock, Unlock, Trash2 } from "lucide-react";
-// import * as layerHelpers from "../components/Admin/utils/layerHelpers";
-// import { toast } from "react-toastify";
-// import ConfirmDesignModal from "../components/Admin/ConfirmDesignModal";
-// import {
-//     getCustomProductByUserId,
-//     updateCustomProduct,
-// } from "../api/customerProduct.api";
-// import {
-//     captureFinalDesign,
-//     uploadFinalImage,
-// } from "../api/customerDesign.api";
-
-// const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
-// const toNumber = (v, fallback = 0) => {
-//     const n = Number(v);
-//     return Number.isFinite(n) ? n : fallback;
-// };
-// const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
-
-// const MAX_LAYER_PERCENT = 300;
-
-// const normalizeLayer = (layer) => {
-//     const width = clamp(toNumber(layer.width, 30), 5, MAX_LAYER_PERCENT);
-//     const height = clamp(toNumber(layer.height, 30), 5, MAX_LAYER_PERCENT);
-//     const positionX = toNumber(layer.positionX, 0);
-//     const positionY = toNumber(layer.positionY, 0);
-
-//     const normalized = {
-//         ...layer,
-//         width: round2(width),
-//         height: round2(height),
-//         positionX: round2(positionX),
-//         positionY: round2(positionY),
-//         rotation: round2(toNumber(layer.rotation, 0)),
-//         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1),
-//     };
-//     return normalized;
-// };
-
-// const getLayerAspectRatio = (layer) => {
-//     const w = Math.max(toNumber(layer?.width, 30), 1);
-//     const h = Math.max(toNumber(layer?.height, 30), 1);
-//     return w / h;
-// };
-
-// const stripHtml = (html) => {
-//     if (!html) return "";
-//     const temp = document.createElement("div");
-//     temp.innerHTML = html;
-//     return temp.textContent || temp.innerText || "";
-// };
-
-// const Editor = () => {
-//     const navigate = useNavigate();
-//     const { productId } = useParams();
-//     const location = useLocation();
-//     const productFromState = location.state?.product;
-
-//     // states
-//     const [isShiftPressed, setIsShiftPressed] = useState(false);
-//     const [product, setProduct] = useState(productFromState || null);
-//     const [loading, setLoading] = useState(!productFromState);
-//     const [startDesigning, setStartDesigning] = useState(false);
-//     const [openMockupModal, setOpenMockupModal] = useState(false);
-//     const [adminLayers, setAdminLayers] = useState([]);
-//     const [alladminLayers, setAllAdminLayers] = useState([]);
-//     const [customerLayers, setCustomerLayers] = useState([]);
-//     const [selectedMockup, setSelectedMockup] = useState(null);
-//     const [selectedPrintArea, setSelectedPrintArea] = useState(null);
-//     const [saving, setSaving] = useState(false);
-//     const [selectedLayerIndex, setSelectedLayerIndex] = useState(null);
-//     const [windowSize, setWindowSize] = useState(0);
-//     const [renderKey, setRenderKey] = useState(0);
-//     const [isLoadingDesign, setIsLoadingDesign] = useState(false);
-//     const [hasSavedDesign, setHasSavedDesign] = useState(false);
-//     const [containersReady, setContainersReady] = useState(false);
-//     const [showConfirmModal, setShowConfirmModal] = useState(false);
-//     const [customerDesignId, setCustomerDesignId] = useState(null);
-//     const [existingCustomProduct, setExistingCustomProduct] = useState(null);
-//     const [isEditing, setIsEditing] = useState(false);
-//     const [isCheckingExisting, setIsCheckingExisting] = useState(false);
-
-//     const fileInputRef = useRef(null);
-//     const containerRefs = useRef({});
-//     const designContainerRef = useRef(null);
-//     const rndRefs = useRef({});
-//     const fontStack = "ui-sans-serif, system-ui, -apple-system, sans-serif";
-
-//     console.log(alladminLayers, "<<<<< alladminLayers");
-
-//     const colors = [
-//         { name: "Black", class: "bg-black" },
-//         { name: "White", class: "bg-white border" },
-//         { name: "Dark Heather", class: "bg-gray-700" },
-//         { name: "Sports Grey", class: "bg-gray-400" },
-//         { name: "Light Blue", class: "bg-blue-400" },
-//         { name: "Azalea Pink", class: "bg-pink-400" },
-//     ];
-
-//     const activeProduct = existingCustomProduct?.baseProduct || product;
-
-//     const productColors =
-//         activeProduct?.Variants?.reduce((acc, variant) => {
-//             if (!variant.color || variant.color === "") return acc;
-//             const existingColor = acc.find((c) => c.name === variant.color);
-//             if (!existingColor) {
-//                 acc.push({
-//                     name: variant.color,
-//                     hex: variant.colorHex || "#ffffff",
-//                     variants: [variant],
-//                 });
-//             } else {
-//                 existingColor.variants.push(variant);
-//             }
-//             return acc;
-//         }, []) || [];
-
-//     const productSizes =
-//         activeProduct?.Variants?.reduce((acc, variant) => {
-//             if (!variant.size || variant.size === "") return acc;
-//             if (!acc.includes(variant.size)) {
-//                 acc.push(variant.size);
-//             }
-//             return acc;
-//         }, []) || [];
-
-//     const sizeOrder = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"];
-//     const sortedSizes = [...productSizes].sort((a, b) => {
-//         const indexA = sizeOrder.indexOf(a);
-//         const indexB = sizeOrder.indexOf(b);
-//         if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-//         if (indexA === -1) return 1;
-//         if (indexB === -1) return -1;
-//         return indexA - indexB;
-//     });
-
-//     const displayColors = productColors.length > 0 ? productColors : [];
-//     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
-
-//     useEffect(() => {
-//         const handleKeyDown = (e) => {
-//             if (e.key === "Shift") setIsShiftPressed(true);
-//         };
-
-//         const handleKeyUp = (e) => {
-//             if (e.key === "Shift") setIsShiftPressed(false);
-//         };
-
-//         window.addEventListener("keydown", handleKeyDown);
-//         window.addEventListener("keyup", handleKeyUp);
-
-//         return () => {
-//             window.removeEventListener("keydown", handleKeyDown);
-//             window.removeEventListener("keyup", handleKeyUp);
-//         };
-//     }, []);
-
-//     // Check existing custom product
-//     useEffect(() => {
-//         const checkExistingDesign = async () => {
-//             if (!productId || !selectedMockup?._id) return;
-//             try {
-//                 setIsCheckingExisting(true);
-//                 const user = JSON.parse(localStorage.getItem("user"));
-//                 if (!user?._id) return;
-//                 const res = await getCustomProductByUserId(user._id);
-//                 if (res.success && res.data) {
-//                     const existing = res.data.find(
-//                         (cp) => cp.baseProduct?._id === productId,
-//                     );
-//                     if (existing) {
-//                         setExistingCustomProduct(existing);
-//                         setIsEditing(true);
-//                         const designRes = await getCustomerDesign(
-//                             productId,
-//                             selectedMockup._id,
-//                         );
-//                         if (designRes.success && designRes.data) {
-//                             setCustomerLayers(designRes.data.layers || []);
-//                             setCustomerDesignId(designRes.data._id);
-//                         }
-//                     } else {
-//                         setIsEditing(false);
-//                         setExistingCustomProduct(null);
-//                     }
-//                 }
-//             } catch (error) {
-//                 console.error("Error checking existing design:", error);
-//                 setIsEditing(false);
-//             } finally {
-//                 setIsCheckingExisting(false);
-//             }
-//         };
-//         checkExistingDesign();
-//     }, [productId, selectedMockup]);
-
-//     useEffect(() => {
-//         const handleResize = () => setWindowSize((w) => w + 1);
-//         window.addEventListener("resize", handleResize);
-//         return () => window.removeEventListener("resize", handleResize);
-//     }, []);
-
-//     useEffect(() => {
-//         const fetchProduct = async () => {
-//             if (!product && productId) {
-//                 try {
-//                     setLoading(true);
-//                     const res = await getProductById(productId);
-//                     setProduct(res);
-//                     if (res.mockupIds?.length > 0)
-//                         setSelectedMockup(res.mockupIds[0]);
-//                 } catch (err) {
-//                     console.error(err);
-//                 } finally {
-//                     setLoading(false);
-//                 }
-//             }
-//         };
-//         fetchProduct();
-//     }, [productId, product]);
-
-//     useEffect(() => {
-//         const fetchAdmin = async () => {
-//             if (product?._id && selectedMockup?._id) {
-//                 try {
-//                     const res = await getLayersByProductId(
-//                         product._id,
-//                         selectedMockup._id,
-//                     );
-//                     if (res.data) {
-//                         const areas = res.data.filter(
-//                             (l) => l.type === "printarea",
-//                         );
-//                         setAdminLayers(areas);
-//                         setAllAdminLayers(res.data);
-//                     }
-//                 } catch (e) {
-//                     console.error("admin layers:", e);
-//                 }
-//             }
-//         };
-//         fetchAdmin();
-//     }, [product?._id, selectedMockup]);
-
-//     useEffect(() => {
-//         const fetchCustomerDesign = async () => {
-//             if (productId && selectedMockup?._id) {
-//                 setIsLoadingDesign(true);
-//                 try {
-//                     const res = await getCustomerDesign(
-//                         productId,
-//                         selectedMockup._id,
-//                     );
-//                     if (res.success && res.data) {
-//                         const loadedLayers = (res.data.layers || []).map(
-//                             (layer) => ({
-//                                 ...layer,
-//                                 horizontalAlign:
-//                                     layer.horizontalAlign || "center",
-//                                 verticalAlign: layer.verticalAlign || "middle",
-//                                 positionX: Number(layer.positionX) || 20,
-//                                 positionY: Number(layer.positionY) || 20,
-//                                 width: Number(layer.width) || 30,
-//                                 height: Number(layer.height) || 30,
-//                                 rotation: Number(layer.rotation) || 0,
-//                                 opacity: Number(layer.opacity) || 1,
-//                             }),
-//                         );
-//                         setCustomerLayers(loadedLayers);
-//                         setTimeout(() => {
-//                             setRenderKey((prev) => prev + 1);
-//                         }, 100);
-//                     }
-//                 } catch (error) {
-//                     console.error("Error loading design:", error);
-//                 } finally {
-//                     setIsLoadingDesign(false);
-//                 }
-//             }
-//         };
-//         fetchCustomerDesign();
-//     }, [productId, selectedMockup]);
-
-//     const getPixelValues = (printAreaId, layer) => {
-//         const container = containerRefs.current[printAreaId];
-//         if (!container)
-//             return { x: 0, y: 0, width: 100, height: 100, scaleFactor: 1 };
-//         const rect = container.getBoundingClientRect();
-//         const cw = rect.width || 300;
-//         const ch = rect.height || 300;
-//         const safe = normalizeLayer(layer);
-
-//         const scaleFactor = cw / 100;
-
-//         return {
-//             x: (safe.positionX / 100) * cw,
-//             y: (safe.positionY / 100) * ch,
-//             width: (safe.width / 100) * cw,
-//             height: (safe.height / 100) * ch,
-//             scaleFactor: scaleFactor,
-//         };
-//     };
-
-//     useEffect(() => {
-//         if (!startDesigning || adminLayers.length === 0) return;
-//         const timer = setTimeout(() => setContainersReady(true), 200);
-//         return () => clearTimeout(timer);
-//     }, [startDesigning, adminLayers]);
-
-//     const updateLayerLocalAndMaybeServer = (
-//         index,
-//         updates,
-//         callServer = true,
-//     ) => {
-//         setCustomerLayers((prev) => {
-//             const updated = [...prev];
-//             updated[index] = { ...updated[index], ...updates };
-//             if (callServer && hasSavedDesign && updated[index]._id) {
-//                 const payload = { ...updated[index] };
-//                 updateCustomerLayer(updated[index]._id, payload).catch(
-//                     (err) => {
-//                         console.error("update layer failed", err);
-//                         toast.error("Unable to update layer on server");
-//                     },
-//                 );
-//             }
-//             return updated;
-//         });
-//         setTimeout(() => setRenderKey((k) => k + 1), 5);
-//     };
-
-//     const handleDragStart = (layerIndex) => setSelectedLayerIndex(layerIndex);
-
-//     const handleDragStop = (printAreaId, layerIndex, d) => {
-//         const container = containerRefs.current[printAreaId];
-//         if (!container) return;
-//         const rect = container.getBoundingClientRect();
-//         const layer = customerLayers[layerIndex];
-//         if (!layer) return;
-//         let newXPercent, newYPercent;
-//         if (
-//             d.x === 0 &&
-//             d.y === 0 &&
-//             layer.positionX !== 0 &&
-//             layer.positionY !== 0
-//         ) {
-//             newXPercent = layer.positionX;
-//             newYPercent = layer.positionY;
-//         } else {
-//             newXPercent = (d.x / rect.width) * 100;
-//             newYPercent = (d.y / rect.height) * 100;
-//         }
-//         updateLayerLocalAndMaybeServer(
-//             layerIndex,
-//             {
-//                 positionX: round2(newXPercent),
-//                 positionY: round2(newYPercent),
-//             },
-//             true,
-//         );
-//     };
-
-//     const handleResizeStop = (printAreaId, layerIndex, ref, position) => {
-//         const container = containerRefs.current[printAreaId];
-//         if (!container) return;
-//         const rect = container.getBoundingClientRect();
-//         const widthPercent = (parseFloat(ref.style.width) / rect.width) * 100;
-//         const heightPercent =
-//             (parseFloat(ref.style.height) / rect.height) * 100;
-//         const posX = (position.x / rect.width) * 100;
-//         const posY = (position.y / rect.height) * 100;
-//         updateLayerLocalAndMaybeServer(
-//             layerIndex,
-//             {
-//                 width: round2(widthPercent),
-//                 height: round2(heightPercent),
-//                 positionX: round2(posX),
-//                 positionY: round2(posY),
-//             },
-//             true,
-//         );
-//     };
-
-//     const handleDuplicateLayer = (index) => {
-//         const updated = layerHelpers.duplicateLayer(customerLayers, index);
-//         setCustomerLayers(updated.map((l) => normalizeLayer(l)));
-//         setSelectedLayerIndex(updated.length - 1);
-//         setRenderKey((k) => k + 1);
-//     };
-
-//     const handleToggleLock = (index) => {
-//         setCustomerLayers((prev) => {
-//             const updated = layerHelpers.toggleLayerLock(prev, index);
-//             return updated;
-//         });
-//         setTimeout(() => setRenderKey((k) => k + 1), 10);
-//     };
-
-//     const handleSave = async () => {
-//         try {
-//             setSaving(true);
-//             const normalized = customerLayers.map((l) => normalizeLayer(l));
-//             let res;
-//             let designId = null;
-//             if (isEditing && existingCustomProduct?._id) {
-//                 const payload = {
-//                     productId,
-//                     mockupId: selectedMockup._id,
-//                     layers: normalized,
-//                     customVariant: existingCustomProduct.customVariant || {
-//                         enabled: true,
-//                         name: "",
-//                         description: "",
-//                         tags: [],
-//                     },
-//                     selectedDefaultVariants:
-//                         existingCustomProduct.selectedDefaultVariants || [],
-//                 };
-//                 res = await updateCustomProduct(
-//                     existingCustomProduct._id,
-//                     payload,
-//                 );
-//                 if (res.success) {
-//                     designId = existingCustomProduct._id;
-//                     setShowConfirmModal(false);
-//                     toast.success("Design updated successfully!");
-//                 }
-//             } else {
-//                 res = await saveCustomerDesign({
-//                     productId,
-//                     mockupId: selectedMockup._id,
-//                     layers: normalized,
-//                 });
-//                 if (res.success) {
-//                     designId = res.data?._id;
-//                     toast.success("Design saved successfully!");
-//                 }
-//             }
-//             if (res?.success) {
-//                 setHasSavedDesign(true);
-//                 setCustomerDesignId(designId);
-//                 try {
-//                     const fresh = await getCustomerDesign(
-//                         productId,
-//                         selectedMockup._id,
-//                     );
-//                     if (fresh.success && fresh.data) {
-//                         if (fresh.data._id) setCustomerDesignId(fresh.data._id);
-//                         const loaded = (fresh.data.layers || []).map((l) =>
-//                             normalizeLayer({
-//                                 ...l,
-//                                 horizontalAlign: l.horizontalAlign || "center",
-//                                 verticalAlign: l.verticalAlign || "middle",
-//                             }),
-//                         );
-//                         setCustomerLayers(loaded);
-//                         setRenderKey((k) => k + 1);
-//                     }
-//                 } catch (e) {
-//                     console.error("fetch fresh after save", e);
-//                 }
-//                 return designId;
-//             } else {
-//                 toast.error(isEditing ? "Update failed" : "Save failed");
-//                 return null;
-//             }
-//         } catch (e) {
-//             console.error("save error", e);
-//             toast.error(isEditing ? "Update failed" : "Save failed");
-//             return null;
-//         } finally {
-//             setSaving(false);
-//         }
-//     };
-
-//     const handleConfirm = async () => {
-//         const savedDesignId = await handleSave();
-//         if (savedDesignId) {
-//             navigate(`/user/design-variants/${productId}`, {
-//                 state: {
-//                     product,
-//                     selectedMockup,
-//                     customerLayers,
-//                     adminLayers,
-//                     customerDesignId: savedDesignId,
-//                     isEditing,
-//                     existingCustomProduct: isEditing
-//                         ? existingCustomProduct
-//                         : null,
-//                 },
-//             });
-//         }
-//     };
-
-//     const handleOpenModal = () => setShowConfirmModal(true);
-
-//     const handleNext = async () => {
-//         try {
-//             setSaving(true);
-//             const normalized = customerLayers.map((l) => normalizeLayer(l));
-//             let designId = null;
-
-//             if (isEditing && existingCustomProduct?._id) {
-//                 const designRes = await getCustomerDesign(
-//                     productId,
-//                     selectedMockup._id,
-//                 );
-//                 if (designRes.success && designRes.data) {
-//                     const updateRes = await saveCustomerDesign({
-//                         productId,
-//                         mockupId: selectedMockup._id,
-//                         layers: normalized,
-//                     });
-//                     if (updateRes.success) {
-//                         designId = designRes.data._id;
-//                         setShowConfirmModal(false);
-//                         toast.success("Design updated successfully!");
-//                     } else {
-//                         toast.error("Design update failed");
-//                         setSaving(false);
-//                         return;
-//                     }
-//                 } else {
-//                     const createRes = await saveCustomerDesign({
-//                         productId,
-//                         mockupId: selectedMockup._id,
-//                         layers: normalized,
-//                     });
-//                     if (createRes.success) {
-//                         designId = createRes.data?._id;
-//                         setShowConfirmModal(false);
-//                         toast.success("Design saved successfully!");
-//                     } else {
-//                         toast.error("Save failed");
-//                         setSaving(false);
-//                         return;
-//                     }
-//                 }
-//             } else {
-//                 const res = await saveCustomerDesign({
-//                     productId,
-//                     mockupId: selectedMockup._id,
-//                     layers: normalized,
-//                 });
-//                 if (res.success) {
-//                     designId = res.data?._id;
-//                     setShowConfirmModal(false);
-//                     toast.success("Design saved successfully!");
-//                 } else {
-//                     toast.error("Save failed");
-//                     setSaving(false);
-//                     return;
-//                 }
-//             }
-
-//             if (designId) {
-//                 const imageFile = await captureFinalDesign(designContainerRef);
-//                 if (imageFile) {
-//                     await uploadFinalImage(designId, imageFile);
-//                 } else {
-//                     toast.warn(
-//                         "Could not generate final image, but design saved.",
-//                     );
-//                 }
-//             }
-
-//             if (designId) {
-//                 navigate(`/user/design-variants/${productId}`, {
-//                     state: {
-//                         product,
-//                         selectedMockup,
-//                         customerLayers,
-//                         adminLayers,
-//                         customerDesignId: designId,
-//                         isEditing,
-//                         existingCustomProduct: isEditing
-//                             ? existingCustomProduct
-//                             : null,
-//                     },
-//                 });
-//             }
-//         } catch (error) {
-//             console.error("Error in handleNext:", error);
-//             toast.error("Something went wrong");
-//         } finally {
-//             setSaving(false);
-//         }
-//     };
-
-//     const handleAlignHorizontal = (align) => {
-//         if (selectedLayerIndex === null) return;
-//         const layer = customerLayers[selectedLayerIndex];
-//         if (!layer) return;
-//         let newX;
-//         if (align === "left") newX = 0;
-//         else if (align === "center") newX = 50 - toNumber(layer.width, 30) / 2;
-//         else newX = 100 - toNumber(layer.width, 30);
-//         updateLayerLocalAndMaybeServer(
-//             selectedLayerIndex,
-//             {
-//                 positionX: round2(newX),
-//                 horizontalAlign: align,
-//             },
-//             true,
-//         );
-//     };
-
-//     const handleAlignVertical = (align) => {
-//         if (selectedLayerIndex === null) return;
-//         const layer = customerLayers[selectedLayerIndex];
-//         if (!layer) return;
-//         let newY;
-//         if (align === "top") newY = 0;
-//         else if (align === "middle") newY = 50 - toNumber(layer.height, 30) / 2;
-//         else newY = 100 - toNumber(layer.height, 30);
-//         updateLayerLocalAndMaybeServer(
-//             selectedLayerIndex,
-//             {
-//                 positionY: round2(newY),
-//                 verticalAlign: align,
-//             },
-//             true,
-//         );
-//     };
-
-//     const handleLayerPropertiesChange = (updates) => {
-//         if (selectedLayerIndex === null) return;
-//         updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
-//     };
-
-//     const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
-//         if (!file) return;
-//         try {
-//             setSaving(true);
-//             const uploadRes = await uploadCustomerImage(file);
-//             if (!uploadRes.success) throw new Error(uploadRes.message);
-//             const { imageUrl, publicId } = uploadRes.data;
-
-//             // Get full print area data to inherit perspective settings
-//             const fullPrintArea = adminLayers.find(pa => pa._id === printAreaLayer._id);
-
-//             const newLayer = {
-//                 printArea: printAreaLayer._id,
-//                 imageUrl,
-//                 publicId,
-//                 positionX: printAreaLayer.x_percent || 20,
-//                 positionY: printAreaLayer.y_percent || 20,
-//                 width: printAreaLayer.width_percent || 30,
-//                 height: printAreaLayer.height_percent || 30,
-//                 rotation: 0,
-//                 opacity: 1,
-//                 visible: true,
-//                 zIndex: customerLayers.length + 1,
-//                 locked: false,
-//                 horizontalAlign: "center",
-//                 verticalAlign: "middle",
-//                 // Inherit perspective settings from admin print area
-//                 enablePerspective: fullPrintArea?.enablePerspective || false,
-//                 corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
-//                     ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-//                     : undefined,
-//                 fit: fullPrintArea?.fit || "cover",
-//             };
-//             setCustomerLayers((prev) => [...prev, normalizeLayer(newLayer)]);
-//             setSelectedLayerIndex(customerLayers.length);
-//             setTimeout(() => setRenderKey((k) => k + 1), 10);
-//             toast.success("Image uploaded");
-//         } catch (e) {
-//             console.error("upload err", e);
-//             toast.error("Upload failed");
-//         } finally {
-//             setSaving(false);
-//         }
-//     };
-
-//     const handleImageFromModal = (image) => {
-//         const defaultPrintArea = selectedPrintArea || adminLayers[0];
-//         if (!defaultPrintArea) {
-//             toast.error("No print area found");
-//             return;
-//         }
-
-//         // Get full print area data to inherit perspective settings
-//         const fullPrintArea = adminLayers.find(pa => pa._id === defaultPrintArea._id);
-
-//         const newLayerData = {
-//             printArea: defaultPrintArea._id,
-//             imageUrl: image.url,
-//             publicId: image.id || null,
-//             positionX: defaultPrintArea.x_percent || 20,
-//             positionY: defaultPrintArea.y_percent || 20,
-//             width: defaultPrintArea.width_percent || 30,
-//             height: defaultPrintArea.height_percent || 30,
-//             rotation: defaultPrintArea.rotation || 0,
-//             opacity: defaultPrintArea.opacity || 1,
-//             visible: true,
-//             zIndex: customerLayers.length + 1,
-//             locked: false,
-//             horizontalAlign: "center",
-//             verticalAlign: "middle",
-//             // Inherit perspective settings from admin print area
-//             enablePerspective: fullPrintArea?.enablePerspective || false,
-//             corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
-//                 ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-//                 : undefined,
-//             fit: fullPrintArea?.fit || "cover",
-//         };
-//         setCustomerLayers((prev) => [...prev, normalizeLayer(newLayerData)]);
-//         setSelectedLayerIndex(customerLayers.length);
-//         setOpenMockupModal(false);
-//         setTimeout(() => setRenderKey((k) => k + 1), 10);
-//     };
-
-//     const handleRemoveLayer = async (index) => {
-//         const layer = customerLayers[index];
-//         if (layer && layer._id) {
-//             try {
-//                 await deleteCustomerLayer(layer._id);
-//             } catch (e) {
-//                 console.error("delete err", e);
-//             }
-//         }
-//         setCustomerLayers((prev) => prev.filter((_, i) => i !== index));
-//         setSelectedLayerIndex(null);
-//         setTimeout(() => setRenderKey((k) => k + 1), 10);
-//     };
-
-//     if (loading)
-//         return (
-//             <div className="min-h-screen flex items-center justify-center">
-//                 Loading product...
-//             </div>
-//         );
-//     if (!product)
-//         return (
-//             <div className="min-h-screen flex items-center justify-center">
-//                 Product not found
-//             </div>
-//         );
-
-//     return (
-//         <div className="min-h-screen bg-[#f8fafc] py-6 px-4 md:px-8 font-sans">
-//             <div className="max-w-7xl mx-auto">
-//                 <div className="flex items-center justify-between mb-6">
-//                     <button
-//                         onClick={() => navigate(-1)}
-//                         className="text-sm font-medium text-gray-500 hover:text-[#f05a28] transition-colors"
-//                     >
-//                         Back to Products
-//                     </button>
-//                     {startDesigning && (
-//                         <div className="flex items-center gap-2">
-//                             <div className="flex items-center gap-2">
-//                                 <button
-//                                     onClick={handleOpenModal}
-//                                     disabled={saving || isCheckingExisting}
-//                                     className={`px-5 py-2 text-white text-sm font-semibold transition disabled:opacity-50 cursor-pointer ${
-//                                         isEditing
-//                                             ? "bg-blue-600 hover:bg-blue-700"
-//                                             : "bg-[#f05a28] hover:bg-[#d94d24]"
-//                                     }`}
-//                                 >
-//                                     {saving
-//                                         ? isEditing
-//                                             ? "Updating..."
-//                                             : "Saving..."
-//                                         : isEditing
-//                                             ? "Update & Next"
-//                                             : "Save & Next"}
-//                                 </button>
-//                             </div>
-//                         </div>
-//                     )}
-//                 </div>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-//                     <div className="lg:col-span-8">
-//                         <div className="relative bg-white shadow-xl border border-gray-200 overflow-hidden">
-//                             <div
-//                                 onClick={() => setSelectedLayerIndex(null)}
-//                                 ref={designContainerRef}
-//                                 className="aspect-square relative"
-//                             >
-//                                 <img
-//                                     src={
-//                                         selectedMockup?.mockupImage?.url ||
-//                                         product?.thumbnail?.url ||
-//                                         image
-//                                     }
-//                                     alt={product?.productTitle}
-//                                     className="w-full h-full object-cover"
-//                                 />
-
-//                                 {/* Admin Image Layers (Mask, Overlays) */}
-//                                 {alladminLayers
-//                                     .filter(
-//                                         (layer) =>
-//                                             layer.type === "image" &&
-//                                             layer.visible !== false,
-//                                     )
-//                                     .sort(
-//                                         (a, b) =>
-//                                             (a.zIndex || 0) - (b.zIndex || 0),
-//                                     )
-//                                     .map((imageLayer) => (
-//                                         <div
-//                                             key={imageLayer._id}
-//                                             className="absolute pointer-events-none"
-//                                             style={{
-//                                                 left: `${imageLayer.x_percent || 0}%`,
-//                                                 top: `${imageLayer.y_percent || 0}%`,
-//                                                 width: `${imageLayer.width_percent || 100}%`,
-//                                                 height: `${imageLayer.height_percent || 100}%`,
-//                                                 transform: `rotate(${imageLayer.rotation || 0}deg)`,
-//                                                 opacity:
-//                                                     imageLayer.opacity ?? 1,
-//                                                 zIndex: 5,
-//                                             }}
-//                                         >
-//                                             <img
-//                                                 src={imageLayer.src}
-//                                                 alt=""
-//                                                 className="w-full h-full object-contain"
-//                                                 style={{
-//                                                     transform: `scaleX(${imageLayer.flipX ? -1 : 1}) scaleY(${imageLayer.flipY ? -1 : 1})`,
-//                                                 }}
-//                                             />
-//                                         </div>
-//                                     ))}
-
-//                                 {startDesigning &&
-//                                     adminLayers.map((printAreaLayer) => {
-//                                         const areaLayers =
-//                                             customerLayers.filter(
-//                                                 (l) =>
-//                                                     (l.printArea?._id ||
-//                                                         l.printArea) ===
-//                                                     printAreaLayer._id,
-//                                             );
-//                                         return (
-//                                             <div
-//                                                 key={printAreaLayer._id}
-//                                                 ref={(el) => {
-//                                                     if (el)
-//                                                         containerRefs.current[
-//                                                             printAreaLayer._id
-//                                                         ] = el;
-//                                                 }}
-//                                                 className="absolute print-area-border border-2 border-dashed border-[#f05a28] bg-white/10"
-//                                                 style={{
-//                                                     left: `${printAreaLayer.x_percent || 20}%`,
-//                                                     top: `${printAreaLayer.y_percent || 20}%`,
-//                                                     width: `${printAreaLayer.width_percent || 30}%`,
-//                                                     height: `${printAreaLayer.height_percent || 30}%`,
-//                                                     overflow: "hidden",
-//                                                     boxShadow:
-//                                                         "0 8px 24px rgba(0,0,0,0.08)",
-//                                                 }}
-//                                             >
-//                                                 {isLoadingDesign ? (
-//                                                     <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-50">
-//                                                         <Loader2
-//                                                             className="animate-spin text-[#f05a28]"
-//                                                             size={40}
-//                                                         />
-//                                                     </div>
-//                                                 ) : (
-//                                                     areaLayers.map((layer) => {
-//                                                         const globalIndex =
-//                                                             customerLayers.findIndex(
-//                                                                 (l) =>
-//                                                                     (l._id
-//                                                                         ? String(
-//                                                                               l._id,
-//                                                                           )
-//                                                                         : null) ===
-//                                                                     (layer._id
-//                                                                         ? String(
-//                                                                               layer._id,
-//                                                                           )
-//                                                                         : null),
-//                                                             );
-//                                                         if (globalIndex === -1)
-//                                                             return null;
-//                                                         const pixelValues =
-//                                                             getPixelValues(
-//                                                                 printAreaLayer._id,
-//                                                                 layer,
-//                                                             );
-//                                                         return (
-//                                                             <Rnd
-//                                                                 dragAxis="both"
-//                                                                 key={`${layer._id || globalIndex}-${renderKey}`}
-//                                                                 size={{
-//                                                                     width: pixelValues.width,
-//                                                                     height: pixelValues.height,
-//                                                                 }}
-//                                                                 position={{
-//                                                                     x: pixelValues.x,
-//                                                                     y: pixelValues.y,
-//                                                                 }}
-//                                                                 disableDragging={layer.locked}
-//                                                                 enableResizing={!layer.locked}
-//                                                                 lockAspectRatio={
-//                                                                     isShiftPressed
-//                                                                         ? getLayerAspectRatio(
-//                                                                               layer,
-//                                                                           )
-//                                                                         : false
-//                                                                 }
-//                                                                 onDragStart={() =>
-//                                                                     handleDragStart(
-//                                                                         globalIndex,
-//                                                                     )
-//                                                                 }
-//                                                                 onDragStop={(
-//                                                                     e,
-//                                                                     d,
-//                                                                 ) =>
-//                                                                     handleDragStop(
-//                                                                         printAreaLayer._id,
-//                                                                         globalIndex,
-//                                                                         d,
-//                                                                     )
-//                                                                 }
-//                                                                 onResizeStop={(
-//                                                                     e,
-//                                                                     dir,
-//                                                                     ref,
-//                                                                     delta,
-//                                                                     pos,
-//                                                                 ) =>
-//                                                                     handleResizeStop(
-//                                                                         printAreaLayer._id,
-//                                                                         globalIndex,
-//                                                                         ref,
-//                                                                         pos,
-//                                                                     )
-//                                                                 }
-//                                                                 onMouseDown={() =>
-//                                                                     setSelectedLayerIndex(
-//                                                                         globalIndex,
-//                                                                     )
-//                                                                 }
-//                                                                 scale={1}
-//                                                                 style={{
-//                                                                     zIndex:
-//                                                                         layer.zIndex ||
-//                                                                         1,
-//                                                                     display:
-//                                                                         "flex",
-//                                                                     alignItems:
-//                                                                         "center",
-//                                                                     justifyContent:
-//                                                                         "center",
-//                                                                 }}
-//                                                             >
-//                                                                 <div
-//                                                                     onClick={(
-//                                                                         e,
-//                                                                     ) =>
-//                                                                         e.stopPropagation()
-//                                                                     }
-//                                                                     className={`relative group w-full h-full overflow-hidden ${
-//                                                                         selectedLayerIndex ===
-//                                                                         globalIndex
-//                                                                             ? "ring-2 ring-blue-500 ring-inset"
-//                                                                             : ""
-//                                                                     }`}
-//                                                                 >
-//                                                                     {layer.enablePerspective &&
-//                                                                     layer.corners ? (
-//                                                                         (() => {
-//                                                                             const printArea =
-//                                                                                 adminLayers.find(
-//                                                                                     (
-//                                                                                         pa,
-//                                                                                     ) =>
-//                                                                                         pa._id ===
-//                                                                                         (layer
-//                                                                                             .printArea
-//                                                                                             ?._id ||
-//                                                                                             layer.printArea),
-//                                                                                 );
-//                                                                             const adminWidth =
-//                                                                                 printArea?.width ||
-//                                                                                 500;
-//                                                                             const adminHeight =
-//                                                                                 printArea?.height ||
-//                                                                                 500;
-
-//                                                                             const scaleX =
-//                                                                                 pixelValues.width /
-//                                                                                 adminWidth;
-//                                                                             const scaleY =
-//                                                                                 pixelValues.height /
-//                                                                                 adminHeight;
-//                                                                             const scaledCorners =
-//                                                                                 layer.corners.map(
-//                                                                                     (
-//                                                                                         c,
-//                                                                                     ) => ({
-//                                                                                         x:
-//                                                                                             c.x *
-//                                                                                             scaleX,
-//                                                                                         y:
-//                                                                                             c.y *
-//                                                                                             scaleY,
-//                                                                                     }),
-//                                                                                 );
-
-//                                                                             return (
-//                                                                                 <div
-//                                                                                     style={{
-//                                                                                         width: "100%",
-//                                                                                         height: "100%",
-//                                                                                         position:
-//                                                                                             "relative",
-//                                                                                     }}
-//                                                                                 >
-//                                                                                     <ThreeWarpedImage
-//                                                                                         key={`${layer._id}-${pixelValues.width}x${pixelValues.height}`}
-//                                                                                         src={
-//                                                                                             layer.imageUrl
-//                                                                                         }
-//                                                                                         corners={
-//                                                                                             scaledCorners
-//                                                                                         }
-//                                                                                         width={
-//                                                                                             pixelValues.width
-//                                                                                         }
-//                                                                                         height={
-//                                                                                             pixelValues.height
-//                                                                                         }
-//                                                                                         fit={
-//                                                                                             layer.fit ||
-//                                                                                             "cover"
-//                                                                                         }
-//                                                                                     />
-//                                                                                 </div>
-//                                                                             );
-//                                                                         })()
-//                                                                     ) : (
-//                                                                         <img
-//                                                                             src={
-//                                                                                 layer?.imageUrl
-//                                                                             }
-//                                                                             alt=""
-//                                                                             className="w-full h-full object-cover pointer-events-none"
-//                                                                             style={{
-//                                                                                 transform: `rotate(${layer.rotation || 0}deg)`,
-//                                                                                 opacity:
-//                                                                                     layer.opacity ??
-//                                                                                     1,
-//                                                                             }}
-//                                                                         />
-//                                                                     )}
-
-//                                                                     {selectedLayerIndex ===
-//                                                                         globalIndex && (
-//                                                                         <button
-//                                                                             onClick={(
-//                                                                                 e,
-//                                                                             ) => {
-//                                                                                 e.stopPropagation();
-//                                                                                 handleRemoveLayer(
-//                                                                                     globalIndex,
-//                                                                                 );
-//                                                                             }}
-//                                                                             className="absolute -top-0 -right-0 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100 z-10 cursor-pointer shadow-lg"
-//                                                                         >
-//                                                                             <X
-//                                                                                 size={
-//                                                                                     14
-//                                                                                 }
-//                                                                             />
-//                                                                         </button>
-//                                                                     )}
-//                                                                 </div>
-//                                                             </Rnd>
-//                                                         );
-//                                                     })
-//                                                 )}
-//                                             </div>
-//                                         );
-//                                     })}
-//                             </div>
-//                         </div>
-//                     </div>
-
-//                     <div className="lg:col-span-4 lg:sticky lg:top-6 self-start">
-//                         <div className="bg-white border border-gray-200 shadow-xl overflow-hidden">
-//                             <div className="p-4 border-b border-gray-200 flex justify-between">
-//                                 <h3 className="text-[15px] font-black text-gray-900">
-//                                     Design Studio
-//                                 </h3>
-//                                 <div
-//                                     style={{
-//                                         display: startDesigning
-//                                             ? "none"
-//                                             : "block",
-//                                     }}
-//                                     onClick={() => setStartDesigning(true)}
-//                                     className="px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition cursor-pointer rounded-md"
-//                                 >
-//                                     Start Designing
-//                                 </div>
-//                             </div>
-
-//                             <div className="p-4 space-y-4">
-//                                 {!startDesigning ? (
-//                                     <>
-//                                         <div className="bg-gray-50 border border-gray-200 p-4">
-//                                             <h1 className="text-xl font-black text-gray-900 leading-snug truncate">
-//                                                 {product?.productTitle ||
-//                                                     product?.title}
-//                                             </h1>
-//                                             <p className="text-gray-500 text-sm mt-2 line-clamp-2">
-//                                                 {stripHtml(
-//                                                     product?.description,
-//                                                 ) || "No description available"}
-//                                             </p>
-//                                             <div className="flex items-center justify-between mt-4">
-//                                                 <div className="text-xl font-black text-gray-900">
-//                                                     $
-//                                                     {product?.Variants?.[0]
-//                                                         ?.basePrice || "0.00"}
-//                                                 </div>
-//                                                 <span className="text-[11px] font-bold text-emerald-700">
-//                                                     Ready to design
-//                                                 </span>
-//                                             </div>
-//                                         </div>
-
-//                                         <div className="grid grid-cols-2 gap-2">
-//                                             <button className="px-4 py-3 border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition">
-//                                                 Product
-//                                             </button>
-//                                             <button
-//                                                 onClick={() =>
-//                                                     setStartDesigning(true)
-//                                                 }
-//                                                 className="cursor-pointer px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition rounded-l-sm"
-//                                             >
-//                                                 Design
-//                                             </button>
-//                                         </div>
-
-//                                         <div className="border border-gray-200 p-4">
-//                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
-//                                                 Available Colors (
-//                                                 {displayColors.length})
-//                                             </h4>
-//                                             <div className="grid grid-cols-2 gap-2 mb-4">
-//                                                 {displayColors.map((c, i) => (
-//                                                     <div
-//                                                         key={i}
-//                                                         className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-2 py-2"
-//                                                     >
-//                                                         <div
-//                                                             className="w-5 h-5 rounded border border-gray-200"
-//                                                             style={{
-//                                                                 backgroundColor:
-//                                                                     c.hex,
-//                                                             }}
-//                                                         ></div>
-//                                                         <span className="truncate capitalize">
-//                                                             {c.name}
-//                                                         </span>
-//                                                     </div>
-//                                                 ))}
-//                                                 {displayColors.length === 0 && (
-//                                                     <div className="col-span-2 text-center text-gray-400 text-xs py-2">
-//                                                         No colors available
-//                                                     </div>
-//                                                 )}
-//                                             </div>
-
-//                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
-//                                                 Available Sizes (
-//                                                 {displaySizes.length})
-//                                             </h4>
-//                                             <div className="flex flex-wrap gap-2">
-//                                                 {displaySizes.map((size, i) => (
-//                                                     <div
-//                                                         key={i}
-//                                                         className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded"
-//                                                     >
-//                                                         {size}
-//                                                     </div>
-//                                                 ))}
-//                                                 {displaySizes.length === 0 && (
-//                                                     <div className="text-center text-gray-400 text-xs py-2 w-full">
-//                                                         No sizes available
-//                                                     </div>
-//                                                 )}
-//                                             </div>
-//                                         </div>
-//                                     </>
-//                                 ) : (
-//                                     <>
-//                                         <div className="border border-gray-200 bg-white p-3">
-//                                             <div className="flex items-center justify-between mb-3">
-//                                                 <h3 className="text-sm font-semibold text-gray-800">
-//                                                     Layers{" "}
-//                                                     <span className="text-xs text-gray-400">
-//                                                         ({customerLayers.length}
-//                                                         )
-//                                                     </span>
-//                                                 </h3>
-//                                             </div>
-//                                             <div className="space-y-2">
-//                                                 {customerLayers.length > 0 ? (
-//                                                     customerLayers.map(
-//                                                         (layer, index) => (
-//                                                             <div
-//                                                                 key={
-//                                                                     layer._id ||
-//                                                                     index
-//                                                                 }
-//                                                                 onClick={() =>
-//                                                                     setSelectedLayerIndex(
-//                                                                         index,
-//                                                                     )
-//                                                                 }
-//                                                                 className={`group flex items-center justify-between p-2 border transition-all cursor-pointer ${
-//                                                                     selectedLayerIndex ===
-//                                                                     index
-//                                                                         ? "border-[#f05a28] bg-[#fff7f3]"
-//                                                                         : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50"
-//                                                                 }`}
-//                                                             >
-//                                                                 <div className="flex items-center gap-3 min-w-0">
-//                                                                     <div className="w-10 h-10 overflow-hidden bg-gray-100 flex-shrink-0">
-//                                                                         <img
-//                                                                             src={
-//                                                                                 layer?.imageUrl
-//                                                                             }
-//                                                                             alt=""
-//                                                                             className="w-full h-full object-cover"
-//                                                                         />
-//                                                                     </div>
-//                                                                     <div className="min-w-0">
-//                                                                         <div className="text-sm font-medium text-gray-800 truncate">
-//                                                                             Layer{" "}
-//                                                                             {index +
-//                                                                                 1}
-//                                                                         </div>
-//                                                                         <div className="text-[11px] text-gray-500">
-//                                                                             {Math.round(
-//                                                                                 layer.width ||
-//                                                                                     0,
-//                                                                             )}
-//                                                                             % ×{" "}
-//                                                                             {Math.round(
-//                                                                                 layer.height ||
-//                                                                                     0,
-//                                                                             )}
-//                                                                             %
-//                                                                         </div>
-//                                                                     </div>
-//                                                                 </div>
-//                                                                 <div className="flex items-center gap-1">
-//                                                                     <button
-//                                                                         onClick={(
-//                                                                             e,
-//                                                                         ) => {
-//                                                                             e.stopPropagation();
-//                                                                             handleDuplicateLayer(
-//                                                                                 index,
-//                                                                             );
-//                                                                         }}
-//                                                                         className="cursor-pointer p-1.5 text-green-600 hover:bg-green-50 transition"
-//                                                                         title="Duplicate"
-//                                                                     >
-//                                                                         <Copy
-//                                                                             size={
-//                                                                                 14
-//                                                                             }
-//                                                                         />
-//                                                                     </button>
-//                                                                     <button
-//                                                                         onClick={(
-//                                                                             e,
-//                                                                         ) => {
-//                                                                             e.stopPropagation();
-//                                                                             handleToggleLock(
-//                                                                                 index,
-//                                                                             );
-//                                                                         }}
-//                                                                         className="cursor-pointer p-1.5 text-amber-600 hover:bg-amber-50 transition"
-//                                                                         title={
-//                                                                             layer.locked
-//                                                                                 ? "Unlock"
-//                                                                                 : "Lock"
-//                                                                         }
-//                                                                     >
-//                                                                         {layer.locked ? (
-//                                                                             <Unlock
-//                                                                                 size={
-//                                                                                     14
-//                                                                                 }
-//                                                                             />
-//                                                                         ) : (
-//                                                                             <Lock
-//                                                                                 size={
-//                                                                                     14
-//                                                                                 }
-//                                                                             />
-//                                                                         )}
-//                                                                     </button>
-//                                                                     <button
-//                                                                         onClick={(
-//                                                                             e,
-//                                                                         ) => {
-//                                                                             e.stopPropagation();
-//                                                                             handleRemoveLayer(
-//                                                                                 index,
-//                                                                             );
-//                                                                         }}
-//                                                                         className="cursor-pointer p-1.5 text-red-600 hover:bg-red-50 transition"
-//                                                                         title="Delete"
-//                                                                     >
-//                                                                         <Trash2
-//                                                                             size={
-//                                                                                 14
-//                                                                             }
-//                                                                         />
-//                                                                     </button>
-//                                                                 </div>
-//                                                             </div>
-//                                                         ),
-//                                                     )
-//                                                 ) : (
-//                                                     <div className="text-center py-6 text-gray-400 text-sm">
-//                                                         No layers added yet
-//                                                     </div>
-//                                                 )}
-//                                             </div>
-//                                         </div>
-
-//                                         {selectedLayerIndex !== null &&
-//                                             customerLayers[
-//                                                 selectedLayerIndex
-//                                             ] && (
-//                                                 <div className="border border-gray-200 bg-white p-3">
-//                                                     <div className="flex items-center justify-between mb-3">
-//                                                         <h3 className="text-sm font-semibold text-gray-800">
-//                                                             Properties
-//                                                         </h3>
-//                                                         <span className="text-[11px] text-gray-400">
-//                                                             Selected Layer
-//                                                         </span>
-//                                                     </div>
-//                                                     <div className="space-y-3">
-//                                                         <LayerProperties
-//                                                             layer={
-//                                                                 customerLayers[
-//                                                                     selectedLayerIndex
-//                                                                 ]
-//                                                             }
-//                                                             onChange={
-//                                                                 handleLayerPropertiesChange
-//                                                             }
-//                                                             onAlignHorizontal={
-//                                                                 handleAlignHorizontal
-//                                                             }
-//                                                             onAlignVertical={
-//                                                                 handleAlignVertical
-//                                                             }
-//                                                         />
-//                                                         <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-//                                                             <button
-//                                                                 onClick={() =>
-//                                                                     handleDuplicateLayer(
-//                                                                         selectedLayerIndex,
-//                                                                     )
-//                                                                 }
-//                                                                 className="flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
-//                                                             >
-//                                                                 <Copy
-//                                                                     size={14}
-//                                                                 />
-//                                                                 Duplicate
-//                                                             </button>
-//                                                             <button
-//                                                                 onClick={() =>
-//                                                                     handleToggleLock(
-//                                                                         selectedLayerIndex,
-//                                                                     )
-//                                                                 }
-//                                                                 className="flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
-//                                                             >
-//                                                                 {customerLayers[
-//                                                                     selectedLayerIndex
-//                                                                 ]?.locked ? (
-//                                                                     <Unlock
-//                                                                         size={
-//                                                                             14
-//                                                                         }
-//                                                                     />
-//                                                                 ) : (
-//                                                                     <Lock
-//                                                                         size={
-//                                                                             14
-//                                                                         }
-//                                                                     />
-//                                                                 )}
-//                                                                 {customerLayers[
-//                                                                     selectedLayerIndex
-//                                                                 ]?.locked
-//                                                                     ? "Unlock"
-//                                                                     : "Lock"}
-//                                                             </button>
-//                                                             <button
-//                                                                 onClick={() =>
-//                                                                     handleRemoveLayer(
-//                                                                         selectedLayerIndex,
-//                                                                     )
-//                                                                 }
-//                                                                 className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-red-500 text-white text-sm font-semibold hover:bg-red-600 cursor-pointer"
-//                                                             >
-//                                                                 <Trash2
-//                                                                     size={14}
-//                                                                 />
-//                                                                 Delete Layer
-//                                                             </button>
-//                                                         </div>
-//                                                     </div>
-//                                                 </div>
-//                                             )}
-
-//                                         <button
-//                                             onClick={() => {
-//                                                 if (!adminLayers.length) {
-//                                                     toast.info(
-//                                                         "No print area available",
-//                                                     );
-//                                                     return;
-//                                                 }
-//                                                 setOpenMockupModal(true);
-//                                             }}
-//                                             className="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 font-medium hover:border-[#f05a28] hover:text-[#f05a28] transition-colors cursor-pointer rounded"
-//                                         >
-//                                             Add Image from Library
-//                                         </button>
-//                                     </>
-//                                 )}
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-
-//                 <AddMockup
-//                     open={openMockupModal}
-//                     onClose={() => setOpenMockupModal(false)}
-//                     productId={product?._id || productId}
-//                     onImageSelect={handleImageFromModal}
-//                 />
-
-//                 <ConfirmDesignModal
-//                     open={showConfirmModal}
-//                     onClose={() => setShowConfirmModal(false)}
-//                     onConfirm={handleNext}
-//                     saving={saving}
-//                 />
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default Editor;
-
-// ============================================================================================
 
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import image from "../assets/image/dummy.jpg";
-import { X, Loader2, Copy, Lock, Unlock, Trash2 } from "lucide-react";
+import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
 import LayerProperties from "../components/Admin/LayerProperties";
@@ -1508,6 +14,7 @@ import {
     getCustomerDesign,
     deleteCustomerLayer,
     updateCustomerLayer,
+    updateDesignMockupImages,
 } from "../api/customerDesign.api";
 import AddMockup from "../components/Admin/AddMockup";
 import { Rnd } from "react-rnd";
@@ -1518,10 +25,7 @@ import {
     getCustomProductByUserId,
     updateCustomProduct,
 } from "../api/customerProduct.api";
-import {
-    captureFinalDesign,
-    uploadFinalImage,
-} from "../api/customerDesign.api";
+import { captureFinalDesign } from "../api/customerDesign.api";
 
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 const toNumber = (v, fallback = 0) => {
@@ -1538,7 +42,7 @@ const normalizeLayer = (layer) => {
     const positionX = toNumber(layer.positionX, 0);
     const positionY = toNumber(layer.positionY, 0);
 
-    const normalized = {
+    return {
         ...layer,
         width: round2(width),
         height: round2(height),
@@ -1547,14 +51,6 @@ const normalizeLayer = (layer) => {
         rotation: round2(toNumber(layer.rotation, 0)),
         opacity: clamp(round2(toNumber(layer.opacity, 1)), 0, 1),
     };
-
-
-    // 🔥 YAHI MAIN FIX HAI
-    // if (normalized._id && String(normalized._id).startsWith("temp_")) {
-    //     delete normalized._id;
-    // }
-
-    return normalized;
 };
 
 const getLayerAspectRatio = (layer) => {
@@ -1576,21 +72,21 @@ const Editor = () => {
     const location = useLocation();
     const productFromState = location.state?.product;
 
-    // states
+    // ─── States ────────────────────────────────────
     const [isShiftPressed, setIsShiftPressed] = useState(false);
     const [product, setProduct] = useState(productFromState || null);
     const [loading, setLoading] = useState(!productFromState);
     const [startDesigning, setStartDesigning] = useState(false);
     const [openMockupModal, setOpenMockupModal] = useState(false);
-    const [adminLayers, setAdminLayers] = useState([]);
-    const [alladminLayers, setAllAdminLayers] = useState([]);
+    const [adminLayers, setAdminLayers] = useState([]); // print areas of current mockup
+    const [alladminLayers, setAllAdminLayers] = useState([]); // all layers of current mockup (bg + pa)
+    const [allproductMockupsAdminLayers, setAllProductMockupsAdminLayers] = useState({}); // full map
     const [customerLayers, setCustomerLayers] = useState([]);
-    const [selectedMockup, setSelectedMockup] = useState(null);
+    const [selectedMockup, setSelectedMockup] = useState(null); // full object
+    const [allProductMockups, setAllProductMockups] = useState([]);
     const [selectedPrintArea, setSelectedPrintArea] = useState(null);
     const [saving, setSaving] = useState(false);
     const [selectedLayerIndex, setSelectedLayerIndex] = useState(null);
-    const [windowSize, setWindowSize] = useState(0);
-    const [renderKey, setRenderKey] = useState(0);
     const [isLoadingDesign, setIsLoadingDesign] = useState(false);
     const [hasSavedDesign, setHasSavedDesign] = useState(false);
     const [containersReady, setContainersReady] = useState(false);
@@ -1599,20 +95,15 @@ const Editor = () => {
     const [existingCustomProduct, setExistingCustomProduct] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isCheckingExisting, setIsCheckingExisting] = useState(false);
+    const [isPreviewActive, setIsPreviewActive] = useState(false);
+    const [windowSize, setWindowSize] = useState(0);
 
     const containerRefs = useRef({});
     const designContainerRef = useRef(null);
 
-    const colors = [
-        { name: "Black", class: "bg-black" },
-        { name: "White", class: "bg-white border" },
-        { name: "Dark Heather", class: "bg-gray-700" },
-        { name: "Sports Grey", class: "bg-gray-400" },
-        { name: "Light Blue", class: "bg-blue-400" },
-        { name: "Azalea Pink", class: "bg-pink-400" },
-    ];
-
+    // ─── Derived data ─────────────────────────────
     const activeProduct = existingCustomProduct?.baseProduct || product;
+    const currentMockupIndex = allProductMockups.findIndex(m => m._id === selectedMockup?._id);
 
     const productColors =
         activeProduct?.Variants?.reduce((acc, variant) => {
@@ -1652,46 +143,38 @@ const Editor = () => {
     const displayColors = productColors.length > 0 ? productColors : [];
     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
 
-    // Keyboard listeners for Shift key and arrow keys movement
+    // ═══════════════════════════════════════════════
+    // Effects
+    // ═══════════════════════════════════════════════
+
+    // Keyboard
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "Shift") setIsShiftPressed(true);
-
-            // Arrow key movement for selected layer
             if (
                 selectedLayerIndex !== null &&
                 customerLayers[selectedLayerIndex] &&
                 !customerLayers[selectedLayerIndex].locked
             ) {
-                const step = e.shiftKey ? 5 : 1; // 5% with shift, else 1%
-                let dx = 0,
-                    dy = 0;
+                const step = e.shiftKey ? 5 : 1;
+                let dx = 0, dy = 0;
                 if (e.key === "ArrowLeft") dx = -step;
                 else if (e.key === "ArrowRight") dx = step;
                 else if (e.key === "ArrowUp") dy = -step;
                 else if (e.key === "ArrowDown") dy = step;
-
                 if (dx !== 0 || dy !== 0) {
-                    e.preventDefault(); // prevent page scrolling
+                    e.preventDefault();
                     const layer = customerLayers[selectedLayerIndex];
                     const newX = clamp(layer.positionX + dx, -50, 150);
                     const newY = clamp(layer.positionY + dy, -50, 150);
-                    updateLayerLocalAndMaybeServer(
-                        selectedLayerIndex,
-                        {
-                            positionX: round2(newX),
-                            positionY: round2(newY),
-                        },
-                        true,
-                    );
+                    updateLayerLocalAndMaybeServer(selectedLayerIndex, {
+                        positionX: round2(newX),
+                        positionY: round2(newY),
+                    }, true);
                 }
             }
         };
-
-        const handleKeyUp = (e) => {
-            if (e.key === "Shift") setIsShiftPressed(false);
-        };
-
+        const handleKeyUp = (e) => { if (e.key === "Shift") setIsShiftPressed(false); };
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
         return () => {
@@ -1716,10 +199,7 @@ const Editor = () => {
                     if (existing) {
                         setExistingCustomProduct(existing);
                         setIsEditing(true);
-                        const designRes = await getCustomerDesign(
-                            productId,
-                            selectedMockup._id,
-                        );
+                        const designRes = await getCustomerDesign(productId, selectedMockup._id);
                         if (designRes.success && designRes.data) {
                             setCustomerLayers(designRes.data.layers || []);
                             setCustomerDesignId(designRes.data._id);
@@ -1739,12 +219,7 @@ const Editor = () => {
         checkExistingDesign();
     }, [productId, selectedMockup]);
 
-    useEffect(() => {
-        const handleResize = () => setWindowSize((w) => w + 1);
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
+    // Fetch product & mockups
     useEffect(() => {
         const fetchProduct = async () => {
             if (!product && productId) {
@@ -1752,7 +227,10 @@ const Editor = () => {
                     setLoading(true);
                     const res = await getProductById(productId);
                     setProduct(res);
-                    if (res.mockupIds?.length > 0) setSelectedMockup(res.mockupIds[0]);
+                    if (res.mockupIds?.length > 0) {
+                        setAllProductMockups(res.mockupIds.map(m => m));
+                        setSelectedMockup(res.mockupIds[0]);
+                    }
                 } catch (err) {
                     console.error(err);
                 } finally {
@@ -1763,30 +241,46 @@ const Editor = () => {
         fetchProduct();
     }, [productId, product]);
 
+    // Fetch ALL mockup layers (map)
     useEffect(() => {
-        const fetchAdmin = async () => {
-            if (product?._id && selectedMockup?._id) {
-                try {
-                    const res = await getLayersByProductId(
-                        product._id,
-                        selectedMockup._id,
-                    );
-                    if (res.data) {
-                        const areas = res.data.filter((l) => l.type === "printarea");
-                        setAdminLayers(areas);
-                        setAllAdminLayers(res.data);
+        const fetchAllMockupLayers = async () => {
+            if (product?._id && allProductMockups.length > 0) {
+                const allLayersMap = {};
+                for (const mockup of allProductMockups) {
+                    try {
+                        const res = await getLayersByProductId(product._id, mockup._id);
+                        if (res.data) {
+                            allLayersMap[mockup._id] = {
+                                all: res.data,
+                                printAreas: res.data.filter(l => l.type === "printarea"),
+                            };
+                        }
+                    } catch (e) {
+                        console.error(`Layers for mockup ${mockup._id}:`, e);
                     }
-                } catch (e) {
-                    console.error("admin layers:", e);
                 }
+                setAllProductMockupsAdminLayers(allLayersMap);
             }
         };
-        fetchAdmin();
-    }, [product?._id, selectedMockup]);
+        fetchAllMockupLayers();
+    }, [product?._id, allProductMockups]);
 
+    // When selected mockup changes, load admin layers from map
+    useEffect(() => {
+        if (selectedMockup?._id && allproductMockupsAdminLayers[selectedMockup._id]) {
+            const data = allproductMockupsAdminLayers[selectedMockup._id];
+            setAdminLayers(data.printAreas);
+            setAllAdminLayers(data.all);
+        } else {
+            setAdminLayers([]);
+            setAllAdminLayers([]);
+        }
+    }, [selectedMockup, allproductMockupsAdminLayers]);
+
+    // Customer design fetch (only if not preview active)
     useEffect(() => {
         const fetchCustomerDesign = async () => {
-            if (productId && selectedMockup?._id) {
+            if (productId && selectedMockup?._id && !isPreviewActive) {
                 setIsLoadingDesign(true);
                 try {
                     const res = await getCustomerDesign(productId, selectedMockup._id);
@@ -1803,7 +297,6 @@ const Editor = () => {
                             opacity: Number(layer.opacity) || 1,
                         }));
                         setCustomerLayers(loadedLayers);
-                        setTimeout(() => setRenderKey((prev) => prev + 1), 100);
                     }
                 } catch (error) {
                     console.error("Error loading design:", error);
@@ -1813,17 +306,79 @@ const Editor = () => {
             }
         };
         fetchCustomerDesign();
-    }, [productId, selectedMockup]);
+    }, [productId, selectedMockup, isPreviewActive]);
+
+    // Containers ready
+    useEffect(() => {
+        if (!startDesigning || adminLayers.length === 0) return;
+        const timer = setTimeout(() => setContainersReady(true), 200);
+        return () => clearTimeout(timer);
+    }, [startDesigning, adminLayers]);
+
+    useEffect(() => {
+        const handleResize = () => setWindowSize((w) => w + 1);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // ═══════════════════════════════════════════════
+    // Helpers & Handlers
+    // ═══════════════════════════════════════════════
+
+
+    // Syncs a new layer to all other mockups of the same product
+    const syncNewLayerToAllMockups = async (newLayer, sourcePrintArea) => {
+        if (allProductMockups.length <= 1) return;
+        if (!sourcePrintArea?.name) {
+            console.warn("Cannot sync – print area has no name");
+            return;
+        }
+        const sourceName = sourcePrintArea.name;
+
+        for (const mockup of allProductMockups) {
+            if (mockup._id === selectedMockup._id) continue;
+            const targetData = allproductMockupsAdminLayers[mockup._id];
+            if (!targetData) continue;
+            const targetPrintAreas = targetData.printAreas || [];
+            const targetPA = targetPrintAreas.find(pa => pa.name === sourceName);
+            if (!targetPA) {
+                console.warn(`No matching print area "${sourceName}" on mockup ${mockup._id}`);
+                continue;
+            }
+
+            // Clean manyek layer (remove temporary IDs)
+            const { _id, clientKey, ...cleanLayer } = newLayer;
+            const targetLayer = {
+                ...cleanLayer,
+                printArea: targetPA._id,
+                corners: targetPA.corners || cleanLayer.corners || [],
+            };
+
+            // Fetch existing design for this mockup and append the layer
+            try {
+                const designRes = await getCustomerDesign(productId, mockup._id);
+                const existingLayers = designRes.success && designRes.data?.layers
+                    ? designRes.data.layers
+                    : [];
+                await saveCustomerDesign({
+                    productId,
+                    mockupId: mockup._id,
+                    layers: [...existingLayers, targetLayer],
+                });
+            } catch (err) {
+                console.error(`Failed to sync layer to mockup ${mockup._id}`, err);
+            }
+        }
+        toast.success("Layer synced to all mockups");
+    };
 
     const getPixelValues = (printAreaId, layer) => {
         const container = containerRefs.current[printAreaId];
-        if (!container)
-            return { x: 0, y: 0, width: 100, height: 100, scaleFactor: 1 };
+        if (!container) return { x: 0, y: 0, width: 100, height: 100, scaleFactor: 1 };
         const rect = container.getBoundingClientRect();
         const cw = rect.width || 300;
         const ch = rect.height || 300;
         const safe = normalizeLayer(layer);
-
         return {
             x: (safe.positionX / 100) * cw,
             y: (safe.positionY / 100) * ch,
@@ -1833,30 +388,18 @@ const Editor = () => {
         };
     };
 
-    useEffect(() => {
-        if (!startDesigning || adminLayers.length === 0) return;
-        const timer = setTimeout(() => setContainersReady(true), 200);
-        return () => clearTimeout(timer);
-    }, [startDesigning, adminLayers]);
-
-    const updateLayerLocalAndMaybeServer = (
-        index,
-        updates,
-        callServer = true,
-    ) => {
+    const updateLayerLocalAndMaybeServer = (index, updates, callServer = true) => {
         setCustomerLayers((prev) => {
             const updated = [...prev];
             updated[index] = { ...updated[index], ...updates };
             if (callServer && hasSavedDesign && updated[index]._id) {
-                const payload = { ...updated[index] };
-                updateCustomerLayer(updated[index]._id, payload).catch((err) => {
+                updateCustomerLayer(updated[index]._id, { ...updated[index] }).catch((err) => {
                     console.error("update layer failed", err);
                     toast.error("Unable to update layer on server");
                 });
             }
             return updated;
         });
-        // setTimeout(() => setRenderKey((k) => k + 1), 5);
     };
 
     const handleDragStart = (layerIndex) => setSelectedLayerIndex(layerIndex);
@@ -1869,14 +412,10 @@ const Editor = () => {
         if (!layer) return;
         let newXPercent = (d.x / rect.width) * 100;
         let newYPercent = (d.y / rect.height) * 100;
-        updateLayerLocalAndMaybeServer(
-            layerIndex,
-            {
-                positionX: round2(newXPercent),
-                positionY: round2(newYPercent),
-            },
-            true,
-        );
+        updateLayerLocalAndMaybeServer(layerIndex, {
+            positionX: round2(newXPercent),
+            positionY: round2(newYPercent),
+        }, true);
     };
 
     const handleResizeStop = (printAreaId, layerIndex, ref, position) => {
@@ -1887,60 +426,412 @@ const Editor = () => {
         const heightPercent = (parseFloat(ref.style.height) / rect.height) * 100;
         const posX = (position.x / rect.width) * 100;
         const posY = (position.y / rect.height) * 100;
+        updateLayerLocalAndMaybeServer(layerIndex, {
+            width: round2(widthPercent),
+            height: round2(heightPercent),
+            positionX: round2(posX),
+            positionY: round2(posY),
+        }, true);
+    };
+
+    const handleDuplicateLayer = (index) => {
+        setCustomerLayers(prev => {
+            const original = prev[index];
+            const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+            const duplicated = {
+                ...original,
+                _id: undefined,
+                positionX: (original.positionX || 0) + 5,
+                positionY: (original.positionY || 0) + 5,
+                zIndex: maxZ + 1,
+            };
+            const updated = [...prev, normalizeLayer(duplicated)];
+            setSelectedLayerIndex(updated.length - 1);
+            return updated;
+        });
+    };
+
+    const handleToggleLock = (index) => {
+        setCustomerLayers((prev) => layerHelpers.toggleLayerLock(prev, index));
+    };
+
+    // ═══════════════════════════════════════════════
+    // Layer upload / add
+    // ═══════════════════════════════════════════════
+
+    // const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
+    //     if (!file) return;
+    //     try {
+    //         setSaving(true);
+    //         const uploadRes = await uploadCustomerImage(file);
+    //         if (!uploadRes.success) throw new Error(uploadRes.message);
+    //         const { imageUrl, publicId } = uploadRes.data;
+    //         const fullPrintArea = adminLayers.find(pa => pa._id === printAreaLayer._id);
+    //         setCustomerLayers(prev => {
+    //             const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+    //             const newLayer = {
+    //                 printArea: printAreaLayer._id,
+    //                 imageUrl,
+    //                 publicId,
+    //                 positionX: 0,
+    //                 positionY: 0,
+    //                 width: 100,
+    //                 height: 100,
+    //                 rotation: 0,
+    //                 opacity: 1,
+    //                 visible: true,
+    //                 zIndex: maxZ + 1,
+    //                 locked: false,
+    //                 horizontalAlign: "center",
+    //                 verticalAlign: "middle",
+    //                 enablePerspective: fullPrintArea?.enablePerspective || false,
+    //                 corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+    //                     ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+    //                     : undefined,
+    //                 fit: fullPrintArea?.fit || "cover",
+    //             };
+    //             const updated = [...prev, normalizeLayer(newLayer)];
+    //             setSelectedLayerIndex(updated.length - 1);
+    //             return updated;
+    //         });
+    //         toast.success("Image uploaded");
+
+    //     } catch (e) {
+    //         console.error("upload err", e);
+    //         toast.error("Upload failed");
+    //     } finally {
+    //         setSaving(false);
+    //     }
+    // };
+
+    const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
+        if (!file) return;
+        try {
+            setSaving(true);
+            const uploadRes = await uploadCustomerImage(file);
+            if (!uploadRes.success) throw new Error(uploadRes.message);
+            const { imageUrl, publicId } = uploadRes.data;
+            const fullPrintArea = adminLayers.find(pa => pa._id === printAreaLayer._id);
+
+            const newLayer = {
+                printArea: printAreaLayer._id,
+                imageUrl,
+                publicId,
+                positionX: 0,
+                positionY: 0,
+                width: 100,
+                height: 100,
+                rotation: 0,
+                opacity: 1,
+                visible: true,
+                zIndex: customerLayers.length + 1,
+                locked: false,
+                horizontalAlign: "center",
+                verticalAlign: "middle",
+                enablePerspective: fullPrintArea?.enablePerspective || false,
+                corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+                    ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+                    : undefined,
+                fit: fullPrintArea?.fit || "cover",
+            };
+
+            setCustomerLayers(prev => {
+                const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+                const layerWithZ = { ...newLayer, zIndex: maxZ + 1 };
+                const updated = [...prev, normalizeLayer(layerWithZ)];
+                setSelectedLayerIndex(updated.length - 1);
+                return updated;
+            });
+
+            toast.success("Image uploaded");
+
+            // ✅ Sync to other mockups IF design already saved
+            if (hasSavedDesign) {
+                syncNewLayerToAllMockups(newLayer, fullPrintArea);
+            }
+        } catch (e) {
+            console.error("upload err", e);
+            toast.error("Upload failed");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAddTextLayer = () => {
+        const defaultPrintArea = selectedPrintArea || adminLayers[0];
+            if (!defaultPrintArea) {
+                toast.error("Koi print area mojood nahi hai");
+                return;
+            }
+
+        const newLayer = {
+            printArea: defaultPrintArea._id,
+            type: "text",
+            text: "New Text",
+            fontSize: 30,
+            fontFamily: "Arial",
+            fontWeight: "normal",
+            fill: "#000000",
+            positionX: 15,
+            positionY: 15,
+            width: 50,
+            height: 30,
+            rotation: 0,
+            opacity: 1,
+            visible: true,
+            zIndex: customerLayers.length + 1,
+            locked: false,
+            horizontalAlign: "center",
+            verticalAlign: "middle",
+            enablePerspective: false,
+            align: "center",
+            lineHeight: 1.2,
+        };
+
+        setCustomerLayers(prev => {
+            const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+            const updated = [...prev, normalizeLayer({ ...newLayer, zIndex: maxZ + 1 })];
+            setSelectedLayerIndex(updated.length - 1);
+            return updated;
+        });
+
+        // ✅ Sync if design exists
+        if (hasSavedDesign) {
+            syncNewLayerToAllMockups(newLayer, defaultPrintArea);
+        }
+    };
+
+    // const handleAddTextLayer = () => {
+    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
+    //     if (!defaultPrintArea) {
+    //         toast.error("Koi print area mojood nahi hai");
+    //         return;
+    //     }
+    //     setCustomerLayers(prev => {
+    //         const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+    //         const newTextLayer = {
+    //             printArea: defaultPrintArea._id,
+    //             type: "text",
+    //             text: "New Text",
+    //             fontSize: 30,
+    //             fontFamily: "Arial",
+    //             fontWeight: "normal",
+    //             fill: "#000000",
+    //             positionX: 15,
+    //             positionY: 15,
+    //             width: 50,
+    //             height: 30,
+    //             rotation: 0,
+    //             opacity: 1,
+    //             visible: true,
+    //             zIndex: maxZ + 1,
+    //             locked: false,
+    //             horizontalAlign: "center",
+    //             verticalAlign: "middle",
+    //             enablePerspective: false,
+    //             align: "center",
+    //             lineHeight: 1.2,
+    //         };
+    //         const updated = [...prev, normalizeLayer(newTextLayer)];
+    //         setSelectedLayerIndex(updated.length - 1);
+    //         return updated;
+    //     });
+    // };
+
+    const handleImageFromModal = (image) => {
+        const defaultPrintArea = selectedPrintArea || adminLayers[0];
+        if (!defaultPrintArea) {
+            toast.error("No print area found");
+            return;
+        }
+        const fullPrintArea = adminLayers.find(pa => pa._id === defaultPrintArea._id);
+
+        const newLayer = {
+            printArea: defaultPrintArea._id,
+            imageUrl: image.url,
+            publicId: image.id || null,
+            positionX: 0,
+            positionY: 0,
+            width: 100,
+            height: 100,
+            rotation: defaultPrintArea.rotation || 0,
+            opacity: 1,
+            visible: true,
+            zIndex: customerLayers.length + 1,
+            locked: false,
+            horizontalAlign: "center",
+            verticalAlign: "middle",
+            enablePerspective: fullPrintArea?.enablePerspective || false,
+            corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+                ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+                : undefined,
+            fit: fullPrintArea?.fit || "cover",
+        };
+
+        setCustomerLayers(prev => {
+            const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+            const updated = [...prev, normalizeLayer({ ...newLayer, zIndex: maxZ + 1 })];
+            setSelectedLayerIndex(updated.length - 1);
+            return updated;
+        });
+        setOpenMockupModal(false);
+
+        // ✅ Sync if design exists
+        if (hasSavedDesign) {
+            syncNewLayerToAllMockups(newLayer, fullPrintArea);
+        }
+    };
+
+    // const handleImageFromModal = (image) => {
+    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
+    //     if (!defaultPrintArea) {
+    //         toast.error("No print area found");
+    //         return;
+    //     }
+    //     const fullPrintArea = adminLayers.find(pa => pa._id === defaultPrintArea._id);
+    //     setCustomerLayers(prev => {
+    //         const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+    //         const newLayer = {
+    //             printArea: defaultPrintArea._id,
+    //             imageUrl: image.url,
+    //             publicId: image.id || null,
+    //             positionX: 0,
+    //             positionY: 0,
+    //             width: 100,
+    //             height: 100,
+    //             rotation: defaultPrintArea.rotation || 0,
+    //             opacity: 1,
+    //             visible: true,
+    //             zIndex: maxZ + 1,
+    //             locked: false,
+    //             horizontalAlign: "center",
+    //             verticalAlign: "middle",
+    //             enablePerspective: fullPrintArea?.enablePerspective || false,
+    //             corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
+    //                 ? JSON.parse(JSON.stringify(fullPrintArea.corners))
+    //                 : undefined,
+    //             fit: fullPrintArea?.fit || "cover",
+    //         };
+    //         const updated = [...prev, normalizeLayer(newLayer)];
+    //         setSelectedLayerIndex(updated.length - 1);
+    //         return updated;
+    //     });
+    //     setOpenMockupModal(false);
+    // };
+
+    const handleRemoveLayer = async (index) => {
+        const layer = customerLayers[index];
+        if (layer && layer._id) {
+            try {
+                await deleteCustomerLayer(layer._id);
+            } catch (e) {
+                console.error("delete err", e);
+            }
+        }
+        setCustomerLayers((prev) => prev.filter((_, i) => i !== index));
+        setSelectedLayerIndex(null);
+    };
+
+    const handleAlignHorizontal = (align) => {
+        if (selectedLayerIndex === null) return;
+        const layer = customerLayers[selectedLayerIndex];
+        if (!layer) return;
+        let newX;
+        if (align === "left") newX = 0;
+        else if (align === "center") newX = 50 - toNumber(layer.width, 100) / 2;
+        else newX = 100 - toNumber(layer.width, 100);
         updateLayerLocalAndMaybeServer(
-            layerIndex,
-            {
-                width: round2(widthPercent),
-                height: round2(heightPercent),
-                positionX: round2(posX),
-                positionY: round2(posY),
-            },
+            selectedLayerIndex,
+            { positionX: round2(newX), horizontalAlign: align },
             true,
         );
     };
 
-    // const handleDuplicateLayer = (index) => {
-    //     const updated = layerHelpers.duplicateLayer(customerLayers, index);
-    //     setCustomerLayers(updated.map((l) => normalizeLayer(l)));
-    //     setSelectedLayerIndex(updated.length - 1);
-    //     setRenderKey((k) => k + 1);
-    // };
-
-
-    const handleDuplicateLayer = (index) => {
-        const originalLayer = customerLayers[index];
-        const clientKey = `dup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        const duplicatedLayer = {
-            ...originalLayer,
-            clientKey,                           // ✅ unique clientKey
-            _id: undefined,                      // backend new ID assign karega
-            positionX: (originalLayer.positionX || 0) + 5,
-            positionY: (originalLayer.positionY || 0) + 5,
-            zIndex: customerLayers.length + 1,
-        };
-
-        setCustomerLayers(prev => [...prev, normalizeLayer(duplicatedLayer)]);
-        setSelectedLayerIndex(customerLayers.length);
-        // setRenderKey(k => k + 1);  // optional rakh sakte ho, lekin zaroori nahi
+    const handleAlignVertical = (align) => {
+        if (selectedLayerIndex === null) return;
+        const layer = customerLayers[selectedLayerIndex];
+        if (!layer) return;
+        let newY;
+        if (align === "top") newY = 0;
+        else if (align === "middle") newY = 50 - toNumber(layer.height, 100) / 2;
+        else newY = 100 - toNumber(layer.height, 100);
+        updateLayerLocalAndMaybeServer(
+            selectedLayerIndex,
+            { positionY: round2(newY), verticalAlign: align },
+            true,
+        );
+    };
+    const handleLayerPropertiesChange = (updates) => {
+        if (selectedLayerIndex === null) return;
+        updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
     };
 
-    const handleToggleLock = (index) => {
-        setCustomerLayers((prev) => {
-            const updated = layerHelpers.toggleLayerLock(prev, index);
-            return updated;
-        });
-        setTimeout(() => setRenderKey((k) => k + 1), 10);
+    // ═══════════════════════════════════════════════
+    // Mockup Navigation & Preview
+    // ═══════════════════════════════════════════════
+
+    const mapLayersToMockup = (layers, sourceMockupId, targetMockupId) => {
+        const sourceData = allproductMockupsAdminLayers[sourceMockupId];
+        const targetData = allproductMockupsAdminLayers[targetMockupId];
+        if (!sourceData || !targetData) return [];
+
+        const sourcePrintAreas = sourceData.printAreas || [];
+        const targetPrintAreas = targetData.printAreas || [];
+
+        return layers
+            .map(layer => {
+                const sourcePA = sourcePrintAreas.find(
+                    pa => pa._id === (layer.printArea?._id || layer.printArea)
+                );
+                if (!sourcePA) return null;
+
+                const targetPA = targetPrintAreas.find(pa => pa.name === sourcePA.name);
+                if (!targetPA) return null;
+
+                return {
+                    ...layer,
+                    _id: undefined,
+                    printArea: targetPA._id,
+                    corners: targetPA.corners || layer.corners, // keep original corners (scaling handles rest)
+                };
+            })
+            .filter(Boolean);
     };
+
+    const switchMockup = (targetMockup, preview = true) => {
+        const currentLayers = customerLayers;
+        setSelectedMockup(targetMockup);
+        if (preview && currentLayers.length > 0) {
+            const previewLayers = mapLayersToMockup(currentLayers, selectedMockup?._id, targetMockup._id);
+            setCustomerLayers(previewLayers);
+            setIsPreviewActive(true);
+            setTimeout(() => setIsPreviewActive(false), 500);
+        } else {
+            setCustomerLayers([]);
+            setIsPreviewActive(false);
+        }
+    };
+
+    const handleNextMockup = () => {
+        if (currentMockupIndex < allProductMockups.length - 1) {
+            switchMockup(allProductMockups[currentMockupIndex + 1]);
+        }
+    };
+
+    const handlePrevMockup = () => {
+        if (currentMockupIndex > 0) {
+            switchMockup(allProductMockups[currentMockupIndex - 1]);
+        }
+    };
+
+    // ═══════════════════════════════════════════════
+    // Save & Next (Multiple Mockup Capture)
+    // ═══════════════════════════════════════════════
 
     const handleSave = async () => {
         try {
             setSaving(true);
             const normalized = customerLayers.map((l) => normalizeLayer(l));
-            // const normalized = customerLayers.map(l => {
-            //     const { clientKey, ...cleanLayer } = normalizeLayer(l);
-            //     return cleanLayer;
-            // });
             let res;
             let designId = null;
             if (isEditing && existingCustomProduct?._id) {
@@ -1989,7 +880,6 @@ const Editor = () => {
                             }),
                         );
                         setCustomerLayers(loaded);
-                        setRenderKey((k) => k + 1);
                     }
                 } catch (e) {
                     console.error("fetch fresh after save", e);
@@ -2025,442 +915,126 @@ const Editor = () => {
         }
     };
 
-    const handleOpenModal = () => setShowConfirmModal(true);
-
     const handleNext = async () => {
         try {
             setSaving(true);
-            const normalized = customerLayers.map((l) => normalizeLayer(l));
-            let designId = null;
+            const normalized = customerLayers.map(l => normalizeLayer(l));
 
-            if (isEditing && existingCustomProduct?._id) {
-                const designRes = await getCustomerDesign(
-                    productId,
-                    selectedMockup._id,
-                );
-                if (designRes.success && designRes.data) {
-                    const updateRes = await saveCustomerDesign({
+            // Step 1: Save current design to DB (get master design ID)
+            const saveRes = await saveCustomerDesign({
+                productId,
+                mockupId: selectedMockup._id,
+                layers: normalized,
+            });
+            if (!saveRes.success) throw new Error('Failed to save design');
+            const masterDesignId = saveRes.data?._id;
+            if (!masterDesignId) throw new Error('No design ID returned');
+
+            // Step 2: For all mockups, ensure design exists (create if missing)
+            for (const mockup of allProductMockups) {
+                if (mockup._id === selectedMockup._id) continue;
+                const existing = await getCustomerDesign(productId, mockup._id);
+                if (!existing.success || !existing.data) {
+                    // Map current layers to this mockup
+                    const mappedLayers = mapLayersToMockup(normalized, selectedMockup._id, mockup._id);
+                    await saveCustomerDesign({
                         productId,
-                        mockupId: selectedMockup._id,
-                        layers: normalized,
+                        mockupId: mockup._id,
+                        layers: mappedLayers,
                     });
-                    if (updateRes.success) {
-                        designId = designRes.data._id;
-                        setShowConfirmModal(false);
-                        toast.success("Design updated successfully!");
-                    } else {
-                        toast.error("Design update failed");
-                        setSaving(false);
-                        return;
-                    }
-                } else {
-                    const createRes = await saveCustomerDesign({
-                        productId,
-                        mockupId: selectedMockup._id,
-                        layers: normalized,
-                    });
-                    if (createRes.success) {
-                        designId = createRes.data?._id;
-                        setShowConfirmModal(false);
-                        toast.success("Design saved successfully!");
-                    } else {
-                        toast.error("Save failed");
-                        setSaving(false);
-                        return;
-                    }
-                }
-            } else {
-                const res = await saveCustomerDesign({
-                    productId,
-                    mockupId: selectedMockup._id,
-                    layers: normalized,
-                });
-                if (res.success) {
-                    designId = res.data?._id;
-                    setShowConfirmModal(false);
-                    toast.success("Design saved successfully!");
-                } else {
-                    toast.error("Save failed");
-                    setSaving(false);
-                    return;
                 }
             }
 
-            if (designId) {
+            // Step 3: Capture & upload images for each mockup
+            const originalMockup = selectedMockup;
+            const uploadedImages = [];
+
+            for (const mockup of allProductMockups) {
+                // Switch UI to this mockup (with correct layers)
+                if (mockup._id !== selectedMockup?._id) {
+                    // Load admin layers for this mockup from map
+                    const data = allproductMockupsAdminLayers[mockup._id];
+                    if (data) {
+                        setAdminLayers(data.printAreas);
+                        setAllAdminLayers(data.all);
+                    }
+                    // Set customer layers: either from saved design or mapped preview
+                    const designRes = await getCustomerDesign(productId, mockup._id);
+                    if (designRes.success && designRes.data) {
+                        setCustomerLayers(designRes.data.layers);
+                    } else {
+                        const mapped = mapLayersToMockup(normalized, originalMockup._id, mockup._id);
+                        setCustomerLayers(mapped);
+                    }
+                    setSelectedMockup(mockup);
+                    // Wait for render
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+
+                // Capture
                 const imageFile = await captureFinalDesign(designContainerRef);
                 if (imageFile) {
-                    await uploadFinalImage(designId, imageFile);
-                } else {
-                    toast.warn("Could not generate final image, but design saved.");
+                    const uploadRes = await uploadCustomerImage(imageFile);
+                    if (uploadRes.success) {
+                        uploadedImages.push({
+                            mockupId: mockup._id,
+                            imageUrl: uploadRes.data.imageUrl,
+                            publicId: uploadRes.data.publicId,
+                        });
+                    }
                 }
             }
 
-            if (designId) {
-                navigate(`/user/design-variants/${productId}`, {
-                    state: {
-                        product,
-                        selectedMockup,
-                        customerLayers,
-                        adminLayers,
-                        customerDesignId: designId,
-                        isEditing,
-                        existingCustomProduct: isEditing ? existingCustomProduct : null,
-                    },
-                });
+            // Restore original mockup
+            setSelectedMockup(originalMockup);
+            const origData = allproductMockupsAdminLayers[originalMockup._id];
+            if (origData) {
+                setAdminLayers(origData.printAreas);
+                setAllAdminLayers(origData.all);
             }
-        } catch (error) {
-            console.error("Error in handleNext:", error);
-            toast.error("Something went wrong");
-        } finally {
-            setSaving(false);
-        }
-    };
+            setCustomerLayers(normalized);
 
-    const handleAlignHorizontal = (align) => {
-        if (selectedLayerIndex === null) return;
-        const layer = customerLayers[selectedLayerIndex];
-        if (!layer) return;
-        let newX;
-        if (align === "left") newX = 0;
-        else if (align === "center") newX = 50 - toNumber(layer.width, 100) / 2;
-        else newX = 100 - toNumber(layer.width, 100);
-        updateLayerLocalAndMaybeServer(
-            selectedLayerIndex,
-            { positionX: round2(newX), horizontalAlign: align },
-            true,
-        );
-    };
+            // Step 4: Update master design's finalDesignImages
+            if (uploadedImages.length > 0) {
+                await updateDesignMockupImages(masterDesignId, uploadedImages);
+            }
 
-    const handleAlignVertical = (align) => {
-        if (selectedLayerIndex === null) return;
-        const layer = customerLayers[selectedLayerIndex];
-        if (!layer) return;
-        let newY;
-        if (align === "top") newY = 0;
-        else if (align === "middle") newY = 50 - toNumber(layer.height, 100) / 2;
-        else newY = 100 - toNumber(layer.height, 100);
-        updateLayerLocalAndMaybeServer(
-            selectedLayerIndex,
-            { positionY: round2(newY), verticalAlign: align },
-            true,
-        );
-    };
-
-    const handleLayerPropertiesChange = (updates) => {
-        if (selectedLayerIndex === null) return;
-        updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
-    };
-
-    // const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
-    //     if (!file) return;
-    //     try {
-    //         setSaving(true);
-    //         const uploadRes = await uploadCustomerImage(file);
-    //         if (!uploadRes.success) throw new Error(uploadRes.message);
-    //         const { imageUrl, publicId } = uploadRes.data;
-
-    //         const fullPrintArea = adminLayers.find(
-    //             (pa) => pa._id === printAreaLayer._id,
-    //         );
-
-    //         const newLayer = {
-    //             printArea: printAreaLayer._id,
-    //             imageUrl,
-    //             publicId,
-    //             positionX: 0,
-    //             positionY: 0,
-    //             width: 100, // default full size of print area
-    //             height: 100,
-    //             rotation: 0,
-    //             opacity: 1,
-    //             visible: true,
-    //             zIndex: customerLayers.length + 1,
-    //             locked: false,
-    //             horizontalAlign: "center",
-    //             verticalAlign: "middle",
-    //             enablePerspective: fullPrintArea?.enablePerspective || false,
-    //             corners:
-    //                 fullPrintArea?.enablePerspective && fullPrintArea.corners
-    //                     ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-    //                     : undefined,
-    //             fit: fullPrintArea?.fit || "cover",
-    //         };
-    //         setCustomerLayers((prev) => [...prev, normalizeLayer(newLayer)]);
-    //         setSelectedLayerIndex(customerLayers.length);
-    //         setTimeout(() => setRenderKey((k) => k + 1), 10);
-    //         toast.success("Image uploaded");
-    //     } catch (e) {
-    //         console.error("upload err", e);
-    //         toast.error("Upload failed");
-    //     } finally {
-    //         setSaving(false);
-    //     }
-    // };
-
-    const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
-        if (!file) return;
-        try {
-            setSaving(true);
-            const uploadRes = await uploadCustomerImage(file);
-            if (!uploadRes.success) throw new Error(uploadRes.message);
-            const { imageUrl, publicId } = uploadRes.data;
-
-            const fullPrintArea = adminLayers.find(
-                (pa) => pa._id === printAreaLayer._id,
-            );
-
-            // ✅ Temporary unique ID
-            const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-            const newLayer = {
-                clientKey,                     // ✅ temporary ID
-                printArea: printAreaLayer._id,
-                imageUrl,
-                publicId,
-                positionX: 0,
-                positionY: 0,
-                width: 100,
-                height: 100,
-                rotation: 0,
-                opacity: 1,
-                visible: true,
-                zIndex: customerLayers.length + 1,
-                locked: false,
-                horizontalAlign: "center",
-                verticalAlign: "middle",
-                enablePerspective: fullPrintArea?.enablePerspective || false,
-                corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
-                    ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-                    : undefined,
-                fit: fullPrintArea?.fit || "cover",
-            };
-
-            setCustomerLayers(prev => {
-                const updated = [...prev, normalizeLayer(newLayer)];
-                setSelectedLayerIndex(updated.length - 1);
-                return updated;
+            toast.success(`Design saved with ${uploadedImages.length} mockup images!`);
+            setShowConfirmModal(false);
+            navigate(`/user/design-variants/${productId}`, {
+                state: {
+                    product,
+                    selectedMockup,
+                    customerLayers,
+                    adminLayers,
+                    customerDesignId: masterDesignId,
+                    isEditing,
+                    existingCustomProduct: isEditing ? existingCustomProduct : null,
+                },
             });
 
-            setRenderKey(k => k + 1);
-            toast.success("Image uploaded");
-        } catch (e) {
-            console.error("upload err", e);
-            toast.error("Upload failed");
+        } catch (error) {
+            console.error("Error in handleNext:", error);
+            toast.error("Something went wrong: " + error.message);
         } finally {
             setSaving(false);
         }
     };
 
-    const jawad = "jawad"
+    const handleOpenModal = () => setShowConfirmModal(true);
 
-    // Yeh function naya text layer banata hai
-    // const handleAddTextLayer = () => {
-    //     // Agar koi print area select nahi hai toh pehla wala le lo
-    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
-    //     if (!defaultPrintArea) {
-    //         toast.error("Koi print area mojood nahi hai");
-    //         return;
-    //     }
+    // ═══════════════════════════════════════════════
+    // Render
+    // ═══════════════════════════════════════════════
 
-    //     // Naye layer ka data
-    //     const newTextLayer = {
-    //         printArea: defaultPrintArea._id,
-    //         type: "text", // Yeh batata hai ke yeh text hai, image nahi
-    //         text: "New Text", // Default text jo start mein show hoga
-    //         fontSize: 30, // Font ka size
-    //         fontFamily: "Arial", // Font family
-    //         fontWeight: "normal", // Bold ya normal
-    //         fill: "#000000", // Text ka color (kala)
-    //         positionX: 15, // Canvas par X position (%)
-    //         positionY: 15, // Canvas par Y position (%)
-    //         width: 50, // Width percentage
-    //         height: 30, // Height percentage
-    //         rotation: 0, // Rotation angle
-    //         opacity: 1, // Full visible
-    //         visible: true,
-    //         zIndex: customerLayers.length + 1, // Sab se upar dikhe
-    //         locked: false, // Locked nahi hai
-    //         horizontalAlign: "center",
-    //         verticalAlign: "middle",
-    //         enablePerspective: false, // Text par perspective apply nahi karna
-    //         align: "center", // Text alignment
-    //         lineHeight: 1.2,
-    //     };
-
-    //     // Customer layers ki list mein naya layer add karo
-    //     setCustomerLayers((prev) => [...prev, normalizeLayer(newTextLayer)]);
-    //     // Naye layer ko select kar lo
-    //     setSelectedLayerIndex(customerLayers.length);
-    //     // Canvas ko refresh karo
-    //     setTimeout(() => setRenderKey((k) => k + 1), 10);
-    // };
-
-    const handleAddTextLayer = () => {
-        const defaultPrintArea = selectedPrintArea || adminLayers[0];
-        if (!defaultPrintArea) {
-            toast.error("Koi print area mojood nahi hai");
-            return;
-        }
-
-        // ✅ Temporary unique ID generate karo
-        const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        const newTextLayer = {
-            clientKey,                         // ✅ temporary ID
-            printArea: defaultPrintArea._id,
-            type: "text",
-            text: "New Text",
-            fontSize: 30,
-            fontFamily: "Arial",
-            fontWeight: "normal",
-            fill: "#000000",
-            positionX: 15,
-            positionY: 15,
-            width: 50,
-            height: 30,
-            rotation: 0,
-            opacity: 1,
-            visible: true,
-            zIndex: customerLayers.length + 1,
-            locked: false,
-            horizontalAlign: "center",
-            verticalAlign: "middle",
-            enablePerspective: false,
-            align: "center",
-            lineHeight: 1.2,
-        };
-
-        // ✅ Functional update se naya array lo aur index sahi set karo
-        setCustomerLayers(prev => {
-            const updated = [...prev, normalizeLayer(newTextLayer)];
-            setSelectedLayerIndex(updated.length - 1);
-            return updated;
-        });
-
-        setRenderKey(k => k + 1);
-    };
-
-    // const handleImageFromModal = (image) => {
-    //     const defaultPrintArea = selectedPrintArea || adminLayers[0];
-    //     if (!defaultPrintArea) {
-    //         toast.error("No print area found");
-    //         return;
-    //     }
-
-    //     const fullPrintArea = adminLayers.find(
-    //         (pa) => pa._id === defaultPrintArea._id,
-    //     );
-
-    //     const newLayerData = {
-    //         printArea: defaultPrintArea._id,
-    //         imageUrl: image.url,
-    //         publicId: image.id || null,
-    //         positionX: 0,
-    //         positionY: 0,
-    //         width: 100,
-    //         height: 100,
-    //         rotation: defaultPrintArea.rotation || 0,
-    //         opacity: defaultPrintArea.opacity || 1,
-    //         visible: true,
-    //         zIndex: customerLayers.length + 1,
-    //         locked: false,
-    //         horizontalAlign: "center",
-    //         verticalAlign: "middle",
-    //         enablePerspective: fullPrintArea?.enablePerspective || false,
-    //         corners:
-    //             fullPrintArea?.enablePerspective && fullPrintArea.corners
-    //                 ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-    //                 : undefined,
-    //         fit: fullPrintArea?.fit || "cover",
-    //     };
-    //     setCustomerLayers((prev) => [...prev, normalizeLayer(newLayerData)]);
-    //     setSelectedLayerIndex(customerLayers.length);
-    //     setOpenMockupModal(false);
-    //     setTimeout(() => setRenderKey((k) => k + 1), 10);
-    // };
-
-    const handleImageFromModal = (image) => {
-        const defaultPrintArea = selectedPrintArea || adminLayers[0];
-        if (!defaultPrintArea) {
-            toast.error("No print area found");
-            return;
-        }
-
-        const fullPrintArea = adminLayers.find(
-            (pa) => pa._id === defaultPrintArea._id,
-        );
-
-        // ✅ Temporary unique ID
-        const clientKey = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        const newLayerData = {
-            clientKey,                         // ✅ temporary ID
-            printArea: defaultPrintArea._id,
-            imageUrl: image.url,
-            publicId: image.id || null,
-            positionX: 0,
-            positionY: 0,
-            width: 100,
-            height: 100,
-            rotation: defaultPrintArea.rotation || 0,
-            opacity: defaultPrintArea.opacity || 1,
-            visible: true,
-            zIndex: customerLayers.length + 1,
-            locked: false,
-            horizontalAlign: "center",
-            verticalAlign: "middle",
-            enablePerspective: fullPrintArea?.enablePerspective || false,
-            corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
-                ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-                : undefined,
-            fit: fullPrintArea?.fit || "cover",
-        };
-
-        setCustomerLayers(prev => {
-            const updated = [...prev, normalizeLayer(newLayerData)];
-            setSelectedLayerIndex(updated.length - 1);
-            return updated;
-        });
-
-        setOpenMockupModal(false);
-        setRenderKey(k => k + 1);
-    };
-
-    const handleRemoveLayer = async (index) => {
-        const layer = customerLayers[index];
-        if (layer && layer._id) {
-            try {
-                await deleteCustomerLayer(layer._id);
-            } catch (e) {
-                console.error("delete err", e);
-            }
-        }
-        setCustomerLayers((prev) => prev.filter((_, i) => i !== index));
-        setSelectedLayerIndex(null);
-        // setTimeout(() => setRenderKey((k) => k + 1), 10);
-    };
-
-    if (loading)
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                Loading product...
-            </div>
-        );
-    if (!product)
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                Product not found
-            </div>
-        );
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading product...</div>;
+    if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
 
     return (
         <div className="min-h-screen bg-[#f8fafc] py-6 px-4 md:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="text-sm font-medium text-gray-500 hover:text-[#f05a28] transition-colors"
-                    >
+                    <button onClick={() => navigate(-1)} className="text-sm font-medium text-gray-500 hover:text-[#f05a28]">
                         Back to Products
                     </button>
                     {startDesigning && (
@@ -2468,24 +1042,16 @@ const Editor = () => {
                             <button
                                 onClick={handleOpenModal}
                                 disabled={saving || isCheckingExisting}
-                                className={`px-5 py-2 text-white text-sm font-semibold transition disabled:opacity-50 cursor-pointer ${isEditing
-                                    ? "bg-blue-600 hover:bg-blue-700"
-                                    : "bg-[#f05a28] hover:bg-[#d94d24]"
-                                    }`}
+                                className={`px-5 py-2 text-white text-sm font-semibold transition disabled:opacity-50 cursor-pointer ${isEditing ? "bg-blue-600 hover:bg-blue-700" : "bg-[#f05a28] hover:bg-[#d94d24]"}`}
                             >
-                                {saving
-                                    ? isEditing
-                                        ? "Updating..."
-                                        : "Saving..."
-                                    : isEditing
-                                        ? "Update & Next"
-                                        : "Save & Next"}
+                                {saving ? (isEditing ? "Updating..." : "Saving...") : (isEditing ? "Update & Next" : "Save & Next")}
                             </button>
                         </div>
                     )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Main Canvas */}
                     <div className="lg:col-span-8">
                         <div className="relative bg-white shadow-xl border border-gray-200 overflow-hidden">
                             <div
@@ -2494,23 +1060,16 @@ const Editor = () => {
                                 className="aspect-square relative"
                             >
                                 <img
-                                    src={
-                                        selectedMockup?.mockupImage?.url ||
-                                        product?.thumbnail?.url ||
-                                        image
-                                    }
+                                    src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
                                 />
 
-                                {/* Admin Image Layers (Masks, Overlays) */}
+                                {/* Admin overlay images */}
                                 {alladminLayers
-                                    .filter(
-                                        (layer) =>
-                                            layer.type === "image" && layer.visible !== false,
-                                    )
+                                    .filter(layer => layer.type === "image" && layer.visible !== false)
                                     .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
-                                    .map((imageLayer) => (
+                                    .map(imageLayer => (
                                         <div
                                             key={imageLayer._id}
                                             className="absolute pointer-events-none"
@@ -2528,214 +1087,158 @@ const Editor = () => {
                                                 src={imageLayer.src}
                                                 alt=""
                                                 className="w-full h-full object-contain"
-                                                style={{
-                                                    transform: `scaleX(${imageLayer.flipX ? -1 : 1}) scaleY(${imageLayer.flipY ? -1 : 1})`,
-                                                }}
+                                                style={{ transform: `scaleX(${imageLayer.flipX ? -1 : 1}) scaleY(${imageLayer.flipY ? -1 : 1})` }}
                                             />
                                         </div>
                                     ))}
 
-                                {startDesigning &&
-                                    adminLayers.map((printAreaLayer) => {
-                                        const areaLayers = customerLayers.filter(
-                                            (l) =>
-                                                (l.printArea?._id || l.printArea) ===
-                                                printAreaLayer._id,
-                                        );
-                                        return (
-                                            <div
-                                                key={printAreaLayer._id}
-                                                ref={(el) => {
-                                                    if (el)
-                                                        containerRefs.current[printAreaLayer._id] = el;
-                                                }}
-                                                className="absolute print-area-border border-2 border-dashed border-[#f05a28] bg-white/10"
-                                                style={{
-                                                    left: `${printAreaLayer.x_percent || 20}%`,
-                                                    top: `${printAreaLayer.y_percent || 20}%`,
-                                                    width: `${printAreaLayer.width_percent || 30}%`,
-                                                    height: `${printAreaLayer.height_percent || 30}%`,
-                                                    overflow: "hidden",
-                                                    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                                                }}
-                                            >
-                                                {isLoadingDesign ? (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-50">
-                                                        <Loader2
-                                                            className="animate-spin text-[#f05a28]"
-                                                            size={40}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    areaLayers.map((layer) => {
-                                                        const globalIndex = customerLayers.findIndex(
-                                                            (l) =>
-                                                                (l._id ? String(l._id) : null) ===
-                                                                (layer._id ? String(layer._id) : null),
-                                                        );
-                                                        if (globalIndex === -1) return null;
-                                                        const pixelValues = getPixelValues(
-                                                            printAreaLayer._id,
-                                                            layer,
-                                                        );
-                                                        return (
-                                                            <Rnd
-                                                                dragAxis="both"
-                                                                // key={`${layer.clientKey || layer._id || globalIndex}-${renderKey}`}
-                                                                key={layer.clientKey || layer._id || `layer-${globalIndex}`}
-                                                                size={{
-                                                                    width: pixelValues.width,
-                                                                    height: pixelValues.height,
-                                                                }}
-                                                                position={{
-                                                                    x: pixelValues.x,
-                                                                    y: pixelValues.y,
-                                                                }}
-                                                                disableDragging={layer.locked}
-                                                                enableResizing={!layer.locked}
-                                                                lockAspectRatio={
-                                                                    isShiftPressed
-                                                                        ? getLayerAspectRatio(layer)
-                                                                        : false
-                                                                }
-                                                                onDragStart={() => handleDragStart(globalIndex)}
-                                                                onDragStop={(e, d) =>
-                                                                    handleDragStop(
-                                                                        printAreaLayer._id,
-                                                                        globalIndex,
-                                                                        d,
-                                                                    )
-                                                                }
-                                                                onResizeStop={(e, dir, ref, delta, pos) =>
-                                                                    handleResizeStop(
-                                                                        printAreaLayer._id,
-                                                                        globalIndex,
-                                                                        ref,
-                                                                        pos,
-                                                                    )
-                                                                }
-                                                                onMouseDown={() =>
-                                                                    setSelectedLayerIndex(globalIndex)
-                                                                }
-                                                                scale={1}
-                                                                style={{
-                                                                    zIndex: layer.zIndex || 1,
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "center",
-                                                                }}
+                                {/* Print Areas & Customer Layers */}
+                                {startDesigning && adminLayers.map(printAreaLayer => {
+                                    const areaLayers = customerLayers.filter(
+                                        l => (l.printArea?._id || l.printArea) === printAreaLayer._id
+                                    );
+                                    return (
+                                        <div
+                                            key={printAreaLayer._id}
+                                            ref={el => { if (el) containerRefs.current[printAreaLayer._id] = el; }}
+                                            className="absolute print-area-border border-2 border-dashed border-[#f05a28] bg-white/10"
+                                            style={{
+                                                left: `${printAreaLayer.x_percent || 20}%`,
+                                                top: `${printAreaLayer.y_percent || 20}%`,
+                                                width: `${printAreaLayer.width_percent || 30}%`,
+                                                height: `${printAreaLayer.height_percent || 30}%`,
+                                                overflow: "hidden",
+                                                boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                                            }}
+                                        >
+                                            {isLoadingDesign ? (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-50">
+                                                    <Loader2 className="animate-spin text-[#f05a28]" size={40} />
+                                                </div>
+                                            ) : (
+                                                areaLayers.map(layer => {
+                                                    const globalIndex = customerLayers.findIndex(
+                                                        l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
+                                                    );
+                                                    if (globalIndex === -1) return null;
+                                                    const pixelValues = getPixelValues(printAreaLayer._id, layer);
+                                                    return (
+                                                        <Rnd
+                                                            key={layer.clientKey || layer._id || `layer-${globalIndex}`}
+                                                            size={{ width: pixelValues.width, height: pixelValues.height }}
+                                                            position={{ x: pixelValues.x, y: pixelValues.y }}
+                                                            disableDragging={layer.locked}
+                                                            enableResizing={!layer.locked}
+                                                            lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
+                                                            onDragStart={() => handleDragStart(globalIndex)}
+                                                            onDragStop={(e, d) => handleDragStop(printAreaLayer._id, globalIndex, d)}
+                                                            onResizeStop={(e, dir, ref, delta, pos) =>
+                                                                handleResizeStop(printAreaLayer._id, globalIndex, ref, pos)
+                                                            }
+                                                            onMouseDown={() => setSelectedLayerIndex(globalIndex)}
+                                                            scale={1}
+                                                            style={{ zIndex: layer.zIndex || 1 }}
+                                                        >
+                                                            <div
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className={`relative group w-full h-full ${layer.type === "text" ? "overflow-visible" : "overflow-hidden"} ${selectedLayerIndex === globalIndex ? "ring-2 ring-blue-500 ring-inset" : ""
+                                                                    }`}
+                                                                style={{ opacity: layer.opacity ?? 1 }}
                                                             >
-                                                                <div
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    className={`relative group w-full h-full ${layer.type === "text" ? "overflow-visible" : "overflow-hidden"
-                                                                        } ${selectedLayerIndex === globalIndex
-                                                                            ? "ring-2 ring-blue-500 ring-inset"
-                                                                            : ""
-                                                                        }`}
-                                                                    style={{
-                                                                        opacity: layer.opacity ?? 1,
-                                                                    }}
-                                                                >
-                                                                    {/* Text Layer Rendering */}
-                                                                    {layer.type === "text" ? (
-                                                                        <div
-                                                                            className="w-full h-full flex items-center justify-center pointer-events-auto"
-                                                                            style={{
-                                                                                transform: `rotate(${layer.rotation || 0}deg)`,
-                                                                                color: layer.fill || "#000000",
-                                                                                fontSize: `${layer.fontSize || 24}px`,
-                                                                                fontFamily: layer.fontFamily || "Arial",
-                                                                                fontWeight: layer.fontWeight || "normal",
-                                                                                fontStyle: layer.fontStyle || "normal",
-                                                                                textAlign: layer.align || "center",
-                                                                                lineHeight: layer.lineHeight || 1.2,
-                                                                                whiteSpace: "pre-wrap",
-                                                                                wordBreak: "break-word",
-                                                                                textDecoration: layer.textDecoration || "none",
-                                                                                letterSpacing: `${layer.letterSpacing || 0}px`,
-                                                                            }}
-                                                                        >
-                                                                            {layer.text || "Your Text"}
-                                                                        </div>
-                                                                    ) : layer.enablePerspective && layer.corners ? (
-                                                                        // Perspective Image Layer
-                                                                        (() => {
-                                                                            const printArea = adminLayers.find(
-                                                                                (pa) =>
-                                                                                    pa._id === (layer.printArea?._id || layer.printArea),
-                                                                            );
-                                                                            const adminWidth = printArea?.width || 500;
-                                                                            const adminHeight = printArea?.height || 500;
+                                                                {layer.type === "text" ? (
+                                                                    <div className="w-full h-full flex items-center justify-center pointer-events-auto"
+                                                                        style={{
+                                                                            transform: `rotate(${layer.rotation || 0}deg)`,
+                                                                            color: layer.fill || "#000000",
+                                                                            fontSize: `${layer.fontSize || 24}px`,
+                                                                            fontFamily: layer.fontFamily || "Arial",
+                                                                            fontWeight: layer.fontWeight || "normal",
+                                                                            fontStyle: layer.fontStyle || "normal",
+                                                                            textAlign: layer.align || "center",
+                                                                            lineHeight: layer.lineHeight || 1.2,
+                                                                            whiteSpace: "pre-wrap",
+                                                                            wordBreak: "break-word",
+                                                                            textDecoration: layer.textDecoration || "none",
+                                                                            letterSpacing: `${layer.letterSpacing || 0}px`,
+                                                                        }}
+                                                                    >
+                                                                        {layer.text || "Your Text"}
+                                                                    </div>
+                                                                ) : layer.enablePerspective && layer.corners ? (
+                                                                    (() => {
+                                                                        const printArea = adminLayers.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
+                                                                        const adminWidth = printArea?.width || 500;
+                                                                        const adminHeight = printArea?.height || 500;
+                                                                        const scaleX = pixelValues.width / adminWidth;
+                                                                        const scaleY = pixelValues.height / adminHeight;
+                                                                        const scaledCorners = layer.corners.map(c => ({ x: c.x * scaleX, y: c.y * scaleY }));
+                                                                        return (
+                                                                            <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                                                                                <ThreeWarpedImage
+                                                                                    key={`${layer._id}-${pixelValues.width}x${pixelValues.height}`}
+                                                                                    src={layer.imageUrl}
+                                                                                    corners={scaledCorners}
+                                                                                    width={pixelValues.width}
+                                                                                    height={pixelValues.height}
+                                                                                    fit={layer.fit || "cover"}
+                                                                                    opacity={layer.opacity ?? 1}
+                                                                                    rotation={layer.rotation ?? 0}
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    })()
+                                                                ) : (
+                                                                    <img
+                                                                        src={layer?.imageUrl}
+                                                                        alt=""
+                                                                        className="w-full h-full object-cover pointer-events-none"
+                                                                        style={{ transform: `rotate(${layer.rotation || 0}deg)` }}
+                                                                    />
+                                                                )}
+                                                                {selectedLayerIndex === globalIndex && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleRemoveLayer(globalIndex); }}
+                                                                        className="absolute -top-0 -right-0 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100 z-10 cursor-pointer shadow-lg rounded-bl-md"
+                                                                    >
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </Rnd>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    );
+                                })}
 
-                                                                            const scaleX = pixelValues.width / adminWidth;
-                                                                            const scaleY = pixelValues.height / adminHeight;
-                                                                            const scaledCorners = layer.corners.map(
-                                                                                (c) => ({
-                                                                                    x: c.x * scaleX,
-                                                                                    y: c.y * scaleY,
-                                                                                }),
-                                                                            );
-
-                                                                            return (
-                                                                                <div
-                                                                                    key={`warp-${layer._id || globalIndex}-${renderKey}`}
-                                                                                    style={{
-                                                                                        width: "100%",
-                                                                                        height: "100%",
-                                                                                        position: "relative",
-                                                                                    }}
-                                                                                >
-                                                                                    <ThreeWarpedImage
-                                                                                        key={`${layer._id}-${pixelValues.width}x${pixelValues.height}`}
-                                                                                        src={layer.imageUrl}
-                                                                                        corners={scaledCorners}
-                                                                                        width={pixelValues.width}
-                                                                                        height={pixelValues.height}
-                                                                                        fit={layer.fit || "cover"}
-                                                                                        opacity={layer.opacity ?? 1}
-                                                                                        rotation={layer.rotation ?? 0}
-                                                                                    />
-                                                                                </div>
-                                                                            );
-                                                                        })()
-                                                                    ) : (
-                                                                        // Normal Image Layer
-                                                                        <img
-                                                                            src={layer?.imageUrl}
-                                                                            alt=""
-                                                                            className="w-full h-full object-cover pointer-events-none"
-                                                                            style={{
-                                                                                transform: `rotate(${layer.rotation || 0}deg)`,
-                                                                                opacity: layer.opacity ?? 1,
-                                                                            }}
-                                                                        />
-                                                                    )}
-
-                                                                    {/* Delete Button - Show when layer is selected */}
-                                                                    {selectedLayerIndex === globalIndex && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRemoveLayer(globalIndex);
-                                                                            }}
-                                                                            className="absolute -top-0 -right-0 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100 z-10 cursor-pointer shadow-lg rounded-bl-md"
-                                                                        >
-                                                                            <X size={14} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </Rnd>
-                                                        );
-                                                    })
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                {/* Navigation Arrows */}
+                                {allProductMockups.length > 1 && (
+                                    <>
+                                        <button
+                                            onClick={handlePrevMockup}
+                                            disabled={currentMockupIndex === 0}
+                                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg z-20 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        >
+                                            <ChevronLeft size={22} />
+                                        </button>
+                                        <button
+                                            onClick={handleNextMockup}
+                                            disabled={currentMockupIndex === allProductMockups.length - 1}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg z-20 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        >
+                                            <ChevronRight size={22} />
+                                        </button>
+                                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full z-20">
+                                            {currentMockupIndex + 1} / {allProductMockups.length}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Sidebar (unchanged) */}
+                    {/* Sidebar */}
                     <div className="lg:col-span-4 lg:sticky lg:top-6 self-start">
                         <div className="bg-white border border-gray-200 shadow-xl overflow-hidden">
                             <div className="p-4 border-b border-gray-200 flex justify-between">
@@ -2753,7 +1256,7 @@ const Editor = () => {
 
                             <div className="p-4 space-y-4">
                                 {!startDesigning ? (
-                                    // ... product info unchanged ...
+                                    // Product Info View
                                     <>
                                         <div className="bg-gray-50 border border-gray-200 p-4">
                                             <h1 className="text-xl font-black text-gray-900 leading-snug truncate">
@@ -2784,6 +1287,39 @@ const Editor = () => {
                                                 Design
                                             </button>
                                         </div>
+
+                                        {/* Mockup Thumbnails for navigation */}
+                                        {allProductMockups.length > 1 && (
+                                            <div className="border border-gray-200 p-4">
+                                                <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
+                                                    Mockups ({allProductMockups.length})
+                                                </h4>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {allProductMockups.map((mockup, idx) => (
+                                                        <div
+                                                            key={mockup._id}
+                                                            onClick={() => {
+                                                                setSelectedMockup(mockup);
+                                                                setStartDesigning(true);
+                                                            }}
+                                                            className={`cursor-pointer border-2 p-1 rounded transition ${selectedMockup?._id === mockup._id
+                                                                ? "border-[#f05a28] bg-orange-50"
+                                                                : "border-gray-200 hover:border-gray-400"
+                                                                }`}
+                                                        >
+                                                            <img
+                                                                src={mockup?.mockupImage?.url || image}
+                                                                alt={mockup?.name || `Mockup ${idx + 1}`}
+                                                                className="w-full aspect-square object-cover rounded"
+                                                            />
+                                                            <p className="text-[10px] text-gray-600 mt-1 truncate text-center">
+                                                                {mockup?.name || `View ${idx + 1}`}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="border border-gray-200 p-4">
                                             <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
@@ -2832,8 +1368,36 @@ const Editor = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    // ... editor sidebar unchanged ...
+                                    // Design Editor View
                                     <>
+                                        {/* Mockup Switcher Thumbnails */}
+                                        {allProductMockups.length > 1 && (
+                                            <div className="border border-gray-200 bg-white p-3">
+                                                <h4 className="text-[11px] font-black uppercase text-gray-400 mb-2">
+                                                    Mockups
+                                                </h4>
+                                                <div className="flex gap-2 overflow-x-auto pb-1">
+                                                    {allProductMockups.map((mockup, idx) => (
+                                                        <div
+                                                            key={mockup._id}
+                                                            onClick={() => switchMockup(mockup, true)}
+                                                            className={`cursor-pointer border-2 rounded flex-shrink-0 w-14 h-14 overflow-hidden transition ${selectedMockup?._id === mockup._id
+                                                                ? "border-[#f05a28]"
+                                                                : "border-gray-200 hover:border-gray-400"
+                                                                }`}
+                                                        >
+                                                            <img
+                                                                src={mockup?.mockupImage?.url || image}
+                                                                alt={mockup?.name || `Mockup ${idx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Layers Panel */}
                                         <div className="border border-gray-200 bg-white p-3">
                                             <div className="flex items-center justify-between mb-3">
                                                 <h3 className="text-sm font-semibold text-gray-800">
@@ -2856,15 +1420,21 @@ const Editor = () => {
                                                         >
                                                             <div className="flex items-center gap-3 min-w-0">
                                                                 <div className="w-10 h-10 overflow-hidden bg-gray-100 flex-shrink-0">
-                                                                    <img
-                                                                        src={layer?.imageUrl}
-                                                                        alt=""
-                                                                        className="w-full h-full object-cover"
-                                                                    />
+                                                                    {layer.type === "text" ? (
+                                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-xs font-bold">
+                                                                            T
+                                                                        </div>
+                                                                    ) : (
+                                                                        <img
+                                                                            src={layer?.imageUrl}
+                                                                            alt=""
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                                 <div className="min-w-0">
                                                                     <div className="text-sm font-medium text-gray-800 truncate">
-                                                                        Layer {index + 1}
+                                                                        {layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`}
                                                                     </div>
                                                                     <div className="text-[11px] text-gray-500">
                                                                         {Math.round(layer.width || 0)}% ×{" "}
@@ -2918,6 +1488,7 @@ const Editor = () => {
                                             </div>
                                         </div>
 
+                                        {/* Layer Properties */}
                                         {selectedLayerIndex !== null &&
                                             customerLayers[selectedLayerIndex] && (
                                                 <div className="border border-gray-200 bg-white p-3">
@@ -2973,6 +1544,7 @@ const Editor = () => {
                                                 </div>
                                             )}
 
+                                        {/* Add Buttons */}
                                         <button
                                             onClick={() => {
                                                 if (!adminLayers.length) {
@@ -2985,7 +1557,6 @@ const Editor = () => {
                                         >
                                             Add Image from Library
                                         </button>
-                                        {/* Ye button text layer add karega */}
                                         <button
                                             onClick={handleAddTextLayer}
                                             disabled={!adminLayers.length}

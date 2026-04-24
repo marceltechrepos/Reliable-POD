@@ -14,6 +14,10 @@ const layerSchema = new mongoose.Schema(
       ref: "Layer",
       required: false
     },
+    printAreaSlot: {
+      type: String,
+      default: ''
+    },
 
     // imageUrl ab conditional required hoga
     imageUrl: {
@@ -191,9 +195,14 @@ const customerDesignSchema = new mongoose.Schema(
     },
 
     finalDesignImage: {
-      type: String,
+      type: [String],
       default: ''
     },
+    finalDesignImages: [{
+      mockupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Mockup' },
+      imageUrl: String,
+      publicId: String
+    }],
     finalDesignPublicId: {
       type: String,
       default: ''
