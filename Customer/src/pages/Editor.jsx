@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import image from "../assets/image/dummy.jpg";
@@ -22,6 +20,7 @@ import * as layerHelpers from "../components/Admin/utils/layerHelpers";
 import { toast } from "react-toastify";
 import ConfirmDesignModal from "../components/Admin/ConfirmDesignModal";
 import {
+    getCustomProductById,
     getCustomProductByUserId,
     updateCustomProduct,
 } from "../api/customerProduct.api";
@@ -70,6 +69,9 @@ const Editor = () => {
     const navigate = useNavigate();
     const { productId } = useParams();
     const location = useLocation();
+    const createNewFlag = location.state?.createNew;
+    const customProductIdFromState = location.state?.customProductId;
+    const selectedMockupFromState = location.state?.selectedMockup;
     const productFromState = location.state?.product;
 
     // ─── States ────────────────────────────────────
@@ -185,6 +187,42 @@ const Editor = () => {
 
     // Check existing custom product
     useEffect(() => {
+
+        // 🔥 Agar SingleProduct se specific customProductId aayi hai
+        if (customProductIdFromState) {
+            const loadSpecificCustomProduct = async () => {
+                setIsCheckingExisting(true);
+                try {
+                    const res = await getCustomProductById(customProductIdFromState);
+                    if (res.success && res.data) {
+                        const cp = res.data;
+                        setExistingCustomProduct(cp);
+                        setIsEditing(true);
+                        setCustomerLayers(cp.customerLayers || []);
+                        setCustomerDesignId(cp.customerDesign?._id || cp.customerDesign);
+                        if (selectedMockupFromState) {
+                            setSelectedMockup(selectedMockupFromState);
+                        }
+                        // Agar chahte ho to seedha designing mode on kardo
+                        // setStartDesigning(true);
+                    }
+                } catch (error) {
+                    console.error("Error loading custom product:", error);
+                    toast.error("Failed to load design");
+                } finally {
+                    setIsCheckingExisting(false);
+                }
+            };
+            loadSpecificCustomProduct();
+            return; // Baaki generic find skip karo
+        }
+
+        if (createNewFlag) {
+            setExistingCustomProduct(null);
+            setIsEditing(false);
+            setIsCheckingExisting(false);
+            return;
+        }
         const checkExistingDesign = async () => {
             if (!productId || !selectedMockup?._id) return;
             try {
@@ -217,7 +255,7 @@ const Editor = () => {
             }
         };
         checkExistingDesign();
-    }, [productId, selectedMockup]);
+    }, [productId, selectedMockup, createNewFlag]);
 
     // Fetch product & mockups
     useEffect(() => {
@@ -279,6 +317,9 @@ const Editor = () => {
 
     // Customer design fetch (only if not preview active)
     useEffect(() => {
+
+        if (createNewFlag) return;
+
         const fetchCustomerDesign = async () => {
             if (productId && selectedMockup?._id && !isPreviewActive) {
                 setIsLoadingDesign(true);
@@ -306,7 +347,7 @@ const Editor = () => {
             }
         };
         fetchCustomerDesign();
-    }, [productId, selectedMockup, isPreviewActive]);
+    }, [productId, selectedMockup, isPreviewActive, createNewFlag]);
 
     // Containers ready
     useEffect(() => {
@@ -438,9 +479,11 @@ const Editor = () => {
         setCustomerLayers(prev => {
             const original = prev[index];
             const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
+            // ✅ clientKey aur _id dono hata kar fresh clientKey do
+            const { _id, clientKey, ...rest } = original;
             const duplicated = {
-                ...original,
-                _id: undefined,
+                ...rest,
+                clientKey: crypto.randomUUID(),
                 positionX: (original.positionX || 0) + 5,
                 positionY: (original.positionY || 0) + 5,
                 zIndex: maxZ + 1,
@@ -514,6 +557,7 @@ const Editor = () => {
             const fullPrintArea = adminLayers.find(pa => pa._id === printAreaLayer._id);
 
             const newLayer = {
+                clientKey: crypto.randomUUID(),
                 printArea: printAreaLayer._id,
                 imageUrl,
                 publicId,
@@ -565,6 +609,7 @@ const Editor = () => {
         }
 
         const newLayer = {
+            clientKey: crypto.randomUUID(),
             printArea: defaultPrintArea._id,
             type: "text",
             text: "New Text",
@@ -647,6 +692,7 @@ const Editor = () => {
         const fullPrintArea = adminLayers.find(pa => pa._id === defaultPrintArea._id);
 
         const newLayer = {
+            clientKey: crypto.randomUUID(),
             printArea: defaultPrintArea._id,
             imageUrl: image.url,
             publicId: image.id || null,
@@ -834,7 +880,7 @@ const Editor = () => {
             const normalized = customerLayers.map((l) => normalizeLayer(l));
             let res;
             let designId = null;
-            if (isEditing && existingCustomProduct?._id) {
+            if (isEditing && existingCustomProduct?._id && !createNewFlag) {
                 const payload = {
                     productId,
                     mockupId: selectedMockup._id,
@@ -859,9 +905,11 @@ const Editor = () => {
                     productId,
                     mockupId: selectedMockup._id,
                     layers: normalized,
+                    forceNew: true,
                 });
                 if (res.success) {
                     designId = res.data?._id;
+                    setCustomerDesignId(designId);
                     toast.success("Design saved successfully!");
                 }
             }
@@ -908,8 +956,9 @@ const Editor = () => {
                     customerLayers,
                     adminLayers,
                     customerDesignId: savedDesignId,
-                    isEditing,
-                    existingCustomProduct: isEditing ? existingCustomProduct : null,
+                    isEditing: isEditing && !createNewFlag,
+                    existingCustomProduct: (isEditing && !createNewFlag) ? existingCustomProduct : null,
+                    createNewFlag: createNewFlag,
                 },
             });
         }
@@ -920,12 +969,21 @@ const Editor = () => {
             setSaving(true);
             const normalized = customerLayers.map(l => normalizeLayer(l));
 
-            // Step 1: Save current design to DB (get master design ID)
-            const saveRes = await saveCustomerDesign({
+            // 🔥 If createNewFlag true, force new design
+            const payload = {
                 productId,
                 mockupId: selectedMockup._id,
                 layers: normalized,
-            });
+                ...(createNewFlag && { forceNew: true }),
+            };
+
+            // Step 1: Save current design to DB (get master design ID)
+            // const saveRes = await saveCustomerDesign({
+            //     productId,
+            //     mockupId: selectedMockup._id,
+            //     layers: normalized,
+            // });
+            const saveRes = await saveCustomerDesign(payload);
             if (!saveRes.success) throw new Error('Failed to save design');
             const masterDesignId = saveRes.data?._id;
             if (!masterDesignId) throw new Error('No design ID returned');
@@ -1117,14 +1175,23 @@ const Editor = () => {
                                                 </div>
                                             ) : (
                                                 areaLayers.map(layer => {
-                                                    const globalIndex = customerLayers.findIndex(
-                                                        l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
-                                                    );
+                                                    // const globalIndex = customerLayers.findIndex(
+                                                    //     l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
+                                                    // );
+                                                    const globalIndex = customerLayers.findIndex(l => {
+                                                        if (layer.clientKey && l.clientKey) {
+                                                            return l.clientKey === layer.clientKey;
+                                                        }
+                                                        if (layer._id && l._id) {
+                                                            return String(l._id) === String(layer._id);
+                                                        }
+                                                        return false;
+                                                    });
                                                     if (globalIndex === -1) return null;
                                                     const pixelValues = getPixelValues(printAreaLayer._id, layer);
                                                     return (
                                                         <Rnd
-                                                            key={layer.clientKey || layer._id || `layer-${globalIndex}`}
+                                                            key={layer.clientKey || layer._id}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
                                                             disableDragging={layer.locked}
@@ -1275,7 +1342,7 @@ const Editor = () => {
                                                 </span>
                                             </div>
                                         </div>
-{/* 
+                                        {/* 
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 onClick={() => setStartDesigning(true)}
@@ -1416,7 +1483,7 @@ const Editor = () => {
                                                 {customerLayers.length > 0 ? (
                                                     customerLayers.map((layer, index) => (
                                                         <div
-                                                            key={layer._id || index}
+                                                            key={layer.clientKey || layer._id || index}
                                                             onClick={() => setSelectedLayerIndex(index)}
                                                             className={`group flex items-center justify-between p-2 border transition-all cursor-pointer ${selectedLayerIndex === index
                                                                 ? "border-[#f05a28] bg-[#fff7f3]"

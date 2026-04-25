@@ -232,7 +232,7 @@ const customerDesignSchema = new mongoose.Schema(
 );
 
 customerDesignSchema.index(
-  { user: 1, product: 1, mockup: 1 },
+  { user: 1, product: 1, mockup: 1 ,  version: 1 },
   { unique: true }
 );
 
