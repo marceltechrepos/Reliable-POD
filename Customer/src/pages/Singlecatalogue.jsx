@@ -95,7 +95,7 @@ useEffect(() => {
             onClick={() => navigate(`/user/edit/${productId}`)}
             className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-[#f05a28] text-white text-[13px] font-bold rounded hover:opacity-90 transition-all"
           >
-            <Plus size={14} /> Create Print On Demand Product
+            <Plus size={14} /> Create Product
           </button>
         </div>
 
@@ -147,9 +147,6 @@ useEffect(() => {
           <div className="lg:col-span-6 space-y-8">
             {/* ... rest of your existing code (unchanged) ... */}
             <div className="space-y-2">
-              <p className="text-[13px] font-bold text-gray-400">
-                fulfilmentCatalogID: {productData?.fulfilmentCatalogID || "N/A"}
-              </p>
               <h1 className="text-3xl font-black text-gray-900">
                 {productData?.productTitle || productData?.title}
               </h1>
@@ -163,25 +160,6 @@ useEffect(() => {
 
             <div className="text-2xl font-black text-gray-900">
               ${productData?.Variants?.[0]?.basePrice || productData?.price || "0.00"}
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase">
-                  Production Costs
-                </p>
-                <button className="text-[#00a185] text-[12px] font-bold underline">
-                  View our production costs
-                </button>
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase">
-                  Production Location
-                </p>
-                <div className="mt-1">
-                  <img src="https://flagcdn.com/w40/us.png" className="w-7 shadow-sm" alt="USA" />
-                </div>
-              </div>
             </div>
 
             <div className="space-y-3">

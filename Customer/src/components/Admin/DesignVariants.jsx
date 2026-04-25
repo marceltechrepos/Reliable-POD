@@ -68,7 +68,7 @@ const VariantCard = ({ variant, isSelected, onSelect }) => {
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* <div className="grid grid-cols-2 gap-2">
                     <div className="bg-gray-50 p-2">
                         <p className="text-[10px] uppercase tracking-widest text-gray-400">
                             Price
@@ -101,17 +101,17 @@ const VariantCard = ({ variant, isSelected, onSelect }) => {
                             {variant?.colorHex || "Default"}
                         </p>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="mt-4 flex items-center justify-between gap-2">
-                    <span
+                    {/* <span
                         className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold ${variant.available === "available"
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-amber-50 text-amber-700"
                             }`}
                     >
                         {variant.available === "available" ? "In stock" : "Pre-order"}
-                    </span>
+                    </span> */}
 
                     {variant.isCustom ? (
                         <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
@@ -207,9 +207,9 @@ export default function DesignVariants() {
     useEffect(() => {
         if (isEditing && existingCustomProduct) {
             // Load selected variant IDs
-            if (existingCustomProduct.selectedDefaultVariants) {
-                setSelectedVariantIds(existingCustomProduct.selectedDefaultVariants);
-            }
+            // if (existingCustomProduct.selectedDefaultVariants) {
+            //     setSelectedVariantIds(existingCustomProduct.selectedDefaultVariants);
+            // }
 
             // Load custom variants array
             if (existingCustomProduct.customVariants?.length > 0) {
@@ -260,8 +260,9 @@ export default function DesignVariants() {
     }, [productId, isEditing]);
 
     const allVariants = useMemo(() => {
-        const base = product?.Variants || [];
-        return [...base, ...customVariants];
+        // const base = product?.Variants || [];
+        // return [...base, ...customVariants];
+        return [ ...customVariants];
     }, [product, customVariants]);
 
     const selectedCustomVariants = useMemo(() => {
@@ -474,19 +475,19 @@ export default function DesignVariants() {
                                             {product?.productTitle || "Product Name"}
                                         </h1>
                                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                                            Select one or more variants and continue to add your custom design details.
+                                            Select one or more Mockups and continue to add your custom Mockups details.
                                         </p>
 
                                         <div className="mt-4 flex flex-wrap gap-2">
-                                            <span className="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
+                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
                                                 {product?.Variants?.length || 0} admin variants available
-                                            </span>
+                                            </span> */}
                                             <span className="px-3 py-1 text-xs font-semibold bg-orange-50 text-[#f05a28]">
                                                 {selectedVariantIds.length} selected
                                             </span>
-                                            <span className="px-3 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
+                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
                                                 {customSelectedCount} custom selected
-                                            </span>
+                                            </span> */}
                                         </div>
                                     </div>
                                 </div>
@@ -496,11 +497,9 @@ export default function DesignVariants() {
                                 <div className="mb-5 flex items-center justify-between">
                                     <div>
                                         <h2 className="text-xl font-black text-gray-900">
-                                            Select Product Variants
+                                            Select Mockups
                                         </h2>
-                                        <p className="text-sm text-gray-500">
-                                            Admin variants and uploaded custom variants are shown together. You can select multiple variants.
-                                        </p>
+                                        
                                     </div>
                                 </div>
 
@@ -538,7 +537,8 @@ export default function DesignVariants() {
                                     </div>
                                 )}
 
-                                {(!product?.Variants || product.Variants.length === 0) &&
+                                {/* {(!product?.Variants || product.Variants.length === 0) && */}
+                                {
                                     customVariants.length === 0 && (
                                         <div className="grid place-items-center border border-dashed border-gray-300 bg-gray-50 py-16">
                                             <div className="text-center">
@@ -552,6 +552,7 @@ export default function DesignVariants() {
                                             </div>
                                         </div>
                                     )}
+                                    
                             </div>
                         </div>
 
@@ -563,10 +564,10 @@ export default function DesignVariants() {
                                     </div>
                                     <div>
                                         <h2 className="text-lg font-black text-gray-900">
-                                            Add custom variants
+                                            Add Mockups
                                         </h2>
                                         <p className="text-sm text-gray-500">
-                                            Upload multiple custom variant images.
+                                            Upload multiple custom Mockups images.
                                         </p>
                                     </div>
                                 </div>
@@ -583,7 +584,7 @@ export default function DesignVariants() {
                                 </label>
 
                                 <p className="mt-3 text-xs text-gray-500">
-                                    Every upload becomes a new selectable custom variant.
+                                    Every upload becomes a new selectable custom Mockups.
                                 </p>
 
                                 {customVariants.length > 0 && (
@@ -774,12 +775,12 @@ export default function DesignVariants() {
                                             {selectedVariantIds.length}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                                    {/* <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                                         <span className="text-gray-500">Default variants</span>
                                         <span className="font-semibold text-gray-900">
                                             {defaultSelectedCount}
                                         </span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                                         <span className="text-gray-500">Custom variants</span>
                                         <span className="font-semibold text-gray-900">

@@ -1,4 +1,4 @@
-import { Schema ,Types, model} from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 const productSchema = new Schema(
   {
@@ -14,6 +14,10 @@ const productSchema = new Schema(
     thumbnail: {
       url: String,
       public_id: String,
+    },
+    visibility: {
+      type: Boolean,
+      default: true,
     },
     mockupImage: String,
     mockupIds: [
@@ -35,19 +39,18 @@ const productSchema = new Schema(
         height: Number,
       },
     ],
-    
+
     // 🔥 ADD THIS - Variant Attributes Configuration
     variantAttributes: {
       sizes: {
         type: [String],
-        default: ['L', 'XS', 'S', 'M']
+        default: []
       },
       colors: {
         type: Map,
         of: String,
         default: {
-          white: '#ffffff',
-          black: '#000000'
+         
         }
       },
       customFields: {
@@ -65,12 +68,15 @@ const productSchema = new Schema(
 
     Variants: [
       {
+        variantsName: String,
         sku: String,
         basePrice: Number,
         comparePrice: Number,
+        baseCost: Number,
         size: { type: String, default: '' },
         color: { type: String, default: '' },
         colorHex: { type: String, default: '#ffffff' },
+        stock: { type: Number, default: 0 },
         weight: { type: Number, default: 0 },
         customAttributes: { type: Object, default: {} },
         available: {

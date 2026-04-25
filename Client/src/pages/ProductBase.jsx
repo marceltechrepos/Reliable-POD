@@ -56,6 +56,8 @@ function ProductBase() {
   const [isThumbnailModalOpen, setIsThumbnailModalOpen] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [visible, setVisible] = useState(true)
+  const [updatingVisibility, setUpdatingVisibility] = useState(false);
 
   const { id: productId } = useParams();
   const navigate = useNavigate();
@@ -85,7 +87,8 @@ function ProductBase() {
       setProvider(data?.fulfilmentProvider || '');
       setFulfilmentCatalogID(data?.fulfilmentCatalogID || '');
       setDescription(data?.description || '');
-      setPreview(data?.thumbnail.url || "")
+      setPreview(data?.thumbnail?.url || "")
+      setVisible(data?.visibility ?? true);
 
       setEditProductById(data);
 
@@ -111,6 +114,7 @@ function ProductBase() {
       return;
     }
 
+
     try {
       const formData = new FormData();
       formData.append("thumbnail", thumbnail);
@@ -130,6 +134,48 @@ function ProductBase() {
       toast.error("Failed to update thumbnail");
     }
   };
+
+  const toggleVisibility = async () => {
+    setUpdatingVisibility(true);
+    try {
+      const newValue = !visible;
+      console.log("Sending payload:", { visibility: newValue }, "Product ID:", productId);
+      const res = await updateProduct(productId, { visibility: newValue });
+      console.log("Response:", res);
+      if (res?.success) {
+        setVisible(newValue);
+        toast.success(`Product ${newValue ? "shown" : "hidden"} successfully`);
+      } else {
+        toast.error("Update failed");
+      }
+    } catch (error) {
+      console.error("Toggle error:", error);
+      toast.error("Failed to update visibility");
+    } finally {
+      setUpdatingVisibility(false);
+    }
+  };
+
+  // const toggleVisibility = async () => {
+  //   setUpdatingVisibility(true);
+  //   try {
+  //     const newValue = !visible;
+
+  //     const res = await updateProduct(productId, { visibility: newValue });
+
+  //     if (res?.success) {
+  //       setVisible(newValue);
+  //       toast.success(`Product ${newValue ? "shown" : "hidden"} successfully`);
+  //     } else {
+  //       toast.error("Update failed");
+  //     }
+
+  //   } catch (error) {
+  //     toast.error("Failed to update visibility");
+  //   } finally {
+  //     setUpdatingVisibility(false)
+  //   }
+  // };
 
   // Remove Thumbnail Handler - Fixed
   const removeThumbnailHandler = async () => {
@@ -239,7 +285,7 @@ function ProductBase() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -254,7 +300,7 @@ function ProductBase() {
     };
 
     // Listen for focus event
-    window.addEventListener('focus', handleFocus);
+    // window.addEventListener('focus', handleFocus);
 
     // Also run once immediately
     handleFocus();
@@ -557,8 +603,21 @@ function ProductBase() {
           {/* Responsive layout: stack on small, 2 columns on md+ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mt-4">
             {/* LEFT FORM */}
+
             <div className="bg-white p-4 sm:p-6 rounded-xl border-l-4 border-ocean">
-              <h2 className="text-2xl font-bold mb-6">Basic information</h2>
+              <div className='flex space-x-2 items-center justify-between mb-4'>
+                <h2 className="text-2xl font-bold mb-6 ">Basic information</h2>
+                {isEditMode && (
+                  <button
+                    onClick={toggleVisibility}
+                    disabled={updatingVisibility}
+                    className="bg-orange-500  text-white px-4 py-2 rounded-md cursor-pointer w-full sm:w-auto"
+                  >
+                    {updatingVisibility ? "Updating..." : visible ? "Hide" : "Show"}
+                  </button>
+                )}
+
+              </div>
 
               <TextField
                 label="Product Title"

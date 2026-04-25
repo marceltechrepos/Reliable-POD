@@ -559,10 +559,10 @@ const Editor = () => {
 
     const handleAddTextLayer = () => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
-            if (!defaultPrintArea) {
-                toast.error("Koi print area mojood nahi hai");
-                return;
-            }
+        if (!defaultPrintArea) {
+            toast.error("Koi print area mojood nahi hai");
+            return;
+        }
 
         const newLayer = {
             printArea: defaultPrintArea._id,
@@ -1275,18 +1275,15 @@ const Editor = () => {
                                                 </span>
                                             </div>
                                         </div>
-
+{/* 
                                         <div className="grid grid-cols-2 gap-2">
-                                            <button className="px-4 py-3 border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition">
-                                                Product
-                                            </button>
                                             <button
                                                 onClick={() => setStartDesigning(true)}
-                                                className="cursor-pointer px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition rounded-l-sm"
+                                                className=" cursor-pointer px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition rounded-sm"
                                             >
                                                 Design
                                             </button>
-                                        </div>
+                                        </div> */}
 
                                         {/* Mockup Thumbnails for navigation */}
                                         {allProductMockups.length > 1 && (
@@ -1322,49 +1319,57 @@ const Editor = () => {
                                         )}
 
                                         <div className="border border-gray-200 p-4">
-                                            <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
-                                                Available Colors ({displayColors.length})
-                                            </h4>
-                                            <div className="grid grid-cols-2 gap-2 mb-4">
-                                                {displayColors.map((c, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-2 py-2"
-                                                    >
-                                                        <div
-                                                            className="w-5 h-5 rounded border border-gray-200"
-                                                            style={{ backgroundColor: c.hex }}
-                                                        ></div>
-                                                        <span className="truncate capitalize">
-                                                            {c.name}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                                {displayColors.length === 0 && (
-                                                    <div className="col-span-2 text-center text-gray-400 text-xs py-2">
-                                                        No colors available
-                                                    </div>
-                                                )}
-                                            </div>
 
-                                            <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
-                                                Available Sizes ({displaySizes.length})
-                                            </h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {displaySizes.map((size, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded"
-                                                    >
-                                                        {size}
-                                                    </div>
-                                                ))}
-                                                {displaySizes.length === 0 && (
-                                                    <div className="text-center text-gray-400 text-xs py-2 w-full">
-                                                        No sizes available
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {
+                                                displayColors.length > 0 && (
+                                                    <>
+                                                        <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
+                                                            Available Colors ({displayColors.length})
+                                                        </h4>
+                                                        <div className="grid grid-cols-2 gap-2 mb-4">
+                                                            {displayColors.map((c, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-2 py-2"
+                                                                >
+                                                                    <div
+                                                                        className="w-5 h-5 rounded border border-gray-200"
+                                                                        style={{ backgroundColor: c.hex }}
+                                                                    ></div>
+                                                                    <span className="truncate capitalize">
+                                                                        {c.name}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+
+                                                        </div>
+                                                    </>
+                                                )
+                                            }
+
+
+                                            {
+                                                displaySizes.length > 0 && (
+                                                    <>
+                                                        <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
+                                                            Available Sizes ({displaySizes.length})
+                                                        </h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {displaySizes.map((size, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded"
+                                                                >
+                                                                    {size}
+                                                                </div>
+                                                            ))}
+
+                                                        </div>
+                                                    </>
+                                                )
+                                            }
+
+
                                         </div>
                                     </>
                                 ) : (
@@ -1462,9 +1467,10 @@ const Editor = () => {
                                                                     title={layer.locked ? "Unlock" : "Lock"}
                                                                 >
                                                                     {layer.locked ? (
-                                                                        <Unlock size={14} />
-                                                                    ) : (
+
                                                                         <Lock size={14} />
+                                                                    ) : (
+                                                                        <Unlock size={14} />
                                                                     )}
                                                                 </button>
                                                                 <button

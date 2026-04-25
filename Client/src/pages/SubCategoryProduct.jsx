@@ -212,7 +212,6 @@ const SubCategoryProduct = () => {
 
                 <div className="flex justify-between text-xs text-gray-500 mt-2">
                   <span>{printareasArr?.length} Print Areas</span>
-                  <span>ID #{p?.fulfilmentCatalogID || "—"}</span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-2">
                   <span>{variantsArr?.length} Variant</span>
@@ -245,7 +244,6 @@ const SubCategoryProduct = () => {
                 <div className="mt-4 space-y-2 text-sm">
                   <div><b>Category:</b> {selected.category?.name || "—"}</div>
                   <div><b>Provider:</b> {selected.fulfilmentProvider?.provider || "—"}</div>
-                  <div><b>Catalog ID:</b> {selected.fulfilmentCatalogID || "—"}</div>
                   <div><b>Created:</b> {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : "—"}</div>
                 </div>
               </div>

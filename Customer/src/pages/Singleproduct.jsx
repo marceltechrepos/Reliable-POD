@@ -117,9 +117,9 @@ const SingleProduct = () => {
   // Variants se unique colors nikalain (colorHex ke basis par)
   const productColors = p?.Variants?.reduce((acc, variant) => {
     // Skip agar colorHex nahi hai
-    if (!variant.colorHex || variant.colorHex === "") return acc;
+    if (!variant.color || variant.color === "") return acc;
 
-    const hex = variant.colorHex.toLowerCase();
+    const hex = variant.color.toLowerCase();
     const existingColor = acc.find(c => c.hex === hex);
 
     if (!existingColor) {
@@ -137,7 +137,7 @@ const SingleProduct = () => {
       } else {
         // Agar custom color hai
         acc.push({
-          name: `Color ${hex}`,
+          name: `${hex}`,
           hex: hex,
           bg: "", // No predefined bg class
           variants: [variant]
@@ -327,9 +327,6 @@ const SingleProduct = () => {
           {/* Right: Details */}
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-2">
-              <p className="text-[13px] font-bold text-gray-400">
-                fulfilmentCatalogID: {p?.fulfilmentCatalogID || "SKU: " + customProduct._id.slice(-8)}
-              </p>
               <h1 className="text-3xl font-black text-gray-900">
                 {customVariant.name || p?.productTitle}
               </h1>
@@ -366,63 +363,64 @@ const SingleProduct = () => {
             )}
 
             {/* Color Swatches */}
-            <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
-                Available Colors ({displayColors.length})
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {displayColors.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setSelectedColor(c.name)}
-                    className={`px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 border transition-all
+            {
+              displayColors.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
+                    Available Colors ({displayColors.length})
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {displayColors.map((c) => (
+                      <button
+                        key={c.name}
+                        onClick={() => setSelectedColor(c.name)}
+                        className={`px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 border transition-all
           ${selectedColor === c.name
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                      }`}
-                  >
-                    {/* Color swatch */}
-                    <div
-                      className="w-3 h-3 rounded-full border border-gray-200"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
-                  </button>
-                ))}
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                          }`}
+                      >
+                        {/* Color swatch */}
+                        <div
+                          className="w-3 h-3 rounded-full border border-gray-200"
+                          style={{ backgroundColor: c.hex }}
+                        />
+                        {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
 
-                {/* If no colors available */}
-                {displayColors.length === 0 && (
-                  <p className="text-xs text-gray-400">No colors available</p>
-                )}
-              </div>
-            </div>
 
             {/* Sizes Section - From Variants */}
-            <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
-                Available Sizes ({sortedSizes.length})
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {sortedSizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-1.5 rounded text-[12px] font-medium border transition-all
-          ${selectedSize === size
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                      }`}
-                  >
-                    {size}
-                  </button>
-                ))}
 
-                {/* If no sizes available */}
-                {sortedSizes.length === 0 && (
-                  <p className="text-xs text-gray-400">No sizes available</p>
-                )}
-              </div>
-            </div>
+            {
+              sortedSizes.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
+                    Available Sizes ({sortedSizes.length})
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedSizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-4 py-1.5 rounded text-[12px] font-medium border transition-all
+          ${selectedSize === size
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                          }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+
 
             {/* Selected Variants Info */}
             {customProduct.selectedDefaultVariants?.length > 0 && (
@@ -431,12 +429,6 @@ const SingleProduct = () => {
                   <p className="text-[10px] font-black text-gray-400 uppercase">Selected Variants</p>
                   <p className="text-sm font-bold text-gray-800 mt-1">
                     {customProduct.selectedDefaultVariants.length} variant(s)
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase">Layers</p>
-                  <p className="text-sm font-bold text-gray-800 mt-1">
-                    {customerLayers.length} layer(s)
                   </p>
                 </div>
               </div>
