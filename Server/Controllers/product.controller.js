@@ -26,23 +26,27 @@ export const getProductsById = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid Product ID" });
     }
 
-    // Fetch product
     const product = await productModel.findById(id).lean();
 
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // 🔥 NEW: Fetch mockups separately and populate them
     let populatedMockups = [];
+
     if (product.mockupIds && product.mockupIds.length > 0) {
-      populatedMockups = await mongoose
+
+      const mockups = await mongoose
         .model("MockupImage")
         .find({ _id: { $in: product.mockupIds } })
         .lean();
+
+      // 🔥 ORDER FIX
+      populatedMockups = product.mockupIds
+        .map(id => mockups.find(m => String(m._id) === String(id)))
+        .filter(Boolean);
     }
 
-    // Fetch category and its parent (same as your logic)
     const category = await Category.findById(product.category)
       .populate({ path: "parent", select: "name slug" })
       .lean();
@@ -52,7 +56,7 @@ export const getProductsById = async (req, res) => {
       data: {
         ...product,
         category: category || null,
-        mockupIds: populatedMockups, // 🔥 overwrite ids with full objects
+        mockupIds: populatedMockups, // ✅ ordered correctly
       },
       status: 200,
     });
@@ -62,6 +66,55 @@ export const getProductsById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// export const getProductsById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     if (!id) {
+//       return res.status(400).json({ success: false, message: "Product ID is required" });
+//     }
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ success: false, message: "Invalid Product ID" });
+//     }
+
+//     // Fetch product
+//     const product = await productModel.findById(id).lean();
+
+//     if (!product) {
+//       return res.status(404).json({ success: false, message: "Product not found" });
+//     }
+
+//     // 🔥 NEW: Fetch mockups separately and populate them
+//     let populatedMockups = [];
+//     if (product.mockupIds && product.mockupIds.length > 0) {
+//       populatedMockups = await mongoose
+//         .model("MockupImage")
+//         .find({ _id: { $in: product.mockupIds } })
+//         .lean();
+//     }
+
+//     // Fetch category and its parent (same as your logic)
+//     const category = await Category.findById(product.category)
+//       .populate({ path: "parent", select: "name slug" })
+//       .lean();
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         ...product,
+//         category: category || null,
+//         mockupIds: populatedMockups, // 🔥 overwrite ids with full objects
+//       },
+//       status: 200,
+//     });
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 export const getProductsByCategoryId = async (req, res) => {
   try {
@@ -257,7 +310,7 @@ export const updateProduct = async (req, res) => {
         $set: updateData,
       },
       { new: true, runValidators: true }
-    );
+    ).populate("mockupIds");
 
     res.status(200).json({
       success: true,
