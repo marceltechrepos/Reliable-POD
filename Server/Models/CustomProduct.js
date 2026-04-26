@@ -15,6 +15,11 @@ const customProductSchema = new mongoose.Schema(
       required: true,
     },
 
+    sellingPrice: {
+      type: Number,
+      default: 0,
+    },
+
     selectedDefaultVariants: [
       {
         type: String,
