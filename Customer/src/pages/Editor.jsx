@@ -187,10 +187,9 @@ const Editor = () => {
 
     // Check existing custom product
     useEffect(() => {
-
-        // 🔥 Agar SingleProduct se specific customProductId aayi hai
-        if (customProductIdFromState) {
-            const loadSpecificCustomProduct = async () => {
+        const initCustomProduct = async () => {
+            // Priority 1: specific custom product from state (editing)
+            if (customProductIdFromState) {
                 setIsCheckingExisting(true);
                 try {
                     const res = await getCustomProductById(customProductIdFromState);
@@ -198,13 +197,16 @@ const Editor = () => {
                         const cp = res.data;
                         setExistingCustomProduct(cp);
                         setIsEditing(true);
+                        setHasSavedDesign(true); // important: already saved design
+                        // Load layers directly from custom product
                         setCustomerLayers(cp.customerLayers || []);
                         setCustomerDesignId(cp.customerDesign?._id || cp.customerDesign);
                         if (selectedMockupFromState) {
                             setSelectedMockup(selectedMockupFromState);
+                        } else if (cp.selectedMockup) {
+                            setSelectedMockup(cp.selectedMockup);
                         }
-                        // Agar chahte ho to seedha designing mode on kardo
-                        // setStartDesigning(true);
+                        setStartDesigning(true); // enter editing mode automatically
                     }
                 } catch (error) {
                     console.error("Error loading custom product:", error);
@@ -212,18 +214,20 @@ const Editor = () => {
                 } finally {
                     setIsCheckingExisting(false);
                 }
-            };
-            loadSpecificCustomProduct();
-            return; // Baaki generic find skip karo
-        }
+                return;
+            }
 
-        if (createNewFlag) {
-            setExistingCustomProduct(null);
-            setIsEditing(false);
-            setIsCheckingExisting(false);
-            return;
-        }
-        const checkExistingDesign = async () => {
+            // Priority 2: create new flag – no existing design
+            if (createNewFlag) {
+                setExistingCustomProduct(null);
+                setIsEditing(false);
+                setHasSavedDesign(false);
+                setCustomerLayers([]);
+                setIsCheckingExisting(false);
+                return;
+            }
+
+            // Priority 3: check if there's an existing custom product for this productId (maybe from previous session)
             if (!productId || !selectedMockup?._id) return;
             try {
                 setIsCheckingExisting(true);
@@ -232,19 +236,19 @@ const Editor = () => {
                 const res = await getCustomProductByUserId(user._id);
                 if (res.success && res.data) {
                     const existing = res.data.find(
-                        (cp) => cp.baseProduct?._id === productId,
+                        (cp) => cp.baseProduct?._id === productId && cp.selectedMockup?._id === selectedMockup._id
                     );
                     if (existing) {
                         setExistingCustomProduct(existing);
                         setIsEditing(true);
-                        const designRes = await getCustomerDesign(productId, selectedMockup._id);
-                        if (designRes.success && designRes.data) {
-                            setCustomerLayers(designRes.data.layers || []);
-                            setCustomerDesignId(designRes.data._id);
-                        }
+                        setHasSavedDesign(true);
+                        setCustomerLayers(existing.customerLayers || []);
+                        setCustomerDesignId(existing.customerDesign?._id || existing.customerDesign);
                     } else {
                         setIsEditing(false);
                         setExistingCustomProduct(null);
+                        setHasSavedDesign(false);
+                        setCustomerLayers([]);
                     }
                 }
             } catch (error) {
@@ -254,8 +258,79 @@ const Editor = () => {
                 setIsCheckingExisting(false);
             }
         };
-        checkExistingDesign();
-    }, [productId, selectedMockup, createNewFlag]);
+
+        initCustomProduct();
+    }, [productId, selectedMockup, createNewFlag, customProductIdFromState]);
+    // useEffect(() => {
+
+    //     // 🔥 Agar SingleProduct se specific customProductId aayi hai
+    //     if (customProductIdFromState) {
+    //         const loadSpecificCustomProduct = async () => {
+    //             setIsCheckingExisting(true);
+    //             try {
+    //                 const res = await getCustomProductById(customProductIdFromState);
+    //                 if (res.success && res.data) {
+    //                     const cp = res.data;
+    //                     setExistingCustomProduct(cp);
+    //                     setIsEditing(true);
+    //                     setCustomerLayers(cp.customerLayers || []);
+    //                     setCustomerDesignId(cp.customerDesign?._id || cp.customerDesign);
+    //                     if (selectedMockupFromState) {
+    //                         setSelectedMockup(selectedMockupFromState);
+    //                     }
+    //                     // Agar chahte ho to seedha designing mode on kardo
+    //                     // setStartDesigning(true);
+    //                 }
+    //             } catch (error) {
+    //                 console.error("Error loading custom product:", error);
+    //                 toast.error("Failed to load design");
+    //             } finally {
+    //                 setIsCheckingExisting(false);
+    //             }
+    //         };
+    //         loadSpecificCustomProduct();
+    //         return; // Baaki generic find skip karo
+    //     }
+
+    //     if (createNewFlag) {
+    //         setExistingCustomProduct(null);
+    //         setIsEditing(false);
+    //         setIsCheckingExisting(false);
+    //         return;
+    //     }
+    //     const checkExistingDesign = async () => {
+    //         if (!productId || !selectedMockup?._id) return;
+    //         try {
+    //             setIsCheckingExisting(true);
+    //             const user = JSON.parse(localStorage.getItem("user"));
+    //             if (!user?._id) return;
+    //             const res = await getCustomProductByUserId(user._id);
+    //             if (res.success && res.data) {
+    //                 const existing = res.data.find(
+    //                     (cp) => cp.baseProduct?._id === productId,
+    //                 );
+    //                 if (existing) {
+    //                     setExistingCustomProduct(existing);
+    //                     setIsEditing(true);
+    //                     const designRes = await getCustomerDesign(productId, selectedMockup._id);
+    //                     if (designRes.success && designRes.data) {
+    //                         setCustomerLayers(designRes.data.layers || []);
+    //                         setCustomerDesignId(designRes.data._id);
+    //                     }
+    //                 } else {
+    //                     setIsEditing(false);
+    //                     setExistingCustomProduct(null);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error("Error checking existing design:", error);
+    //             setIsEditing(false);
+    //         } finally {
+    //             setIsCheckingExisting(false);
+    //         }
+    //     };
+    //     checkExistingDesign();
+    // }, [productId, selectedMockup, createNewFlag]);
 
     // Fetch product & mockups
     useEffect(() => {
@@ -316,10 +391,45 @@ const Editor = () => {
     }, [selectedMockup, allproductMockupsAdminLayers]);
 
     // Customer design fetch (only if not preview active)
+    // useEffect(() => {
+
+    //     if (createNewFlag) return;
+
+    //     const fetchCustomerDesign = async () => {
+    //         if (productId && selectedMockup?._id && !isPreviewActive) {
+    //             setIsLoadingDesign(true);
+    //             try {
+    //                 const res = await getCustomerDesign(productId, selectedMockup._id);
+    //                 if (res.success && res.data) {
+    //                     const loadedLayers = (res.data.layers || []).map((layer) => ({
+    //                         ...layer,
+    //                         horizontalAlign: layer.horizontalAlign || "center",
+    //                         verticalAlign: layer.verticalAlign || "middle",
+    //                         positionX: Number(layer.positionX) || 0,
+    //                         positionY: Number(layer.positionY) || 0,
+    //                         width: Number(layer.width) || 100,
+    //                         height: Number(layer.height) || 100,
+    //                         rotation: Number(layer.rotation) || 0,
+    //                         opacity: Number(layer.opacity) || 1,
+    //                     }));
+    //                     setCustomerLayers(loadedLayers);
+    //                 }
+    //             } catch (error) {
+    //                 console.error("Error loading design:", error);
+    //             } finally {
+    //                 setIsLoadingDesign(false);
+    //             }
+    //         }
+    //     };
+    //     fetchCustomerDesign();
+    // }, [productId, selectedMockup, isPreviewActive, createNewFlag]);
+
     useEffect(() => {
-
         if (createNewFlag) return;
-
+        if (existingCustomProduct) {
+            // We already loaded layers from custom product, no need to fetch design
+            return;
+        }
         const fetchCustomerDesign = async () => {
             if (productId && selectedMockup?._id && !isPreviewActive) {
                 setIsLoadingDesign(true);
@@ -338,6 +448,7 @@ const Editor = () => {
                             opacity: Number(layer.opacity) || 1,
                         }));
                         setCustomerLayers(loadedLayers);
+                        setHasSavedDesign(true);
                     }
                 } catch (error) {
                     console.error("Error loading design:", error);
@@ -347,7 +458,7 @@ const Editor = () => {
             }
         };
         fetchCustomerDesign();
-    }, [productId, selectedMockup, isPreviewActive, createNewFlag]);
+    }, [productId, selectedMockup, isPreviewActive, createNewFlag, existingCustomProduct]);
 
     // Containers ready
     useEffect(() => {
@@ -880,27 +991,36 @@ const Editor = () => {
             const normalized = customerLayers.map((l) => normalizeLayer(l));
             let res;
             let designId = null;
+
             if (isEditing && existingCustomProduct?._id && !createNewFlag) {
+                // ✅ SAHI FIELD NAME use karo
                 const payload = {
                     productId,
                     mockupId: selectedMockup._id,
-                    layers: normalized,
+                    customerLayers: normalized,  // ← ye change kiya
                     customVariant: existingCustomProduct.customVariant || {
                         enabled: true,
                         name: "",
                         description: "",
                         tags: [],
                     },
-                    selectedDefaultVariants:
-                        existingCustomProduct.selectedDefaultVariants || [],
+                    selectedDefaultVariants: existingCustomProduct.selectedDefaultVariants || [],
                 };
                 res = await updateCustomProduct(existingCustomProduct._id, payload);
                 if (res.success) {
                     designId = existingCustomProduct._id;
                     setShowConfirmModal(false);
                     toast.success("Design updated successfully!");
+
+                    // Refresh karo
+                    const refreshed = await getCustomProductById(existingCustomProduct._id);
+                    if (refreshed.success && refreshed.data) {
+                        setExistingCustomProduct(refreshed.data);
+                        setCustomerLayers(refreshed.data.customerLayers || []);
+                    }
                 }
             } else {
+                // New design wala code same rakh sakte ho
                 res = await saveCustomerDesign({
                     productId,
                     mockupId: selectedMockup._id,
@@ -913,25 +1033,10 @@ const Editor = () => {
                     toast.success("Design saved successfully!");
                 }
             }
+
             if (res?.success) {
                 setHasSavedDesign(true);
                 setCustomerDesignId(designId);
-                try {
-                    const fresh = await getCustomerDesign(productId, selectedMockup._id);
-                    if (fresh.success && fresh.data) {
-                        if (fresh.data._id) setCustomerDesignId(fresh.data._id);
-                        const loaded = (fresh.data.layers || []).map((l) =>
-                            normalizeLayer({
-                                ...l,
-                                horizontalAlign: l.horizontalAlign || "center",
-                                verticalAlign: l.verticalAlign || "middle",
-                            }),
-                        );
-                        setCustomerLayers(loaded);
-                    }
-                } catch (e) {
-                    console.error("fetch fresh after save", e);
-                }
                 return designId;
             } else {
                 toast.error(isEditing ? "Update failed" : "Save failed");
@@ -945,6 +1050,78 @@ const Editor = () => {
             setSaving(false);
         }
     };
+
+    // const handleSave = async () => {
+    //     try {
+    //         setSaving(true);
+    //         const normalized = customerLayers.map((l) => normalizeLayer(l));
+    //         let res;
+    //         let designId = null;
+    //         if (isEditing && existingCustomProduct?._id && !createNewFlag) {
+    //             const payload = {
+    //                 productId,
+    //                 mockupId: selectedMockup._id,
+    //                 layers: normalized,
+    //                 customVariant: existingCustomProduct.customVariant || {
+    //                     enabled: true,
+    //                     name: "",
+    //                     description: "",
+    //                     tags: [],
+    //                 },
+    //                 selectedDefaultVariants:
+    //                     existingCustomProduct.selectedDefaultVariants || [],
+    //             };
+    //             res = await updateCustomProduct(existingCustomProduct._id, payload);
+    //             if (res.success) {
+    //                 designId = existingCustomProduct._id;
+    //                 setShowConfirmModal(false);
+    //                 toast.success("Design updated successfully!");
+    //             }
+    //         } else {
+    //             res = await saveCustomerDesign({
+    //                 productId,
+    //                 mockupId: selectedMockup._id,
+    //                 layers: normalized,
+    //                 forceNew: true,
+    //             });
+    //             if (res.success) {
+    //                 designId = res.data?._id;
+    //                 setCustomerDesignId(designId);
+    //                 toast.success("Design saved successfully!");
+    //             }
+    //         }
+    //         if (res?.success) {
+    //             setHasSavedDesign(true);
+    //             setCustomerDesignId(designId);
+    //             try {
+    //                 const fresh = await getCustomerDesign(productId, selectedMockup._id);
+    //                 if (fresh.success && fresh.data) {
+    //                     if (fresh.data._id) setCustomerDesignId(fresh.data._id);
+    //                     const loaded = (fresh.data.layers || []).map((l) =>
+    //                         normalizeLayer({
+    //                             ...l,
+    //                             horizontalAlign: l.horizontalAlign || "center",
+    //                             verticalAlign: l.verticalAlign || "middle",
+    //                         }),
+    //                     );
+    //                     setCustomerLayers(loaded);
+    //                 }
+    //             } catch (e) {
+    //                 console.error("fetch fresh after save", e);
+    //             }
+    //             return designId;
+    //         } else {
+    //             toast.error(isEditing ? "Update failed" : "Save failed");
+    //             return null;
+    //         }
+    //     } catch (e) {
+    //         console.error("save error", e);
+    //         toast.error(isEditing ? "Update failed" : "Save failed");
+    //         return null;
+    //     } finally {
+    //         setSaving(false);
+    //     }
+    // };
 
     const handleConfirm = async () => {
         const savedDesignId = await handleSave();
@@ -1278,29 +1455,6 @@ const Editor = () => {
                                         </div>
                                     );
                                 })}
-
-                                {/* Navigation Arrows */}
-                                {allProductMockups.length > 1 && (
-                                    <>
-                                        <button
-                                            onClick={handlePrevMockup}
-                                            disabled={currentMockupIndex === 0}
-                                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg z-20 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                                        >
-                                            <ChevronLeft size={22} />
-                                        </button>
-                                        <button
-                                            onClick={handleNextMockup}
-                                            disabled={currentMockupIndex === allProductMockups.length - 1}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg z-20 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                                        >
-                                            <ChevronRight size={22} />
-                                        </button>
-                                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full z-20">
-                                            {currentMockupIndex + 1} / {allProductMockups.length}
-                                        </div>
-                                    </>
-                                )}
                             </div>
                         </div>
                     </div>
