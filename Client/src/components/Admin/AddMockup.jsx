@@ -127,9 +127,10 @@ export default function AddMockup({ open, onClose, onSelect, productId }) {
             if (res?.success) {
                 onSelect?.(selected); // or onSelect?.(res.data)
                 onClose();
+                toast.success("Mockups added to product successfully")
+                window.location.reload();
                 return;
             } else {
-                // handle error (toast / alert)
                 toast.error("Failed to add mockups to product")
                 console.error("Failed to add mockups", res);
                 // still close or keep modal open based on UX

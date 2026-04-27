@@ -30,11 +30,12 @@ export default function Subcatalogue() {
     try {
       const res = await getProductsByCategory(id);
 
-      // ✅ res already array hai
-      // Agar backend poori list deta hai to frontend filter bhi kar lo:
       const filtered = (res || []).filter((p) => {
         const catId = p?.category?._id || p?.category;
-        return String(catId) === String(id);
+        return (
+          String(catId) === String(id) &&
+          p?.visibility === true   // ✅ ye line add karo
+        );
       });
 
       setProducts(filtered);
@@ -55,7 +56,12 @@ export default function Subcatalogue() {
       // agar children nahi hain to products load karo
       if (!children || children.length === 0) {
         const prods = await getProductsByCategory(subCategoryId);
-        setProducts(prods || []);
+
+        const filtered = (prods || []).filter(
+          (p) => p?.visibility === true
+        );
+        // setProducts(prods || []);
+        setProducts(filtered);
       }
 
       setLoading(false);

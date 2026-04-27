@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Breadcrumbs from "../components/Breadcrumbs";
 import AddCategoryModal from "../components/Admin/AddCategoryModal";
+import {toast} from "react-toastify"
 import {
     createCategory,
     getAllCategory,
@@ -67,7 +68,7 @@ function CategoryPage() {
 
         const res = await deleteCategory(id);
         if (!res.success) {
-            alert(res.message || "Failed to delete category");
+            toast.error(res.message || "Failed to delete category");
             return;
         }
 
@@ -77,7 +78,7 @@ function CategoryPage() {
     // Submit handler → Add or Edit
     const submitCategoryHandler = async () => {
         if (!newCategory.trim()) {
-            alert("Category name required!");
+            toast.error("Category name required!");
             return;
         }
 
@@ -90,14 +91,14 @@ function CategoryPage() {
             res = await updateCategory(editCategoryId, formData);
         } else {
             if (!categoryThumbnail) {
-                alert("Thumbnail required for new category!");
+                toast.error("Thumbnail required for new category!");
                 return;
             }
             res = await createCategory(formData);
         }
 
         if (!res.success) {
-            alert(res.message || "Something went wrong");
+            toast.error(res.message || "Something went wrong");
             return;
         }
 

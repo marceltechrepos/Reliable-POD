@@ -18,10 +18,10 @@ export const registerAPi = async (payload, setLoading, navigate) => {
         setLoading(false)
 
         if (data.success === true) {
-            alert(data.message);
+            toast.success(data.message);
             navigate("/")
         } else {
-            alert(data.message || "something went wrong");
+            toast.error(data.message || "something went wrong");
         }
 
     } catch (error) {

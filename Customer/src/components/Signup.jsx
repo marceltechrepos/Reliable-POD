@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { registerAPi } from '../api/auth.api';
+import { toast } from 'react-toastify';
 
 function Signup() {
 
@@ -31,17 +32,17 @@ function Signup() {
             password.trim() === "" ||
             confirmPassword.trim() === ""
         ) {
-            alert("all fields are required");
+            toast.error("all fields are required");
             return;
         }
 
         if (password.length < 6) {
-            alert("password must be at least 6 characters long");
+            toast.error("password must be at least 6 characters long");
             return;
         }
 
         if (password !== confirmPassword) {
-            alert("password do not match");
+            toast.error("password do not match");
             return;
         }
 

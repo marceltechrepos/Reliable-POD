@@ -88,7 +88,7 @@ export default function MyProducts() {
       }
     } catch (error) {
       console.error(error);
-      alert('Error importing products');
+      toast.error('Error importing products');
     } finally {
       setImporting(false);
     }

@@ -4,6 +4,7 @@ import {
   deleteMockupImage,
   duplicateMockup,
   getAllMockupImage,
+  getSingleMockupImage,
   uploadMockupImage,
 } from "../Controllers/mockupImage.controller.js";
 import { upload } from "../Middlewares/Multer/multer.js";
@@ -23,5 +24,6 @@ router.put(
 );
 router.delete("/delete-mockup-image/:id", deleteMockupImage);
 router.post("/duplicate-mockup/:mockupId", duplicateMockup);
+router.get("/get-single-mockup/:id", getSingleMockupImage);
 
 export default router;

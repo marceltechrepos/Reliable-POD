@@ -13,6 +13,7 @@ const createCustomProduct = async (req, res) => {
       customVariant = {},
       customerDesignId = null,
       selectedMockup = null,
+      sellingPrice = 0,
       customerLayers = [],
     } = req.body;
 
@@ -67,6 +68,7 @@ const createCustomProduct = async (req, res) => {
       customerDesign: customerDesignId,
       selectedMockup,
       customerLayers,
+       sellingPrice,
     });
 
     await customProduct.save();

@@ -72,13 +72,61 @@ const uploadFinalImage = async (req, res) => {
 
 // Controllers/customerDesign.Controller.js
 
+// const saveDesign = async (req, res) => {
+//     try {
+//         const { productId, mockupId , forceNew  } = req.body;
+//         let { layers } = req.body;
+//         const userId = req.user && req.user._id;
+
+
+
+//         // defensive parsing if layers is a string
+//         if (typeof layers === 'string') {
+//             try { layers = JSON.parse(layers); }
+//             catch (e) { return res.status(400).json({ success: false, message: 'Invalid layers JSON' }); }
+//         }
+
+//         if (!productId || !mockupId || !Array.isArray(layers)) {
+//             return res.status(400).json({ success: false, message: 'Missing or invalid fields' });
+//         }
+
+//         // Find existing design
+//         let design = await CustomerDesign.findOne({ user: userId, product: productId, mockup: mockupId });
+
+//         if (design) {
+//             // Update
+//             design.layers = layers;
+//             await design.save();
+//         } else {
+//             // Create new
+//             design = new CustomerDesign({
+//                 user: userId,
+//                 product: productId,
+//                 mockup: mockupId,
+//                 layers
+//             });
+//             await design.save();
+//         }
+
+//         res.json({ success: true, data: design });
+//     } catch (error) {
+//         console.error(error);
+//         if (error.name === 'ValidationError') {
+//             return res.status(400).json({ success: false, message: error.message });
+//         }
+//         if (error.code === 11000) {
+//             return res.status(409).json({ success: false, message: 'Duplicate design exists' });
+//         }
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// }
+
 const saveDesign = async (req, res) => {
     try {
-        const { productId, mockupId } = req.body;
+        const { productId, mockupId, forceNew } = req.body;
         let { layers } = req.body;
         const userId = req.user && req.user._id;
 
-        // defensive parsing if layers is a string
         if (typeof layers === 'string') {
             try { layers = JSON.parse(layers); }
             catch (e) { return res.status(400).json({ success: false, message: 'Invalid layers JSON' }); }
@@ -88,22 +136,45 @@ const saveDesign = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Missing or invalid fields' });
         }
 
-        // Find existing design
-        let design = await CustomerDesign.findOne({ user: userId, product: productId, mockup: mockupId });
+        let design;
 
-        if (design) {
-            // Update
-            design.layers = layers;
-            await design.save();
-        } else {
-            // Create new
+        if (forceNew) {
+            // ✅ Force new: Always create new document with timestamp to bypass unique index
             design = new CustomerDesign({
                 user: userId,
                 product: productId,
                 mockup: mockupId,
-                layers
+                layers,
+                canvasWidth: 100,
+                canvasHeight: 100,
+                finalDesignImage: [],
+                finalDesignImages: [],
+                // 🔥 Add a unique field to bypass compound index
+                createdAt: new Date(), // already there, but helps differentiate
             });
             await design.save();
+        } else {
+            // Existing logic — find and update, or create
+            design = await CustomerDesign.findOne({
+                user: userId,
+                product: productId,
+                mockup: mockupId
+            });
+
+            if (design) {
+                design.layers = layers;
+                await design.save();
+            } else {
+                design = new CustomerDesign({
+                    user: userId,
+                    product: productId,
+                    mockup: mockupId,
+                    layers,
+                    canvasWidth: 100,
+                    canvasHeight: 100,
+                });
+                await design.save();
+            }
         }
 
         res.json({ success: true, data: design });
@@ -117,7 +188,87 @@ const saveDesign = async (req, res) => {
         }
         res.status(500).json({ success: false, message: error.message });
     }
-}
+};
+
+// ============================ work
+
+// const saveDesign = async (req, res) => {
+//     try {
+//         const { productId, mockupId, forceNew } = req.body;
+//         let { layers } = req.body;
+//         const userId = req.user && req.user._id;
+
+//         if (typeof layers === 'string') {
+//             try {
+//                 layers = JSON.parse(layers);
+//             } catch (e) {
+//                 return res.status(400).json({ success: false, message: 'Invalid layers JSON' });
+//             }
+//         }
+
+//         if (!productId || !mockupId || !Array.isArray(layers)) {
+//             return res.status(400).json({ success: false, message: 'Missing or invalid fields' });
+//         }
+
+//         let design;
+
+//         if (forceNew) {
+//             // 🔥 Find latest version for this user+product+mockup combo
+//             const latestDesign = await CustomerDesign.findOne(
+//                 { user: userId, product: productId, mockup: mockupId }
+//             ).sort({ version: -1 }); // highest version first
+
+//             const newVersion = latestDesign ? (latestDesign.version || 1) + 1 : 1;
+
+//             design = new CustomerDesign({
+//                 user: userId,
+//                 product: productId,
+//                 mockup: mockupId,
+//                 version: newVersion, // Incremented version
+//                 layers,
+//                 canvasWidth: 100,
+//                 canvasHeight: 100,
+//                 finalDesignImage: [],
+//                 finalDesignImages: [],
+//             });
+//             await design.save();
+//         } else {
+//             // Existing logic
+//             design = await CustomerDesign.findOne({
+//                 user: userId,
+//                 product: productId,
+//                 mockup: mockupId
+//             });
+
+//             if (design) {
+//                 design.layers = layers;
+//                 await design.save();
+//             } else {
+//                 design = new CustomerDesign({
+//                     user: userId,
+//                     product: productId,
+//                     mockup: mockupId,
+//                     version: 1,
+//                     layers,
+//                     canvasWidth: 100,
+//                     canvasHeight: 100,
+//                 });
+//                 await design.save();
+//             }
+//         }
+
+//         res.json({ success: true, data: design });
+//     } catch (error) {
+//         console.error(error);
+//         if (error.name === 'ValidationError') {
+//             return res.status(400).json({ success: false, message: error.message });
+//         }
+//         if (error.code === 11000) {
+//             return res.status(409).json({ success: false, message: 'Duplicate design exists' });
+//         }
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// };
 
 const updateLayer = async (req, res) => {
     try {
@@ -288,6 +439,85 @@ const getcustomerDesignByuserId = async (req, res) => {
     }
 }
 
+
+// =================================================
+
+// ✅ NEW: Upload image for a specific mockup
+const uploadMockupImage = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const { mockupId } = req.body;
+        const userId = req.user._id;
+
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file provided' });
+        }
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'customer_final_designs',
+        });
+
+        // Delete temporary file after upload (optional)
+        // fs.unlinkSync(req.file.path);
+
+        res.json({
+            success: true,
+            data: {
+                imageUrl: result.secure_url,
+                publicId: result.public_id,
+                mockupId: mockupId
+            }
+        });
+    } catch (error) {
+        console.error('uploadMockupImage error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ✅ NEW: Update design with all mockup images array
+const updateMockupImages = async (req, res) => {
+    try {
+        const { designId } = req.params;
+        const { finalDesignImages } = req.body;
+        const userId = req.user._id;
+
+        // Find design owned by this user
+        const design = await CustomerDesign.findOne({ _id: designId, user: userId });
+        if (!design) {
+            return res.status(404).json({ success: false, message: 'Design not found' });
+        }
+
+        // Update with new images array
+        design.finalDesignImages = finalDesignImages;
+
+        // Also keep first image as main for backward compatibility
+        if (finalDesignImages && finalDesignImages.length > 0) {
+            design.finalDesignImage = finalDesignImages[0].imageUrl;
+        }
+
+        await design.save();
+
+        res.json({
+            success: true,
+            message: 'Mockup images updated successfully',
+            data: {
+                finalDesignImages: design.finalDesignImages,
+                finalDesignImage: design.finalDesignImage
+            }
+        });
+    } catch (error) {
+        console.error('updateMockupImages error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export {
     uploadImage,
     saveDesign,
@@ -295,5 +525,7 @@ export {
     deleteLayer,
     updateLayer,
     getcustomerDesignByuserId,
-    uploadFinalImage
+    uploadFinalImage,
+    uploadMockupImage,
+    updateMockupImages
 }

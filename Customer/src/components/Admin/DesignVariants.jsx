@@ -68,7 +68,7 @@ const VariantCard = ({ variant, isSelected, onSelect }) => {
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* <div className="grid grid-cols-2 gap-2">
                     <div className="bg-gray-50 p-2">
                         <p className="text-[10px] uppercase tracking-widest text-gray-400">
                             Price
@@ -101,17 +101,17 @@ const VariantCard = ({ variant, isSelected, onSelect }) => {
                             {variant?.colorHex || "Default"}
                         </p>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="mt-4 flex items-center justify-between gap-2">
-                    <span
+                    {/* <span
                         className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold ${variant.available === "available"
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-amber-50 text-amber-700"
                             }`}
                     >
                         {variant.available === "available" ? "In stock" : "Pre-order"}
-                    </span>
+                    </span> */}
 
                     {variant.isCustom ? (
                         <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
@@ -177,9 +177,11 @@ export default function DesignVariants() {
     const [loadingProduct, setLoadingProduct] = useState(false);
     const [creating, setCreating] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [sellingPrice, setSellingPrice] = useState("");
 
     const [step, setStep] = useState("list");
     const [selectedVariantIds, setSelectedVariantIds] = useState([]);
+    const [currentTag, setCurrentTag] = useState("");
 
     // Custom variants array - multiple variants
     const [customVariants, setCustomVariants] = useState([]);
@@ -203,13 +205,34 @@ export default function DesignVariants() {
         String(id).startsWith("custom-")
     ).length;
 
+    // =========================================================
+    // Inside component, before return
+    const hasCustomVariants = customVariants.length > 0;
+
+    // Main button click handler for list step
+    const handleMainButtonClick = () => {
+        if (!hasCustomVariants) {
+            // No custom variants -> direct create
+            handleCreate();
+        } else {
+            // Show details step
+            handleNext();
+        }
+    };
+
+    // Disable main button if no variant is selected (only when custom variants exist)
+    const mainButtonDisabled = hasCustomVariants
+        ? selectedVariantIds.length === 0
+        : false; // when no custom variants, allow creation even without selection
+    // =========================================================
+
     // Load existing data if editing
     useEffect(() => {
         if (isEditing && existingCustomProduct) {
             // Load selected variant IDs
-            if (existingCustomProduct.selectedDefaultVariants) {
-                setSelectedVariantIds(existingCustomProduct.selectedDefaultVariants);
-            }
+            // if (existingCustomProduct.selectedDefaultVariants) {
+            //     setSelectedVariantIds(existingCustomProduct.selectedDefaultVariants);
+            // }
 
             // Load custom variants array
             if (existingCustomProduct.customVariants?.length > 0) {
@@ -222,6 +245,10 @@ export default function DesignVariants() {
                     // Include other fields if needed
                 }));
                 setCustomVariants(loadedCustomVariants);
+            }
+
+            if (existingCustomProduct?.sellingPrice) {
+                setSellingPrice(existingCustomProduct.sellingPrice);
             }
 
             // Load common details
@@ -260,8 +287,9 @@ export default function DesignVariants() {
     }, [productId, isEditing]);
 
     const allVariants = useMemo(() => {
-        const base = product?.Variants || [];
-        return [...base, ...customVariants];
+        // const base = product?.Variants || [];
+        // return [...base, ...customVariants];
+        return [...customVariants];
     }, [product, customVariants]);
 
     const selectedCustomVariants = useMemo(() => {
@@ -376,6 +404,7 @@ export default function DesignVariants() {
                 customerDesignId: state?.customerDesignId || null,
                 selectedMockup: state?.selectedMockup?._id || null,
                 customerLayers: state?.customerLayers || [],
+                sellingPrice: sellingPrice ? parseFloat(sellingPrice) : 0,
             };
 
             console.log("Update Payload:", payload); // Debug
@@ -433,10 +462,21 @@ export default function DesignVariants() {
                                 {product?.productTitle || "Product"}
                             </span>
                             <ChevronRight size={14} />
-                            <span className="font-semibold text-[#f05a28]">Variants</span>
+                            <span className="font-semibold text-[#f05a28]">Mockups</span>
                         </div>
                     </div>
 
+                    <button
+                        onClick={step === "list" ? handleMainButtonClick : handleCreate}
+                        disabled={step === "list" ? mainButtonDisabled : creating}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f05a28] text-white text-sm font-bold rounded-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                    >
+                        {step === "list"
+                            ? (customVariants.length === 0 ? "Create Product" : "Next")
+                            : (creating ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Product" : "Create Product"))
+                        }
+                    </button>
+                    {/* 
                     <button
                         onClick={step === "list" ? handleNext : handleCreate}
                         disabled={step === "list" ? selectedVariantIds.length === 0 : creating}
@@ -449,7 +489,7 @@ export default function DesignVariants() {
                                 : (isEditing ? "Update Product" : "Create Product")
                             )
                         }
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
@@ -474,20 +514,37 @@ export default function DesignVariants() {
                                             {product?.productTitle || "Product Name"}
                                         </h1>
                                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                                            Select one or more variants and continue to add your custom design details.
+                                            Select one or more Mockups and continue to add your custom Mockups details.
                                         </p>
 
                                         <div className="mt-4 flex flex-wrap gap-2">
-                                            <span className="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
+                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
                                                 {product?.Variants?.length || 0} admin variants available
-                                            </span>
+                                            </span> */}
                                             <span className="px-3 py-1 text-xs font-semibold bg-orange-50 text-[#f05a28]">
                                                 {selectedVariantIds.length} selected
                                             </span>
-                                            <span className="px-3 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
+                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
                                                 {customSelectedCount} custom selected
-                                            </span>
+                                            </span> */}
                                         </div>
+
+                                        {/* // add the input field to enter the price of custom product. */}
+                                        <div className="mt-3">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                                Selling Price
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={sellingPrice}
+                                                onChange={(e) => setSellingPrice(e.target.value)}
+                                                placeholder="e.g. 24.99"
+                                                className="w-full max-w-xs border border-gray-300 px-4 py-2.5 outline-none placeholder:text-gray-400 focus:border-[#f05a28] cursor-text"
+                                            />
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -496,11 +553,9 @@ export default function DesignVariants() {
                                 <div className="mb-5 flex items-center justify-between">
                                     <div>
                                         <h2 className="text-xl font-black text-gray-900">
-                                            Select Product Variants
+                                            Select Mockups
                                         </h2>
-                                        <p className="text-sm text-gray-500">
-                                            Admin variants and uploaded custom variants are shown together. You can select multiple variants.
-                                        </p>
+
                                     </div>
                                 </div>
 
@@ -518,7 +573,7 @@ export default function DesignVariants() {
                                 {/* Unselected custom variants */}
                                 {customVariants.filter(v => !selectedVariantIds.includes(v._id)).length > 0 && (
                                     <div className="mt-4">
-                                        <p className="text-sm font-semibold text-gray-500 mb-2">Unselected Variants</p>
+                                        <p className="text-sm font-semibold text-gray-500 mb-2">Unselected Mockups</p>
                                         <div className="space-y-2">
                                             {customVariants
                                                 .filter(v => !selectedVariantIds.includes(v._id))
@@ -538,7 +593,8 @@ export default function DesignVariants() {
                                     </div>
                                 )}
 
-                                {(!product?.Variants || product.Variants.length === 0) &&
+                                {/* {(!product?.Variants || product.Variants.length === 0) && */}
+                                {
                                     customVariants.length === 0 && (
                                         <div className="grid place-items-center border border-dashed border-gray-300 bg-gray-50 py-16">
                                             <div className="text-center">
@@ -552,6 +608,7 @@ export default function DesignVariants() {
                                             </div>
                                         </div>
                                     )}
+
                             </div>
                         </div>
 
@@ -563,10 +620,10 @@ export default function DesignVariants() {
                                     </div>
                                     <div>
                                         <h2 className="text-lg font-black text-gray-900">
-                                            Add custom variants
+                                            Add Mockups
                                         </h2>
                                         <p className="text-sm text-gray-500">
-                                            Upload multiple custom variant images.
+                                            Upload multiple custom Mockups images.
                                         </p>
                                     </div>
                                 </div>
@@ -583,7 +640,7 @@ export default function DesignVariants() {
                                 </label>
 
                                 <p className="mt-3 text-xs text-gray-500">
-                                    Every upload becomes a new selectable custom variant.
+                                    Every upload becomes a new selectable custom Mockups.
                                 </p>
 
                                 {customVariants.length > 0 && (
@@ -624,10 +681,10 @@ export default function DesignVariants() {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-black text-gray-900">
-                                            Custom Details
+                                            Mockups Details
                                         </h2>
                                         <p className="text-sm text-gray-500">
-                                            These details will apply to all selected custom variants ({selectedCustomVariants.length}).
+                                            These details will apply to all selected Mockups ({selectedCustomVariants.length}).
                                         </p>
                                     </div>
                                 </div>
@@ -652,25 +709,172 @@ export default function DesignVariants() {
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                        <div className="space-y-3">
+                                            <label className="block text-sm font-semibold text-gray-700">
                                                 Tags
+                                                <span className="ml-1 text-xs font-normal text-gray-400">(Optional)</span>
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={customVariantDetails.tags}
-                                                onChange={(e) =>
-                                                    setCustomVariantDetails(prev => ({
-                                                        ...prev,
-                                                        tags: e.target.value,
-                                                    }))
-                                                }
-                                                placeholder="mug, photo mug, gift, dishwasher safe"
-                                                className="w-full border border-gray-300 px-4 py-3 outline-none placeholder:text-gray-400 focus:border-[#f05a28] cursor-text"
-                                            />
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                Separate tags with commas
-                                            </p>
+
+                                            {/* Input Field */}
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={currentTag}
+                                                    onChange={(e) => setCurrentTag(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter" && currentTag.trim()) {
+                                                            e.preventDefault();
+                                                            const newTag = currentTag.trim();
+
+                                                            // Get current tags as array
+                                                            const currentTags = customVariantDetails.tags
+                                                                .split(",")
+                                                                .map(t => t.trim())
+                                                                .filter(t => t.length > 0);
+
+                                                            // Check if tag already exists (case-insensitive)
+                                                            if (!currentTags.some(t => t.toLowerCase() === newTag.toLowerCase())) {
+                                                                // Add new tag
+                                                                const updatedTagsArray = [...currentTags, newTag];
+                                                                setCustomVariantDetails(prev => ({
+                                                                    ...prev,
+                                                                    tags: updatedTagsArray.join(", "),
+                                                                }));
+                                                            }
+
+                                                            // Clear input
+                                                            setCurrentTag("");
+                                                        } else if (e.key === "Backspace" && !currentTag) {
+                                                            // Remove last tag when input is empty
+                                                            e.preventDefault();
+                                                            const currentTags = customVariantDetails.tags
+                                                                .split(",")
+                                                                .map(t => t.trim())
+                                                                .filter(t => t.length > 0);
+
+                                                            if (currentTags.length > 0) {
+                                                                currentTags.pop();
+                                                                setCustomVariantDetails(prev => ({
+                                                                    ...prev,
+                                                                    tags: currentTags.join(", "),
+                                                                }));
+                                                            }
+                                                        }
+                                                    }}
+                                                    placeholder="Type a tag and press Enter"
+                                                    className="w-full border border-gray-300 px-4 py-2.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#f05a28] focus:ring-1 focus:ring-[#f05a28]/20 transition-all cursor-text"
+                                                />
+
+                                                {/* Input Icon */}
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M12 5v14M5 12h14" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            {/* Tags Display Area */}
+                                            {customVariantDetails.tags && customVariantDetails.tags.split(",").filter(t => t.trim()).length > 0 && (
+                                                <div className="border border-gray-200 bg-gray-50/50 rounded-lg p-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                            Added Tags
+                                                        </h4>
+                                                        <span className="text-xs text-gray-400 font-medium">
+                                                            {customVariantDetails.tags.split(",").filter(t => t.trim()).length} tag(s)
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {customVariantDetails.tags
+                                                            .split(",")
+                                                            .map(t => t.trim())
+                                                            .filter(t => t.length > 0)
+                                                            .map((tag, index) => (
+                                                                <span
+                                                                    key={`${tag}-${index}`}
+                                                                    className="inline-flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-full text-sm text-gray-700 font-medium shadow-sm hover:shadow-md hover:border-[#f05a28]/30 transition-all duration-200 group"
+                                                                >
+                                                                    {/* Tag Icon */}
+                                                                    <svg
+                                                                        width="12"
+                                                                        height="12"
+                                                                        viewBox="0 0 24 24"
+                                                                        fill="none"
+                                                                        stroke="#f05a28"
+                                                                        strokeWidth="2.5"
+                                                                        className="flex-shrink-0"
+                                                                    >
+                                                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                                                                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                                                                    </svg>
+
+                                                                    <span>{tag}</span>
+
+                                                                    {/* Remove Button */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const currentTags = customVariantDetails.tags
+                                                                                .split(",")
+                                                                                .map(t => t.trim())
+                                                                                .filter(t => t.length > 0);
+
+                                                                            const updatedTags = currentTags.filter((_, i) => i !== index);
+
+                                                                            setCustomVariantDetails(prev => ({
+                                                                                ...prev,
+                                                                                tags: updatedTags.join(", "),
+                                                                            }));
+                                                                        }}
+                                                                        className="ml-1 p-0.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                                                        title="Remove tag"
+                                                                    >
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                </span>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Empty State */}
+                                            {(!customVariantDetails.tags || customVariantDetails.tags.split(",").filter(t => t.trim()).length === 0) && (
+                                                <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                                    <svg
+                                                        className="mx-auto mb-2 text-gray-300"
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                                                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                                                    </svg>
+                                                    <p className="text-xs text-gray-400">
+                                                        No tags added yet. Type above and press Enter to add.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Helper Text */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 h-px bg-gray-200"></div>
+                                                <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                                                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono text-gray-500">
+                                                        Enter ↵
+                                                    </kbd>
+                                                    to add tag
+                                                    <span className="mx-1 text-gray-300">•</span>
+                                                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono text-gray-500">
+                                                        Backspace ⌫
+                                                    </kbd>
+                                                    to remove
+                                                </p>
+                                                <div className="flex-1 h-px bg-gray-200"></div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -731,7 +935,7 @@ export default function DesignVariants() {
 
                         <div className="lg:col-span-4 space-y-6">
                             <div className="border border-gray-200 bg-white p-5">
-                                <h3 className="text-lg font-black text-gray-900">Selected Custom Variants</h3>
+                                <h3 className="text-lg font-black text-gray-900">Selected Mockups</h3>
 
                                 {selectedCustomVariants.length > 0 ? (
                                     <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
@@ -761,7 +965,7 @@ export default function DesignVariants() {
                                         <div>
                                             <ImagePlus className="mx-auto mb-2 text-gray-400" size={26} />
                                             <p className="text-sm text-gray-500">
-                                                No custom variants selected
+                                                No Mockups Selected
                                             </p>
                                         </div>
                                     </div>
@@ -769,19 +973,19 @@ export default function DesignVariants() {
 
                                 <div className="mt-4 space-y-3 text-sm">
                                     <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                                        <span className="text-gray-500">Total variants selected</span>
+                                        <span className="text-gray-500">Total Mockups selected</span>
                                         <span className="font-semibold text-gray-900">
                                             {selectedVariantIds.length}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                                    {/* <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                                         <span className="text-gray-500">Default variants</span>
                                         <span className="font-semibold text-gray-900">
                                             {defaultSelectedCount}
                                         </span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                                        <span className="text-gray-500">Custom variants</span>
+                                        <span className="text-gray-500">Mockups</span>
                                         <span className="font-semibold text-gray-900">
                                             {customSelectedCount}
                                         </span>
