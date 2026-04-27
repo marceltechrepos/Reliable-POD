@@ -139,7 +139,11 @@ const saveDesign = async (req, res) => {
         let design;
 
         if (forceNew) {
-            // ✅ Force new: Always create new document with timestamp to bypass unique index
+            const lastDesign = await CustomerDesign
+                .findOne({ user: userId, product: productId, mockup: mockupId })
+                .sort({ version: -1 });
+
+            const newVersion = lastDesign ? lastDesign.version + 1 : 1;
             design = new CustomerDesign({
                 user: userId,
                 product: productId,
@@ -149,7 +153,7 @@ const saveDesign = async (req, res) => {
                 canvasHeight: 100,
                 finalDesignImage: [],
                 finalDesignImages: [],
-                // 🔥 Add a unique field to bypass compound index
+                version: newVersion, 
                 createdAt: new Date(), // already there, but helps differentiate
             });
             await design.save();
@@ -190,85 +194,6 @@ const saveDesign = async (req, res) => {
     }
 };
 
-// ============================ work
-
-// const saveDesign = async (req, res) => {
-//     try {
-//         const { productId, mockupId, forceNew } = req.body;
-//         let { layers } = req.body;
-//         const userId = req.user && req.user._id;
-
-//         if (typeof layers === 'string') {
-//             try {
-//                 layers = JSON.parse(layers);
-//             } catch (e) {
-//                 return res.status(400).json({ success: false, message: 'Invalid layers JSON' });
-//             }
-//         }
-
-//         if (!productId || !mockupId || !Array.isArray(layers)) {
-//             return res.status(400).json({ success: false, message: 'Missing or invalid fields' });
-//         }
-
-//         let design;
-
-//         if (forceNew) {
-//             // 🔥 Find latest version for this user+product+mockup combo
-//             const latestDesign = await CustomerDesign.findOne(
-//                 { user: userId, product: productId, mockup: mockupId }
-//             ).sort({ version: -1 }); // highest version first
-
-//             const newVersion = latestDesign ? (latestDesign.version || 1) + 1 : 1;
-
-//             design = new CustomerDesign({
-//                 user: userId,
-//                 product: productId,
-//                 mockup: mockupId,
-//                 version: newVersion, // Incremented version
-//                 layers,
-//                 canvasWidth: 100,
-//                 canvasHeight: 100,
-//                 finalDesignImage: [],
-//                 finalDesignImages: [],
-//             });
-//             await design.save();
-//         } else {
-//             // Existing logic
-//             design = await CustomerDesign.findOne({
-//                 user: userId,
-//                 product: productId,
-//                 mockup: mockupId
-//             });
-
-//             if (design) {
-//                 design.layers = layers;
-//                 await design.save();
-//             } else {
-//                 design = new CustomerDesign({
-//                     user: userId,
-//                     product: productId,
-//                     mockup: mockupId,
-//                     version: 1,
-//                     layers,
-//                     canvasWidth: 100,
-//                     canvasHeight: 100,
-//                 });
-//                 await design.save();
-//             }
-//         }
-
-//         res.json({ success: true, data: design });
-//     } catch (error) {
-//         console.error(error);
-//         if (error.name === 'ValidationError') {
-//             return res.status(400).json({ success: false, message: error.message });
-//         }
-//         if (error.code === 11000) {
-//             return res.status(409).json({ success: false, message: 'Duplicate design exists' });
-//         }
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// };
 
 const updateLayer = async (req, res) => {
     try {

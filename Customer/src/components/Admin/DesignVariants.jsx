@@ -67,51 +67,7 @@ const VariantCard = ({ variant, isSelected, onSelect }) => {
                         </div>
                     )}
                 </div>
-
-                {/* <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-gray-50 p-2">
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                            Price
-                        </p>
-                        <p className="text-sm font-bold text-gray-900">
-                            ${variant.basePrice ?? "0.00"}
-                        </p>
-                    </div>
-                    <div className="bg-gray-50 p-2">
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                            Weight
-                        </p>
-                        <p className="text-sm font-bold text-gray-900">
-                            {variant.weight ?? "N/A"}g
-                        </p>
-                    </div>
-                    <div className="bg-gray-50 p-2">
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                            Size
-                        </p>
-                        <p className="text-sm font-bold text-gray-900">
-                            {variant.size ?? "N/A"}
-                        </p>
-                    </div>
-                    <div className="bg-gray-50 p-2">
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                            Color
-                        </p>
-                        <p className="truncate text-sm font-bold text-gray-900">
-                            {variant?.colorHex || "Default"}
-                        </p>
-                    </div>
-                </div> */}
-
                 <div className="mt-4 flex items-center justify-between gap-2">
-                    {/* <span
-                        className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold ${variant.available === "available"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
-                            }`}
-                    >
-                        {variant.available === "available" ? "In stock" : "Pre-order"}
-                    </span> */}
 
                     {variant.isCustom ? (
                         <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
@@ -178,6 +134,11 @@ export default function DesignVariants() {
     const [creating, setCreating] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [sellingPrice, setSellingPrice] = useState("");
+    const [productDetails, setProductDetails] = useState({
+        title: "",
+        description: "",
+        tags: "",
+    });
 
     const [step, setStep] = useState("list");
     const [selectedVariantIds, setSelectedVariantIds] = useState([]);
@@ -209,6 +170,17 @@ export default function DesignVariants() {
     // Inside component, before return
     const hasCustomVariants = customVariants.length > 0;
 
+
+    useEffect(() => {
+        if (product && !isEditing) {
+            setProductDetails({
+                title: product.productTitle || "",
+                description: product.description || "",
+                tags: "",
+            });
+        }
+    }, [product, isEditing]);
+
     // Main button click handler for list step
     const handleMainButtonClick = () => {
         if (!hasCustomVariants) {
@@ -229,10 +201,6 @@ export default function DesignVariants() {
     // Load existing data if editing
     useEffect(() => {
         if (isEditing && existingCustomProduct) {
-            // Load selected variant IDs
-            // if (existingCustomProduct.selectedDefaultVariants) {
-            //     setSelectedVariantIds(existingCustomProduct.selectedDefaultVariants);
-            // }
 
             // Load custom variants array
             if (existingCustomProduct.customVariants?.length > 0) {
@@ -269,7 +237,7 @@ export default function DesignVariants() {
                 setLoadingProduct(true);
                 const data = await getProductById(productId);
                 setProduct(data || null);
-
+                console.log("Product data", data);
                 // New mode: select all variants by default
                 if (!isEditing) {
                     const defaultIds = data?.Variants?.map((v) => v._id) || [];
@@ -287,9 +255,8 @@ export default function DesignVariants() {
     }, [productId, isEditing]);
 
     const allVariants = useMemo(() => {
-        // const base = product?.Variants || [];
-        // return [...base, ...customVariants];
-        return [...customVariants];
+        const base = product?.Variants || [];
+        return [...base, ...customVariants];
     }, [product, customVariants]);
 
     const selectedCustomVariants = useMemo(() => {
@@ -476,20 +443,6 @@ export default function DesignVariants() {
                             : (creating ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Product" : "Create Product"))
                         }
                     </button>
-                    {/* 
-                    <button
-                        onClick={step === "list" ? handleNext : handleCreate}
-                        disabled={step === "list" ? selectedVariantIds.length === 0 : creating}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f05a28] text-white text-sm font-bold rounded-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                    >
-                        {step === "list"
-                            ? "Next"
-                            : (creating
-                                ? (isEditing ? "Updating..." : "Creating...")
-                                : (isEditing ? "Update Product" : "Create Product")
-                            )
-                        }
-                    </button> */}
                 </div>
             </div>
 
@@ -518,15 +471,9 @@ export default function DesignVariants() {
                                         </p>
 
                                         <div className="mt-4 flex flex-wrap gap-2">
-                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
-                                                {product?.Variants?.length || 0} admin variants available
-                                            </span> */}
                                             <span className="px-3 py-1 text-xs font-semibold bg-orange-50 text-[#f05a28]">
                                                 {selectedVariantIds.length} selected
                                             </span>
-                                            {/* <span className="px-3 py-1 text-xs font-semibold bg-purple-50 text-purple-700">
-                                                {customSelectedCount} custom selected
-                                            </span> */}
                                         </div>
 
                                         {/* // add the input field to enter the price of custom product. */}
@@ -600,10 +547,10 @@ export default function DesignVariants() {
                                             <div className="text-center">
                                                 <Package2 className="mx-auto mb-3 text-gray-400" size={28} />
                                                 <h3 className="text-lg font-semibold text-gray-900">
-                                                    No variants found
+                                                    No Mockups found
                                                 </h3>
                                                 <p className="mt-1 text-sm text-gray-500">
-                                                    This product does not have variants yet.
+                                                    This product does not have Custom Mockups yet.
                                                 </p>
                                             </div>
                                         </div>
@@ -636,7 +583,7 @@ export default function DesignVariants() {
                                         className="hidden"
                                     />
                                     <UploadCloud size={16} />
-                                    {uploadingImage ? "Uploading..." : "Choose image"}
+                                    {uploadingImage ? "Uploading..." : "Choose Mockups"}
                                 </label>
 
                                 <p className="mt-3 text-xs text-gray-500">
@@ -681,10 +628,10 @@ export default function DesignVariants() {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-black text-gray-900">
-                                            Mockups Details
+                                            Products Details
                                         </h2>
                                         <p className="text-sm text-gray-500">
-                                            These details will apply to all selected Mockups ({selectedCustomVariants.length}).
+                                            These details will apply to the product.
                                         </p>
                                     </div>
                                 </div>
@@ -697,11 +644,11 @@ export default function DesignVariants() {
                                             </label>
                                             <input
                                                 type="text"
-                                                value={customVariantDetails.name}
+                                                value={productDetails.title}
                                                 onChange={(e) =>
-                                                    setCustomVariantDetails(prev => ({
+                                                    setProductDetails(prev => ({
                                                         ...prev,
-                                                        name: e.target.value,
+                                                        title: e.target.value,
                                                     }))
                                                 }
                                                 placeholder="11oz Dishwasher Proof Photo Mug"
@@ -727,7 +674,7 @@ export default function DesignVariants() {
                                                             const newTag = currentTag.trim();
 
                                                             // Get current tags as array
-                                                            const currentTags = customVariantDetails.tags
+                                                            const currentTags = productDetails.tags
                                                                 .split(",")
                                                                 .map(t => t.trim())
                                                                 .filter(t => t.length > 0);
@@ -735,10 +682,10 @@ export default function DesignVariants() {
                                                             // Check if tag already exists (case-insensitive)
                                                             if (!currentTags.some(t => t.toLowerCase() === newTag.toLowerCase())) {
                                                                 // Add new tag
-                                                                const updatedTagsArray = [...currentTags, newTag];
-                                                                setCustomVariantDetails(prev => ({
+                                                                const updatedTags = [...currentTags, newTag];
+                                                                setProductDetails(prev => ({
                                                                     ...prev,
-                                                                    tags: updatedTagsArray.join(", "),
+                                                                    tags: updatedTags.join(", "),
                                                                 }));
                                                             }
 
@@ -747,14 +694,14 @@ export default function DesignVariants() {
                                                         } else if (e.key === "Backspace" && !currentTag) {
                                                             // Remove last tag when input is empty
                                                             e.preventDefault();
-                                                            const currentTags = customVariantDetails.tags
+                                                            const currentTags = productDetails.tags
                                                                 .split(",")
                                                                 .map(t => t.trim())
                                                                 .filter(t => t.length > 0);
 
                                                             if (currentTags.length > 0) {
                                                                 currentTags.pop();
-                                                                setCustomVariantDetails(prev => ({
+                                                                setProductDetails(prev => ({
                                                                     ...prev,
                                                                     tags: currentTags.join(", "),
                                                                 }));
@@ -774,19 +721,19 @@ export default function DesignVariants() {
                                             </div>
 
                                             {/* Tags Display Area */}
-                                            {customVariantDetails.tags && customVariantDetails.tags.split(",").filter(t => t.trim()).length > 0 && (
+                                            {productDetails.tags && productDetails.tags.split(",").filter(t => t.trim()).length > 0 && (
                                                 <div className="border border-gray-200 bg-gray-50/50 rounded-lg p-4">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                             Added Tags
                                                         </h4>
                                                         <span className="text-xs text-gray-400 font-medium">
-                                                            {customVariantDetails.tags.split(",").filter(t => t.trim()).length} tag(s)
+                                                            {productDetails.tags.split(",").filter(t => t.trim()).length} tag(s)
                                                         </span>
                                                     </div>
 
                                                     <div className="flex flex-wrap gap-2">
-                                                        {customVariantDetails.tags
+                                                        {productDetails.tags
                                                             .split(",")
                                                             .map(t => t.trim())
                                                             .filter(t => t.length > 0)
@@ -815,16 +762,16 @@ export default function DesignVariants() {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            const currentTags = customVariantDetails.tags
+                                                                            const currentTags = productDetails.tags
                                                                                 .split(",")
                                                                                 .map(t => t.trim())
                                                                                 .filter(t => t.length > 0);
 
                                                                             const updatedTags = currentTags.filter((_, i) => i !== index);
 
-                                                                            setCustomVariantDetails(prev => ({
+                                                                            setProductDetails(prev => ({
                                                                                 ...prev,
-                                                                                tags: updatedTags.join(", "),
+                                                                                tags: currentTags.join(", "),
                                                                             }));
                                                                         }}
                                                                         className="ml-1 p-0.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
@@ -839,7 +786,7 @@ export default function DesignVariants() {
                                             )}
 
                                             {/* Empty State */}
-                                            {(!customVariantDetails.tags || customVariantDetails.tags.split(",").filter(t => t.trim()).length === 0) && (
+                                            {(!productDetails.tags || productDetails.tags.split(",").filter(t => t.trim()).length === 0) && (
                                                 <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center">
                                                     <svg
                                                         className="mx-auto mb-2 text-gray-300"
@@ -884,9 +831,9 @@ export default function DesignVariants() {
                                         </label>
                                         <Suspense fallback={<div className="border p-4 text-gray-400">Loading editor...</div>}>
                                             <RichTextEditor
-                                                value={customVariantDetails.description}
+                                                value={productDetails.description}
                                                 onChange={(htmlContent) =>
-                                                    setCustomVariantDetails(prev => ({
+                                                    setProductDetails(prev => ({
                                                         ...prev,
                                                         description: htmlContent,
                                                     }))
@@ -896,18 +843,6 @@ export default function DesignVariants() {
                                         <p className="mt-2 text-xs text-gray-500">
                                             You can format text with bold, italic, lists, images, and links.
                                         </p>
-                                        {/* <textarea
-                                            rows={12}
-                                            value={customVariantDetails.description}
-                                            onChange={(e) =>
-                                                setCustomVariantDetails(prev => ({
-                                                    ...prev,
-                                                    description: e.target.value,
-                                                }))
-                                            }
-                                            placeholder="Brighten someone's day with our custom photo mugs..."
-                                            className="w-full resize-none border border-gray-300 px-4 py-3 outline-none placeholder:text-gray-400 focus:border-[#f05a28] cursor-text"
-                                        /> */}
                                     </div>
                                 </div>
 
@@ -954,7 +889,7 @@ export default function DesignVariants() {
                                                         {variant.fileName || "Custom variant"}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-1">
-                                                        Will use: {customVariantDetails.name || "Name not set"}
+                                                        Will use: {productDetails.name || "Name not set"}
                                                     </p>
                                                 </div>
                                             </div>

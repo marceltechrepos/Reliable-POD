@@ -189,7 +189,7 @@ function ProductVariant() {
               </svg>
               <span>Delete Selected</span>
             </button>
-            <button
+            {/* <button
               type='button'
               className='flex items-center gap-1 text-xs md:text-sm font-normal shadow-lg rounded-md border border-ocean text-ocean hover:bg-ocean hover:text-white py-1 px-2 md:px-3 cursor-pointer whitespace-nowrap'
             >
@@ -205,10 +205,10 @@ function ProductVariant() {
               </svg>
               <span className='hidden md:inline'>Display Setting</span>
               <span className='md:hidden'>Settings</span>
-            </button>
+            </button> */}
 
             {/* Switch for Custom Print Area */}
-            <div className='ml-0 md:ml-2 mt-2 md:mt-0'>
+            {/* <div className='ml-0 md:ml-2 mt-2 md:mt-0'>
               <FormControlLabel
                 control={
                   <Switch
@@ -226,9 +226,9 @@ function ProductVariant() {
                 }
                 className='text-xs md:text-sm'
               />
-            </div>
+            </div> */}
 
-            {/* Custom Print Area Button - Only show when switch is on */}
+            {/* Custom Print Area Button - Only show when switch is on
             {isCustomPrintArea && (
               <button
                 type='button'
@@ -248,7 +248,7 @@ function ProductVariant() {
                 </svg>
                 <span>Add Print Area</span>
               </button>
-            )}
+            )} */}
           </div>
 
           {/* New Variant Button */}
