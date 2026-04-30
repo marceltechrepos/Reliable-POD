@@ -802,19 +802,46 @@ const Editor = () => {
             .filter(Boolean);
     };
 
-    // const switchMockup = (targetMockup, preview = true) => {
-    //     const currentLayers = currentLayers;
-    //     setSelectedMockup(targetMockup);
-    //     if (preview && currentLayers.length > 0) {
-    //         const previewLayers = mapLayersToMockup(currentLayers, selectedMockup?._id, targetMockup._id);
-    //         setCustomerLayers(previewLayers);
-    //         setIsPreviewActive(true);
-    //         setTimeout(() => setIsPreviewActive(false), 500);
-    //     } else {
-    //         setCustomerLayers([]);
-    //         setIsPreviewActive(false);
-    //     }
-    // };
+    // Swap two layers in the given mockup's array
+    const swapLayersInMockup = (mockupId, fromIndex, toIndex) => {
+        setLayersByMockup(prev => {
+            const layers = [...(prev[mockupId] || [])];
+            if (fromIndex < 0 || toIndex < 0 || fromIndex >= layers.length || toIndex >= layers.length) return prev;
+            [layers[fromIndex], layers[toIndex]] = [layers[toIndex], layers[fromIndex]];
+            return { ...prev, [mockupId]: layers };
+        });
+    };
+
+    // Move a layer up or down in the current mockup, then propagate the swap to all others
+    const moveLayer = (direction) => {
+        if (selectedLayerIndex === null) return;
+        const newIndex = direction === 'up' ? selectedLayerIndex - 1 : selectedLayerIndex + 1;
+        if (newIndex < 0 || newIndex >= currentLayers.length) return;
+
+        const currentMockupId = selectedMockup._id;
+        const layerA = currentLayers[selectedLayerIndex];
+        const layerB = currentLayers[newIndex];
+
+        // Swap in current mockup
+        swapLayersInMockup(currentMockupId, selectedLayerIndex, newIndex);
+
+        // Propagate to other mockups using masterKey (if both layers have it)
+        if (layerA.masterKey && layerB.masterKey) {
+            Object.keys(layersByMockup).forEach(mockupId => {
+                if (mockupId === currentMockupId) return;
+                const layers = layersByMockup[mockupId] || [];
+                const indexA = layers.findIndex(l => l.masterKey === layerA.masterKey);
+                const indexB = layers.findIndex(l => l.masterKey === layerB.masterKey);
+                if (indexA !== -1 && indexB !== -1) {
+                    swapLayersInMockup(mockupId, indexA, indexB);
+                }
+                // Optional: if only one layer exists in another mockup, you could still swap with the adjacent index, but that depends on your use case. We'll keep it simple.
+            });
+        }
+
+        setSelectedLayerIndex(newIndex);
+    };
+
     const handleSwitchMockup = (targetMockup) => {
         setSelectedMockup(targetMockup);
     };
@@ -1620,6 +1647,27 @@ const Editor = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        moveLayer('up');
+                                                                    }}
+                                                                    className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition"
+                                                                    title="Move up" 
+                                                                >
+                                                                    ↑
+                                                                </button>
+                                                                {/* Move Down */}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        moveLayer('down');
+                                                                    }}
+                                                                    className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition"
+                                                                    title="Move down"
+                                                                >
+                                                                    ↓
+                                                                </button>
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
