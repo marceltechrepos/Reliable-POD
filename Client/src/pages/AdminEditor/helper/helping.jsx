@@ -6,7 +6,7 @@ import {
 
 // ================= CANVAS SIZE =================
 export const getCanvasSize = (layers) => {
-  const bgLayer = layers?.find(l => l.type === "background");
+  const bgLayer = layers?.find(l => l.type === "background") || { _naturalWidth: 1500, _naturalHeight: 1500 };
 
   if (bgLayer && bgLayer._naturalWidth && bgLayer._naturalHeight) {
     const originalWidth = bgLayer._naturalWidth;

@@ -5,6 +5,42 @@ body {
   position: relative;
 }
 
+/* Drag and drop styles */
+.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* global.css ya kisi CSS file mein */
+.sortable-ghost {
+  opacity: 0.5;
+  background-color: rgb(229 231 235);
+}
+
+.sortable-drag {
+  opacity: 0.5;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.sortable-drag {
+  opacity: 0.5;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: #f3f4f6;
+  border: 2px dashed #f05a28;
+}
+
+.sortable-ghost * {
+  opacity: 0;
+}
+
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -16,6 +52,7 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
 
 .tabs-container .MuiBox-root {
   padding: 0;
