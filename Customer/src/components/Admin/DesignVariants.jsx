@@ -374,6 +374,8 @@ export default function DesignVariants() {
                 sellingPrice: sellingPrice ? parseFloat(sellingPrice) : 0,
             };
 
+            console.log(" state?.selectedMockup >>>>" ,  state?.selectedMockup)
+
             console.log("Update Payload:", payload); // Debug
 
             let data;

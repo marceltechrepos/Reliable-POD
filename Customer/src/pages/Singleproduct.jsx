@@ -232,6 +232,7 @@ const SingleProduct = () => {
           <Link to={`/user/edit/${p?._id}`} state={{
             customProductId: customProduct._id,
             selectedMockup: customProduct.selectedMockup,
+            product: customProduct.baseProduct, // optional but helpful
           }}>
             <button className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
               <Layout size={14} /> Edit Design
