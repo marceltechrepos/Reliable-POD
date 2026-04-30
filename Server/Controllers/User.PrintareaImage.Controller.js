@@ -60,6 +60,7 @@ export const createPrintareaImage = async (req, res) => {
       printAreaImage: {
         url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
+        name: image.originalname,
       },
       productId: body.productId || null,
       UserId: body.UserId || null,
@@ -331,14 +332,14 @@ export const deletePrintareaImage = async (req, res) => {
       });
     }
 
-      // // Check ownership (optional)
-      // if (printAreaImage.UserId && printAreaImage.UserId.toString() !== userId?.toString()) {
-      //   return res.status(403).json({
-      //     success: false,
-      //     status: 403,
-      //     message: "You don't have permission to delete this image",
-      //   });
-      // }
+    // // Check ownership (optional)
+    // if (printAreaImage.UserId && printAreaImage.UserId.toString() !== userId?.toString()) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     status: 403,
+    //     message: "You don't have permission to delete this image",
+    //   });
+    // }
 
     // Delete from Cloudinary
     if (printAreaImage.printAreaImage?.public_id) {

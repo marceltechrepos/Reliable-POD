@@ -271,23 +271,23 @@ export const uploadMockupImage = async (req, res) => {
 export const getSingleMockupImage = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid mockup ID"
       });
     }
-    
+
     const mockup = await mockupImageModel.findById(id);
-    
+
     if (!mockup) {
       return res.status(404).json({
         success: false,
         message: "Mockup not found"
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: mockup
@@ -361,7 +361,6 @@ export const deleteMockupImage = async (req, res) => {
   }
 };
 
-
 // DUPLICATE MOCKUP WITH ALL LAYERS
 export const duplicateMockup = async (req, res) => {
   try {
@@ -429,6 +428,44 @@ export const duplicateMockup = async (req, res) => {
 
   } catch (error) {
     console.error("Duplicate mockup error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error"
+    });
+  }
+};
+
+export const updateMockup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid mockup ID"
+      });
+    }
+
+    const mockup = await mockupImageModel.findById(id);
+
+    if (!mockup) {
+      return res.status(404).json({
+        success: false,
+        message: "Mockup not found"
+      });
+    }
+
+    mockup.name = name;
+    await mockup.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Mockup updated successfully",
+      data: mockup
+    });
+  } catch (error) {
+    console.error("Update mockup error:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Internal server error"

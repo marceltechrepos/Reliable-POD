@@ -143,7 +143,7 @@ export default function MyProducts() {
                   : "bg-gray-300 cursor-not-allowed"
                 }`}
             >
-              {importing ? "Importing..." : "Import to Shopify"}
+              {importing ? "Pushing..." : "Push to Shopify"}
             </button>
           </div>
         </div>

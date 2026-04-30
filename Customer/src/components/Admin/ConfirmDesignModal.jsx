@@ -25,12 +25,12 @@ const ConfirmDesignModal = ({ open, onClose, onConfirm, customerDesignId ,saving
                 </div>
 
                 <div className="p-5 border-t border-gray-200 flex items-center justify-end gap-3">
-                    <button
+                    {/* <button
                         onClick={onClose}
                         className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition cursor-pointer"
                     >
                         Makes Changes
-                    </button>
+                    </button> */}
 
                     <button
                         onClick={onConfirm}
