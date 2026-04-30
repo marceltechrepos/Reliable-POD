@@ -85,7 +85,7 @@ export const duplicateMockupApi = async (mockupId, productId) => {
         const res = await authFetch(`${BASE_URL}/api/duplicate-mockup/${mockupId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId }) // optional
+            body: JSON.stringify({ productId }) // optional 
         });
 
         const data = await res.json();
@@ -104,5 +104,24 @@ export const duplicateMockupApi = async (mockupId, productId) => {
             success: false,
             message: "Network error occurred"
         };
+    }
+};
+
+export const updateMockup = async (mockupId, nameString) => {
+    try {
+        const res = await authFetch(`${BASE_URL}/api/update-mockup/${mockupId}`, {
+            method: "PATCH",  // Use PATCH for partial updates
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: nameString })  // ✅ send plain string
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            return { success: false, message: data.message || "Update failed" };
+        }
+        return data;
+    } catch (error) {
+        console.error("Update mockup error:", error);
+        return { success: false, message: "Network error occurred" };
     }
 };

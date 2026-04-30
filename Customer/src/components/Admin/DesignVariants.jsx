@@ -439,8 +439,8 @@ export default function DesignVariants() {
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f05a28] text-white text-sm font-bold rounded-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                     >
                         {step === "list"
-                            ? (customVariants.length === 0 ? "Create Product" : "Next")
-                            : (creating ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Product" : "Create Product"))
+                            ? (customVariants.length === 0 ? "Continue" : "Next")
+                            : (creating ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Product" : "Continue"))
                         }
                     </button>
                 </div>

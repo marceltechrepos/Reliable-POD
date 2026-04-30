@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ShoppingBag, Edit3, Copy, Archive, RefreshCw, Download, Plus, X, Layout
+  ShoppingBag, Edit3, Copy, Archive, RefreshCw, Download, Plus, X, Layout,
+  Package, Tag, Info, DollarSign, MapPin, Calendar, Layers, Eye, Hash,
+  CheckCircle, Circle, Code, List, ListOrdered, ImageIcon, Undo, Link as LinkIcon
 } from "lucide-react";
 import { getCustomProductById } from "../api/customerProduct.api";
 import image from "../assets/image/dummy.jpg";
 
 const SingleProduct = () => {
   const navigate = useNavigate();
-  const { customProductId } = useParams(); // ✅ Get ID from URL
+  const { customProductId } = useParams();
   const [customProduct, setCustomProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState("M");
   const [selectedColor, setSelectedColor] = useState("Black");
   const [selectedTab, setSelectedTab] = useState("PRODUCT");
 
-
-  console.log(customProduct, "<<<<<<customProduct")
+  console.log(customProduct, "<<<<<<customProduct");
 
   const stripHtml = (html) => {
     if (!html) return "";
@@ -38,7 +39,6 @@ const SingleProduct = () => {
 
   const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
 
-  // ✅ Fetch custom product by ID
   useEffect(() => {
     const fetchCustomProduct = async () => {
       try {
@@ -61,7 +61,6 @@ const SingleProduct = () => {
     }
   }, [customProductId]);
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -73,7 +72,6 @@ const SingleProduct = () => {
     );
   }
 
-  // Product not found
   if (!customProduct) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -90,21 +88,19 @@ const SingleProduct = () => {
     );
   }
 
-  // ✅ Extract product data
   const p = customProduct.baseProduct || {};
   const customVariant = customProduct.customVariant || {};
   const selectedMockup = customProduct.selectedMockup || {};
   const customerLayers = customProduct.customerLayers || [];
-  const finalImage = customProduct?.customerDesign?.finalDesignImage || [];
+  const finalDesignImages = customProduct?.customerDesign?.finalDesignImages || [];
 
-  // Display image: custom variant image > mockup image > product thumbnail
-  const displayImage = selectedImage ||
-    selectedMockup.imageUrl ||
+  const displayImage =
+    selectedImage ||
+    finalDesignImages[0]?.imageUrl ||
     selectedMockup?.mockupImage?.url ||
     p?.thumbnail?.url ||
     image;
 
-  // Pehle colors array define karo (jo aapne upar diya hai)
   const colors = [
     { name: "Black", bg: "bg-black", hex: "#000000" },
     { name: "Red", bg: "bg-red-600", hex: "#dc2626" },
@@ -114,20 +110,13 @@ const SingleProduct = () => {
     { name: "White", bg: "bg-white border", hex: "#ffffff" }
   ];
 
-  // Variants se unique colors nikalain (colorHex ke basis par)
   const productColors = p?.Variants?.reduce((acc, variant) => {
-    // Skip agar colorHex nahi hai
     if (!variant.color || variant.color === "") return acc;
-
     const hex = variant.color.toLowerCase();
     const existingColor = acc.find(c => c.hex === hex);
-
     if (!existingColor) {
-      // colors array mein matching color dhundho
       const matchedColor = colors.find(c => c.hex.toLowerCase() === hex);
-
       if (matchedColor) {
-        // Agar predefined color mil gaya
         acc.push({
           name: matchedColor.name,
           hex: hex,
@@ -135,37 +124,30 @@ const SingleProduct = () => {
           variants: [variant]
         });
       } else {
-        // Agar custom color hai
         acc.push({
           name: `${hex}`,
           hex: hex,
-          bg: "", // No predefined bg class
+          bg: "",
           variants: [variant]
         });
       }
     } else {
       existingColor.variants.push(variant);
     }
-
     return acc;
   }, []) || [];
 
-  // 🔥 NEW: Variants se unique sizes nikalain
   const productSizes = p?.Variants?.reduce((acc, variant) => {
     if (!variant.size || variant.size === "") return acc;
-
     if (!acc.includes(variant.size)) {
       acc.push(variant.size);
     }
-
     return acc;
   }, []) || [];
 
-  // Agar koi color nahi mila to default show karo
   const displayColors = productColors.length > 0 ? productColors : colors;
   const displaySizes = productSizes.length > 0 ? productSizes : [];
 
-  // Sort sizes properly (S, M, L, XL, 2XL, 3XL)
   const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
   const sortedSizes = [...displaySizes].sort((a, b) => {
     const indexA = sizeOrder.indexOf(a);
@@ -176,7 +158,15 @@ const SingleProduct = () => {
     return indexA - indexB;
   });
 
-  const sizes = ["Small", "Medium", "Large", "XL", "2XL", "3XL"];
+  // Helper function to get variant details by ID
+  const getVariantById = (variantId) => {
+    return p?.Variants?.find(v => v._id === variantId);
+  };
+
+  // Calculate price range
+  const prices = p?.Variants?.map(v => v.basePrice).filter(p => p);
+  const minPrice = prices?.length ? Math.min(...prices) : null;
+  const maxPrice = prices?.length ? Math.max(...prices) : null;
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-6 px-4 md:px-8" style={{ fontFamily: fontStack }}>
@@ -212,7 +202,6 @@ const SingleProduct = () => {
           >
             <Edit3 size={14} /> Edit Product
           </button>
-
           <button
             className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
             onClick={() => setIsConfiguratorModalOpen(true)}
@@ -242,17 +231,9 @@ const SingleProduct = () => {
           </button>
           <Link to={`/user/edit/${p?._id}`} state={{
             customProductId: customProduct._id,
-            selectedMockup: customProduct.selectedMockup, // optional but helpful
+            selectedMockup: customProduct.selectedMockup,
           }}>
-            <button
-              className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
-            // onClick={() => navigate(`/user/edit/${p?._id}`, {
-            //   state: {
-            //     product: customProduct
-            //   }
-            // })}
-            >
-
+            <button className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50">
               <Layout size={14} /> Edit Design
             </button>
           </Link>
@@ -267,60 +248,52 @@ const SingleProduct = () => {
                 alt={customVariant.name || p?.productTitle}
                 className="w-full h-full object-cover"
               />
-
-              {/* Custom Variant Badge */}
-
-              {
-                customProduct.importedToShopify ? (
-                  <div className="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded">
-                    Imported
-                  </div>
-                ) :
-                  (
-                    customVariant.enabled && (
-                      <div className="absolute top-4 left-4 bg-[#f05a28] text-white text-xs font-bold px-3 py-1.5 rounded">
-                        Custom Design
-                      </div>
-                    )
-                  )
-              }
-
-              {/* {customVariant.enabled && (
-                <div className="absolute top-4 left-4 bg-[#f05a28] text-white text-xs font-bold px-3 py-1.5 rounded">
-                  Custom Design
+              {customProduct.importedToShopify ? (
+                <div className="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded">
+                  Imported
                 </div>
-              )} */}
+              ) : (
+                customVariant.enabled && (
+                  <div className="absolute top-4 left-4 bg-[#f05a28] text-white text-xs font-bold px-3 py-1.5 rounded">
+                    Custom Design
+                  </div>
+                )
+              )}
             </div>
 
             {/* Thumbnail Gallery */}
             <div className="grid grid-cols-4 gap-4">
-              {/* Main image thumbnail */}
-              <div
-                onClick={() => setSelectedImage(customProduct?.customerDesign?.finalDesignImage)}
-                className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
-                <img src={customProduct?.customerDesign?.finalDesignImage} className="w-full h-full object-cover" />
-              </div>
-
-              {/* Layer thumbnails */}
-              {customerLayers.slice(0, 3).map((layer, idx) => (
-                <div
-                  onClick={() => setSelectedImage(layer.imageUrl)}
-                  key={idx} className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all">
-                  <img src={layer.imageUrl} className="w-full h-full object-cover" />
-                </div>
-              ))}
-
-              {/* If less than 3 layers, show placeholder */}
-              {customerLayers.length === 0 && (
+              {finalDesignImages.length > 0 ? (
+                finalDesignImages.map((img, idx) => (
+                  <div
+                    key={img._id || idx}
+                    onClick={() => setSelectedImage(img.imageUrl)}
+                    className="aspect-square bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-[#f05a28] transition-all"
+                  >
+                    <img
+                      src={img.imageUrl}
+                      alt={`Mockup ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = image;
+                      }}
+                    />
+                  </div>
+                ))
+              ) : (
                 <>
                   <div className="aspect-square bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
-                    No image
+                    No images
                   </div>
                   <div className="aspect-square bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
-                    No image
+                    No images
                   </div>
                   <div className="aspect-square bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
-                    No image
+                    No images
+                  </div>
+                  <div className="aspect-square bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                    No images
                   </div>
                 </>
               )}
@@ -341,7 +314,6 @@ const SingleProduct = () => {
             {/* Custom Variant Details */}
             {customVariant.description && (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                {/* <p className="text-sm text-gray-700">{stripHtml(customVariant.description)}</p> */}
                 <div
                   className="text-[14px] text-gray-600 leading-relaxed"
                   dangerouslySetInnerHTML={{
@@ -366,83 +338,74 @@ const SingleProduct = () => {
             )}
 
             {/* Color Swatches */}
-            {
-              displayColors.length > 0 && (
-                <div className="space-y-4">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
-                    Available Colors ({displayColors.length})
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {displayColors.map((c) => (
-                      <button
-                        key={c.name}
-                        onClick={() => setSelectedColor(c.name)}
-                        className={`px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 border transition-all
-          ${selectedColor === c.name
-                            ? "bg-gray-900 text-white border-gray-900"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                          }`}
-                      >
-                        {/* Color swatch */}
-                        <div
-                          className="w-3 h-3 rounded-full border border-gray-200"
-                          style={{ backgroundColor: c.hex }}
-                        />
-                        {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
-                      </button>
-                    ))}
-                  </div>
+            {displayColors.length > 0 && (
+              <div className="space-y-4">
+                <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
+                  Available Colors ({displayColors.length})
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {displayColors.map((c) => (
+                    <button
+                      key={c.name}
+                      onClick={() => setSelectedColor(c.name)}
+                      className={`px-3 py-1.5 rounded text-[11px] font-bold flex items-center gap-2 border transition-all
+                        ${selectedColor === c.name
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                        }`}
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full border border-gray-200"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
+                    </button>
+                  ))}
                 </div>
-              )
-            }
+              </div>
+            )}
 
-
-            {/* Sizes Section - From Variants */}
-
-            {
-              sortedSizes.length > 0 && (
-                <div className="space-y-4">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
-                    Available Sizes ({sortedSizes.length})
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {sortedSizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-1.5 rounded text-[12px] font-medium border transition-all
-          ${selectedSize === size
-                            ? "bg-gray-900 text-white border-gray-900"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                          }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+            {/* Sizes Section */}
+            {sortedSizes.length > 0 && (
+              <div className="space-y-4">
+                <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">
+                  Available Sizes ({sortedSizes.length})
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {sortedSizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-1.5 rounded text-[12px] font-medium border transition-all
+                        ${selectedSize === size
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
                 </div>
-              )
-            }
+              </div>
+            )}
 
-
-            {/* Selected Variants Info */}
-            {customProduct.selectedDefaultVariants?.length > 0 && (
-              <div className="grid grid-cols-2 gap-8 p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase">Selected Variants</p>
-                  <p className="text-sm font-bold text-gray-800 mt-1">
-                    {customProduct.selectedDefaultVariants.length} variant(s)
-                  </p>
-                </div>
+            {/* Price Range */}
+            {minPrice && maxPrice && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-gray-900">
+                  ${minPrice.toFixed(2)}
+                </span>
+                {minPrice !== maxPrice && (
+                  <span className="text-lg text-gray-500">
+                    - ${maxPrice.toFixed(2)}
+                  </span>
+                )}
               </div>
             )}
 
             {/* Base Product Description */}
             <div className="space-y-3">
               <h4 className="text-[11px] font-black uppercase text-gray-400">Description</h4>
-              {/* <p className="text-[14px] text-gray-600 leading-relaxed">
-                {p?.description?.replace(/<[^>]*>/g, '') || "No description available"}
-              </p> */}
               <div
                 className="text-[14px] text-gray-600 leading-relaxed"
                 dangerouslySetInnerHTML={{
@@ -457,18 +420,75 @@ const SingleProduct = () => {
                 <span className="font-semibold">Mockup:</span> {selectedMockup.name}
               </div>
             )}
+
+            {/* ========== ADDITIONAL DETAILS SECTION ========== */}
+            <div className="pt-6 border-t border-gray-200 space-y-6">
+              <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                <Info size={16} /> Full Product Details
+              </h3>
+              {/* All Variants Table */}
+              {p?.Variants && p.Variants.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-100 p-4 space-y-3 overflow-x-auto">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                    <Package size={12} /> All Variants ({p.Variants.length})
+                  </h4>
+                  <table className="min-w-full text-xs">
+                    <thead className="text-gray-500 border-b">
+                      <tr>
+                        <th className="text-left py-2 font-medium">SKU</th>
+                        <th className="text-left py-2 font-medium">Size</th>
+                        <th className="text-left py-2 font-medium">Color</th>
+                        <th className="text-left py-2 font-medium">Material</th>
+                        <th className="text-left py-2 font-medium">Price</th>
+                        <th className="text-left py-2 font-medium">Stock</th>
+                        <th className="text-left py-2 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {p.Variants.map((variant, idx) => (
+                        <tr key={variant._id || idx} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="py-2 font-mono text-gray-700">{variant.sku}</td>
+                          <td className="py-2">{variant.size || "—"}</td>
+                          <td className="py-2">
+                            {variant.color && (
+                              <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: variant.colorHex }} />
+                                <span>{variant.color}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-2">{variant.customAttributes?.Material || "—"}</td>
+                          <td className="py-2 font-bold">${variant.basePrice?.toFixed(2)}</td>
+                          <td className="py-2">{variant.stock}</td>
+                          <td className="py-2">
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${variant.available === 'available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {variant.available}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>
 
-      {/* --- MODAL SECTION --- */}
+      {/* Modals Section (kept exactly as original) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded shadow-2xl flex flex-col md:flex-row overflow-hidden relative animate-in fade-in zoom-in duration-200">
 
             {/* Modal Left: Product Preview */}
             <div className="w-full md:w-1/3 bg-[#f9fafb] p-8 flex flex-col items-center border-r border-gray-100">
-              <img src={finalImage} alt="modal-preview" className="w-full h-auto mb-6" />
+              <img
+                src={finalDesignImages[0]?.imageUrl || displayImage}
+                alt="modal-preview"
+                className="w-full h-auto mb-6"
+              />
               <div className="text-center">
                 <h2 className="text-[16px] font-bold text-gray-800 uppercase italic">Test</h2>
                 <h3 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight leading-tight">
@@ -481,7 +501,7 @@ const SingleProduct = () => {
             {/* Modal Right: Selection Details */}
             <div className="w-full md:w-2/3 p-10 space-y-6 overflow-y-auto max-h-[90vh]">
 
-              {/* --- COLOR SECTION (Updated as per your image) --- */}
+              {/* COLOR SECTION */}
               <div>
                 <label className="text-[14px] font-bold text-gray-800 uppercase block mb-3">Color</label>
                 <div className="flex flex-wrap gap-2">
@@ -503,7 +523,7 @@ const SingleProduct = () => {
                       onClick={() => setSelectedColor(c.name)}
                       style={{ backgroundColor: c.bg, color: c.text }}
                       className={`px-3 py-1.5 rounded border text-[12px] font-bold transition-all shadow-sm
-                  ${selectedColor === c.name ? "ring-2 ring-offset-2 ring-black scale-105" : "border-gray-300 hover:border-gray-500"}`}
+                        ${selectedColor === c.name ? "ring-2 ring-offset-2 ring-black scale-105" : "border-gray-300 hover:border-gray-500"}`}
                     >
                       {c.name}
                     </button>
@@ -511,7 +531,7 @@ const SingleProduct = () => {
                 </div>
               </div>
 
-              {/* --- SIZE SECTION --- */}
+              {/* SIZE SECTION */}
               <div>
                 <label className="text-[14px] font-bold text-gray-800 uppercase block mb-3">Size</label>
                 <div className="flex flex-wrap gap-2">
@@ -520,7 +540,7 @@ const SingleProduct = () => {
                       key={s}
                       onClick={() => setSelectedSize(s)}
                       className={`px-5 py-2 rounded border text-[13px] font-semibold transition-all
-                  ${selectedSize === s ? "border-black bg-gray-50 ring-1 ring-black" : "border-gray-200 bg-[#f9fafb] text-gray-400 hover:border-gray-400"}`}
+                        ${selectedSize === s ? "border-black bg-gray-50 ring-1 ring-black" : "border-gray-200 bg-[#f9fafb] text-gray-400 hover:border-gray-400"}`}
                     >
                       {s}
                     </button>
@@ -532,7 +552,7 @@ const SingleProduct = () => {
                 Show Advanced Quantity Selection
               </button>
 
-              {/* --- MODAL FOOTER BUTTONS --- */}
+              {/* MODAL FOOTER BUTTONS */}
               <div className="pt-6 flex items-center gap-4 border-t border-gray-100">
                 <button className="flex items-center gap-2 px-8 py-2.5 bg-[#f05a28] text-white text-[14px] font-bold rounded hover:bg-[#199d71] transition-all shadow-md">
                   <ShoppingBag size={18} /> Add Product
@@ -559,7 +579,6 @@ const SingleProduct = () => {
 
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          {/* Max-height set to 85vh for a shorter modal */}
           <div className="bg-white w-full max-w-5xl rounded-sm shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in fade-in zoom-in duration-200">
 
             {/* Modal Header */}
@@ -573,16 +592,16 @@ const SingleProduct = () => {
             {/* Modal Body */}
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
-              {/* Left: Product Image Preview (Fixed width, non-scrollable) */}
+              {/* Left: Product Image Preview */}
               <div className="w-full md:w-1/2 p-6 flex justify-center items-start bg-white border-r border-gray-50">
                 <img
-                  src={finalImage}
+                  src={finalDesignImages[0]?.imageUrl || displayImage}
                   alt="edit-preview"
                   className="w-full max-w-[320px] h-auto object-contain"
                 />
               </div>
 
-              {/* Right: Form Fields (Scrollable area) */}
+              {/* Right: Form Fields */}
               <div className="w-full md:w-1/2 p-6 flex flex-col">
 
                 {/* Tabs Section */}
@@ -619,13 +638,12 @@ const SingleProduct = () => {
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-400 uppercase mb-2">Tags</label>
-                        <input defaultValue={customProduct?.customVariant?.tags.map((v) => v)} type="text" placeholder="Add a tag" className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
+                        <input defaultValue={customProduct?.customVariant?.tags?.join(", ")} type="text" placeholder="Add a tag" className="w-full border border-gray-300 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-[#1fb684]" />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-[11px] font-bold text-gray-400 uppercase">Description</label>
-                        {/* <textarea rows="5" className="w-full border border-gray-300 rounded px-3 py-3 text-[13px] text-gray-600 leading-relaxed focus:outline-none" defaultValue={p.description} /> */}
                         <div
-                          className="text-[14px] text-gray-600 leading-relaxed"
+                          className="text-[14px] text-gray-600 leading-relaxed border border-gray-200 p-3 rounded min-h-[150px]"
                           dangerouslySetInnerHTML={{
                             __html: customProduct?.customVariant?.description || "No description available",
                           }}
@@ -691,7 +709,7 @@ const SingleProduct = () => {
               {/* Left Side: Product Image */}
               <div className="w-full md:w-1/2 p-8 flex justify-center items-start bg-white">
                 <img
-                  src={p.image}
+                  src={p.thumbnail?.url || image}
                   alt="duplicate-preview"
                   className="w-full max-w-[380px] h-auto object-contain"
                 />
@@ -712,7 +730,7 @@ const SingleProduct = () => {
                   <div className="h-4 w-[1px] bg-gray-300 mx-1"></div>
                   <Code size={16} className="cursor-pointer hover:text-black" />
                   <ImageIcon size={16} className="cursor-pointer hover:text-black" />
-                  <Link size={16} className="cursor-pointer hover:text-black" />
+                  <LinkIcon size={16} className="cursor-pointer hover:text-black" />
                   <RefreshCw size={14} className="cursor-pointer hover:text-black" />
                   <Undo size={16} className="cursor-pointer hover:text-black" />
                 </div>
@@ -751,7 +769,6 @@ const SingleProduct = () => {
         </div>
       )}
 
-
       {isArchiveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -767,7 +784,7 @@ const SingleProduct = () => {
             {/* Modal Body - Confirmation Message */}
             <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
               <p className="text-[15px] text-gray-600">
-                You have requested to archive <span className="font-bold text-gray-800">{p.title || "hgdghdhgc"}</span>.
+                You have requested to archive <span className="font-bold text-gray-800">{p.productTitle || "this product"}</span>.
               </p>
               <p className="text-[15px] text-gray-600">
                 Please confirm your intention.
@@ -796,7 +813,6 @@ const SingleProduct = () => {
         </div>
       )}
 
-
       {isConfiguratorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -815,7 +831,6 @@ const SingleProduct = () => {
             {/* Modal Body - Color Selection */}
             <div className="p-6 space-y-4">
               <label className="block text-[14px] font-bold text-gray-600">Color</label>
-
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: "Black", bg: "bg-[#1a1a1a]" },
@@ -835,21 +850,18 @@ const SingleProduct = () => {
                   { name: "White", bg: "bg-white border border-gray-200 text-black" },
                   { name: "Yellow", bg: "bg-[#fdb933]" }
                 ].map((color) => {
-                  // Safety check: agar state na ho toh 'Black' ko default maano
-                  const isSelected = (typeof selectedConfigColor !== 'undefined' ? selectedConfigColor : "Black") === color.name;
-
+                  const isSelected = (selectedConfigColor) === color.name;
                   return (
                     <div
                       key={color.name}
-                      onClick={() => typeof setSelectedConfigColor !== 'undefined' && setSelectedConfigColor(color.name)}
+                      onClick={() => setSelectedConfigColor(color.name)}
                       className={`
-                  ${color.bg} 
-                  ${color.name === 'White' && !isSelected ? 'text-black' : 'text-white'} 
-                  px-3 py-1 rounded-sm text-[13px] font-medium cursor-pointer flex items-center gap-1 transition-all
-                  ${isSelected ? 'ring-2 ring-offset-1 ring-gray-400' : 'hover:opacity-90'}
-                `}
+                        ${color.bg} 
+                        ${color.name === 'White' && !isSelected ? 'text-black' : 'text-white'} 
+                        px-3 py-1 rounded-sm text-[13px] font-medium cursor-pointer flex items-center gap-1 transition-all
+                        ${isSelected ? 'ring-2 ring-offset-1 ring-gray-400' : 'hover:opacity-90'}
+                      `}
                     >
-                      {/* ✓ mark logic */}
                       {isSelected && <span className="font-bold">✓</span>}
                       {color.name}
                     </div>
@@ -868,7 +880,6 @@ const SingleProduct = () => {
                   Launch In New Tab
                 </button>
               </div>
-
               <button
                 onClick={() => setIsConfiguratorModalOpen(false)}
                 className="px-6 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50"
@@ -919,7 +930,6 @@ const SingleProduct = () => {
               >
                 Regenerate
               </button>
-
               <button
                 onClick={() => setIsRegenerateModalOpen(false)}
                 className="px-8 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all"
@@ -960,7 +970,6 @@ const SingleProduct = () => {
                     placeholder="Search for Store"
                     className="w-full border border-gray-200 rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400 placeholder:text-gray-300 shadow-sm"
                   />
-                  {/* Search Icon Placeholder */}
                   <span className="absolute right-3 top-2.5 text-gray-400 font-bold transform scale-x-[-1]">Q</span>
                 </div>
 
@@ -998,7 +1007,6 @@ const SingleProduct = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

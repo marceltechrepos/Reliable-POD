@@ -11,12 +11,15 @@ const printAreaImageSchema = new Schema(
         type: String,
         required: [true, "Public ID is required"],
       },
+      name: {
+        type: String,
+      },
     },
-    productId:{
-        type: Types.ObjectId,
+    productId: {
+      type: Types.ObjectId,
     },
-    UserId:{
-        type: Types.ObjectId,
+    UserId: {
+      type: Types.ObjectId,
     },
     name: String,
     size: String,
