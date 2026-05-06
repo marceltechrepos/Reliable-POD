@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
-const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
+const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity = 1 }) => {
   const canvasRef = useRef(null);
   const [texture, setTexture] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -53,7 +53,8 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
     const material = new THREE.ShaderMaterial({
       uniforms: {
         uTexture: { value: texture },
-        uTargetCorners: { value: targetCorners }
+        uTargetCorners: { value: targetCorners },
+        uOpacity: { value: opacity }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -75,9 +76,11 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
       fragmentShader: `
         varying vec2 vUv;
         uniform sampler2D uTexture;
+        uniform float uOpacity;
         
         void main() {
-          gl_FragColor = texture2D(uTexture, vUv);
+          vec4 texColor = texture2D(uTexture, vUv);
+          gl_FragColor = vec4(texColor.rgb, texColor.a * uOpacity);
         }
       `,
       side: THREE.DoubleSide,
@@ -103,20 +106,27 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover" }) => {
 
   useEffect(() => {
     if (!isInitialized || !meshRef.current) return;
-    if (!corners || corners.length !== 4) return;
-
+    
     const material = meshRef.current.material;
-    if (material && material.uniforms && material.uniforms.uTargetCorners) {
-      material.uniforms.uTargetCorners.value = corners.map(c => 
-        new THREE.Vector2(c.x / width, c.y / height)
-      );
+    if (material && material.uniforms) {
+      // Update corners
+      if (corners && corners.length === 4) {
+        material.uniforms.uTargetCorners.value = corners.map(c => 
+          new THREE.Vector2(c.x / width, c.y / height)
+        );
+      }
+      
+      // Update opacity
+      material.uniforms.uOpacity.value = opacity;
+      
       material.uniformsNeedUpdate = true;
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
     }
-  }, [corners, width, height, isInitialized]);
+  }, [corners, width, height, opacity, isInitialized]);
+
 
   return (
     <canvas
