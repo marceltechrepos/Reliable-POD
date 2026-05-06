@@ -824,7 +824,6 @@ const Editor = () => {
 
         const sourcePrintAreas = sourceData.printAreas || [];
         const targetPrintAreas = targetData.printAreas || [];
-
         return layers
             .map((layer, index) => {
                 const sourcePA = sourcePrintAreas.find(
@@ -1294,7 +1293,7 @@ const Editor = () => {
     //                 await new Promise((resolve) => {
     //                     // Let React commit the state change
     //                     setTimeout(() => {
-    //                         const imgEl = mockupImgRef.current;
+    //                         const imgEl = designContainerRef.current?.querySelector("img");
     //                         if (!imgEl || imgEl.complete) return resolve();
     //                         imgEl.onload = resolve;
     //                         imgEl.onerror = resolve; // don’t block forever
@@ -1302,7 +1301,7 @@ const Editor = () => {
     //                 });
 
     //                 // ── Additional settling time for Rnd layers ──
-    //                 await new Promise((resolve) => setTimeout(resolve, 1000));
+    //                 await new Promise((resolve) => setTimeout(resolve, 600));
     //             } else {
     //                 // Original mockup – ensure admin layers are correct
     //                 const data = allproductMockupsAdminLayers[originalMockup._id];
@@ -1775,7 +1774,7 @@ const Editor = () => {
                                 className="aspect-square relative"
                             >
                                 <img
-                                    ref={mockupImgRef}
+                                ref={mockupImgRef}
                                     src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
