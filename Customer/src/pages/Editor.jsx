@@ -109,12 +109,14 @@ const Editor = () => {
     const [windowSize, setWindowSize] = useState(0);
     const [layersByMockup, setLayersByMockup] = useState({});
     const [containerSizes, setContainerSizes] = useState({});
+    const [allMockupLayersReady, setAllMockupLayersReady] = useState(false);
     const currentLayers = selectedMockup?._id
         ? (layersByMockup[selectedMockup._id] || [])
         : [];
 
     const containerRefs = useRef({});
     const designContainerRef = useRef(null);
+    const mockupImgRef = useRef(null);
 
     const sortableLayers = currentLayers.map((layer, idx) => ({
         ...layer,
@@ -298,6 +300,29 @@ const Editor = () => {
     }, [productId, product]);
 
     // Fetch ALL mockup layers (map)
+    // useEffect(() => {
+    //     const fetchAllMockupLayers = async () => {
+    //         if (product?._id && allProductMockups.length > 0) {
+    //             const allLayersMap = {};
+    //             for (const mockup of allProductMockups) {
+    //                 try {
+    //                     const res = await getLayersByProductId(product._id, mockup._id);
+    //                     if (res.data) {
+    //                         allLayersMap[mockup._id] = {
+    //                             all: res.data,
+    //                             printAreas: res.data.filter(l => l.type === "printarea"),
+    //                         };
+    //                     }
+    //                 } catch (e) {
+    //                     console.error(`Layers for mockup ${mockup._id}:`, e);
+    //                 }
+    //             }
+    //             setAllProductMockupsAdminLayers(allLayersMap);
+    //         }
+    //     };
+    //     fetchAllMockupLayers();
+    // }, [product?._id, allProductMockups]);
+
     useEffect(() => {
         const fetchAllMockupLayers = async () => {
             if (product?._id && allProductMockups.length > 0) {
@@ -316,6 +341,11 @@ const Editor = () => {
                     }
                 }
                 setAllProductMockupsAdminLayers(allLayersMap);
+
+                // 👇 Mark ready only if every mockup got some data (at least an empty array)
+                const allIds = allProductMockups.map(m => m._id);
+                const ready = allIds.every(id => allLayersMap[id] !== undefined);
+                setAllMockupLayersReady(ready);
             }
         };
         fetchAllMockupLayers();
@@ -796,7 +826,7 @@ const Editor = () => {
         const targetPrintAreas = targetData.printAreas || [];
 
         return layers
-            .map(layer => {
+            .map((layer, index) => {
                 const sourcePA = sourcePrintAreas.find(
                     pa => pa._id === (layer.printArea?._id || layer.printArea)
                 );
@@ -805,9 +835,11 @@ const Editor = () => {
                 const targetPA = targetPrintAreas.find(pa => pa.name === sourcePA.name);
                 if (!targetPA) return null;
 
+                const sourceKey = layer.clientKey || layer._id || index;
                 return {
                     ...layer,
                     _id: undefined,
+                    clientKey: `${targetMockupId}-${sourceKey}`,
                     printArea: targetPA._id,
                     corners: targetPA.corners || layer.corners, // keep original corners (scaling handles rest)
                 };
@@ -1025,136 +1057,456 @@ const Editor = () => {
     };
 
     const handleNext = async () => {
-        try {
-            setSaving(true);
+  try {
+    setSaving(true);
 
-            // Helper function
-            const isConfigMockup = (mockup) => {
-                if (!mockup?.name) return false;
-                return mockup.name.toLowerCase().startsWith('config');
-            };
-
-            // ── 0. Snapshot original mockup layers ──
-            const originalMockup = selectedMockup;
-            const originalLayers = layersByMockup[originalMockup._id] || [];
-            const originalNormalized = originalLayers.map(l => normalizeLayer(l));
-
-            // ── 1. Save designs for every mockup ──
-            let masterDesignId = null;
-            for (const mockup of allProductMockups) {
-                if (isConfigMockup(mockup)) {
-                    console.log(`⏭️ Skipping config mockup: ${mockup.name}`);
-                    continue;
-                }
-                const layers = layersByMockup[mockup._id] || [];
-                const norm = layers.map(l => normalizeLayer(l));
-                const res = await saveCustomerDesign({
-                    productId,
-                    mockupId: mockup._id,
-                    layers: norm,
-                    forceNew: false,
-                });
-                if (!masterDesignId && res?.success && res.data?._id) {
-                    masterDesignId = res.data._id;
-                }
-            }
-
-            // ── 2. Ensure any missing mockup gets a design ──
-            for (const mockup of allProductMockups) {
-                if (isConfigMockup(mockup)) continue;
-                if (mockup._id === originalMockup._id) continue;
-                const existing = await getCustomerDesign(productId, mockup._id);
-                if (!existing.success || !existing.data) {
-                    const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
-                    await saveCustomerDesign({
-                        productId,
-                        mockupId: mockup._id,
-                        layers: mapped,
-                    });
-                }
-            }
-
-            // ── 3. Capture & upload images for each mockup ──
-            const uploadedImages = [];
-            for (const mockup of allProductMockups) {
-                if (isConfigMockup(mockup)) {
-                    console.log(`⏭️ Skipping capture for config mockup: ${mockup.name}`);
-                    continue;
-                }
-
-                if (mockup._id !== originalMockup._id) {
-                    const data = allproductMockupsAdminLayers[mockup._id];
-                    if (data) {
-                        setAdminLayers(data.printAreas);
-                        setAllAdminLayers(data.all);
-                    }
-                    const designRes = await getCustomerDesign(productId, mockup._id);
-                    if (designRes.success && designRes.data) {
-                        setLayersByMockup(prev => ({
-                            ...prev,
-                            [mockup._id]: designRes.data.layers.map(normalizeLayer),
-                        }));
-                    } else {
-                        const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
-                        setLayersByMockup(prev => ({ ...prev, [mockup._id]: mapped }));
-                    }
-                    setSelectedMockup(mockup);
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                } else {
-                    const data = allproductMockupsAdminLayers[originalMockup._id];
-                    if (data) {
-                        setAdminLayers(data.printAreas);
-                        setAllAdminLayers(data.all);
-                    }
-                }
-
-                const imageFile = await captureFinalDesign(designContainerRef);
-                if (imageFile) {
-                    const uploadRes = await uploadCustomerImage(imageFile);
-                    if (uploadRes.success) {
-                        uploadedImages.push({
-                            mockupId: mockup._id,
-                            imageUrl: uploadRes.data.imageUrl,
-                            publicId: uploadRes.data.publicId,
-                        });
-                    }
-                }
-            }
-
-            // ── 4. Restore original mockup state ──
-            setSelectedMockup(originalMockup);
-            const origData = allproductMockupsAdminLayers[originalMockup._id];
-            if (origData) {
-                setAdminLayers(origData.printAreas);
-                setAllAdminLayers(origData.all);
-            }
-            setLayersByMockup(prev => ({ ...prev, [originalMockup._id]: originalNormalized }));
-
-            // ── 5. Attach captured images to master design ──
-            if (uploadedImages.length > 0 && masterDesignId) {
-                await updateDesignMockupImages(masterDesignId, uploadedImages);
-            }
-
-            toast.success(`Design saved with ${uploadedImages.length} mockup images!`);
-            setShowConfirmModal(false);
-            navigate(`/user/design-variants/${productId}`, {
-                state: {
-                    product,
-                    selectedMockup: originalMockup,
-                    currentLayers: originalNormalized,
-                    adminLayers,
-                    customerDesignId: masterDesignId,
-                    isEditing,
-                    existingCustomProduct: isEditing ? existingCustomProduct : null,
-                },
-            });
-        } catch (error) {
-            console.error("Error in handleNext:", error);
-            toast.error("Something went wrong: " + error.message);
-        } finally {
-            setSaving(false);
-        }
+    const isConfigMockup = (mockup) => {
+      if (!mockup?.name) return false;
+      return mockup.name.toLowerCase().startsWith("config");
     };
+
+    // ── 0. Snapshot original mockup layers ──
+    const originalMockup = selectedMockup;
+    const originalLayers = layersByMockup[originalMockup._id] || [];
+    const originalNormalized = originalLayers.map((l) => normalizeLayer(l));
+
+    // ── 1. Save designs for every mockup ──
+    let masterDesignId = null;
+    
+    // First, save ALL mockups with their layers from layersByMockup
+    for (const mockup of allProductMockups) {
+      if (isConfigMockup(mockup)) continue;
+      
+      let layersToSave;
+      
+      if (mockup._id === originalMockup._id) {
+        // Original mockup - use its layers directly
+        layersToSave = originalNormalized;
+      } else {
+        // Other mockups - map layers from original using print area names
+        layersToSave = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
+      }
+      
+      const res = await saveCustomerDesign({
+        productId,
+        mockupId: mockup._id,
+        layers: layersToSave,
+        forceNew: createNewFlag,
+      });
+      
+      if (!masterDesignId && res?.success && res.data?._id) {
+        masterDesignId = res.data._id;
+      }
+      
+      // Also update layersByMockup with what we just saved
+      if (res?.success) {
+        setLayersByMockup(prev => ({
+          ...prev,
+          [mockup._id]: layersToSave,
+        }));
+      }
+    }
+
+    // ── 2. Capture & upload images for each mockup ──
+    const uploadedImages = [];
+    
+    for (const mockup of allProductMockups) {
+      if (isConfigMockup(mockup)) continue;
+
+      // Switch to this mockup
+      if (mockup._id !== originalMockup._id) {
+        // Set admin layers for this mockup
+        const data = allproductMockupsAdminLayers[mockup._id];
+        if (data) {
+          setAdminLayers(data.printAreas);
+          setAllAdminLayers(data.all);
+        }
+        
+        // ✅ IMPORTANT: Use the layers we just saved (from layersByMockup)
+        // These are already mapped correctly with the right clientKeys
+        setSelectedMockup(mockup);
+
+        // Wait for React to render the new mockup
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        
+        // Wait for the mockup image to load
+        await new Promise((resolve) => {
+          const imgEl = mockupImgRef.current;
+          if (!imgEl || imgEl.complete) {
+            setTimeout(resolve, 200);
+          } else {
+            imgEl.onload = () => setTimeout(resolve, 200);
+            imgEl.onerror = () => setTimeout(resolve, 200);
+          }
+        });
+        
+        // Additional settling time for Rnd layers
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      } else {
+        // Original mockup
+        const data = allproductMockupsAdminLayers[originalMockup._id];
+        if (data) {
+          setAdminLayers(data.printAreas);
+          setAllAdminLayers(data.all);
+        }
+      }
+
+      // Capture
+      try {
+        const imageFile = await captureFinalDesign(designContainerRef);
+        if (imageFile) {
+          const uploadRes = await uploadCustomerImage(imageFile);
+          if (uploadRes.success) {
+            uploadedImages.push({
+              mockupId: mockup._id,
+              imageUrl: uploadRes.data.imageUrl,
+              publicId: uploadRes.data.publicId,
+            });
+            console.log(`✅ Captured mockup ${mockup._id}`);
+          }
+        } else {
+          console.warn(`⚠️ Capture returned null for mockup ${mockup._id}`);
+        }
+      } catch (err) {
+        console.error(`❌ Capture error for mockup ${mockup._id}:`, err);
+      }
+    }
+
+    // ── 3. Restore original mockup ──
+    setSelectedMockup(originalMockup);
+    const origData = allproductMockupsAdminLayers[originalMockup._id];
+    if (origData) {
+      setAdminLayers(origData.printAreas);
+      setAllAdminLayers(origData.all);
+    }
+    setLayersByMockup(prev => ({
+      ...prev,
+      [originalMockup._id]: originalNormalized,
+    }));
+
+    // ── 4. Save captured images to design ──
+    if (uploadedImages.length > 0 && masterDesignId) {
+      await updateDesignMockupImages(masterDesignId, uploadedImages);
+    }
+
+    toast.success(`Design saved with ${uploadedImages.length} mockup images!`);
+    setShowConfirmModal(false);
+    navigate(`/user/design-variants/${productId}/${masterDesignId}`, {
+      state: {
+        product,
+        selectedMockup: originalMockup,
+        currentLayers: originalNormalized,
+        adminLayers,
+        customerDesignId: masterDesignId,
+        isEditing,
+        existingCustomProduct: isEditing ? existingCustomProduct : null,
+      },
+    });
+  } catch (error) {
+    console.error("Error in handleNext:", error);
+    toast.error("Something went wrong: " + error.message);
+  } finally {
+    setSaving(false);
+  }
+};
+
+    // const handleNext = async () => {
+    //     try {
+    //         setSaving(true);
+
+    //         // Helper function
+    //         const isConfigMockup = (mockup) => {
+    //             if (!mockup?.name) return false;
+    //             return mockup.name.toLowerCase().startsWith("config");
+    //         };
+
+    //         // ── 0. Snapshot original mockup layers ──
+    //         const originalMockup = selectedMockup;
+    //         const originalLayers = layersByMockup[originalMockup._id] || [];
+    //         const originalNormalized = originalLayers.map((l) => normalizeLayer(l));
+
+    //         // ── 1. Save designs for every mockup ──
+    //         let masterDesignId = null;
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) continue;
+    //             const layers = layersByMockup[mockup._id] || [];
+    //             const norm = layers.map((l) => normalizeLayer(l));
+    //             const res = await saveCustomerDesign({
+    //                 productId,
+    //                 mockupId: mockup._id,
+    //                 layers: norm,
+    //                 forceNew: createNewFlag,
+    //             });
+    //             if (!masterDesignId && res?.success && res.data?._id) {
+    //                 masterDesignId = res.data._id;
+    //             }
+    //         }
+
+    //         // ── 2. Ensure any missing mockup gets a design ──
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) continue;
+    //             if (mockup._id === originalMockup._id) continue;
+    //             const existing = await getCustomerDesign(productId, mockup._id);
+    //             if (!existing.success || !existing.data) {
+    //                 const mapped = mapLayersToMockup(
+    //                     originalNormalized,
+    //                     originalMockup._id,
+    //                     mockup._id
+    //                 );
+    //                 await saveCustomerDesign({
+    //                     productId,
+    //                     mockupId: mockup._id,
+    //                     layers: mapped,
+    //                     forceNew: createNewFlag,
+    //                 });
+    //             }
+    //         }
+
+    //         // ── 3. Capture & upload images for each mockup ──
+    //         const uploadedImages = [];
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) continue;
+
+    //             // ── Switch to the mockup if not original ──
+    //             if (mockup._id !== originalMockup._id) {
+    //                 const data = allproductMockupsAdminLayers[mockup._id];
+    //                 if (data) {
+    //                     setAdminLayers(data.printAreas);
+    //                     setAllAdminLayers(data.all);
+    //                 }
+    //                 const designRes = await getCustomerDesign(productId, mockup._id);
+    //                 if (designRes.success && designRes.data) {
+    //                     setLayersByMockup((prev) => ({
+    //                         ...prev,
+    //                         [mockup._id]: designRes.data.layers.map(normalizeLayer),
+    //                     }));
+    //                 } else {
+    //                     const mapped = mapLayersToMockup(
+    //                         originalNormalized,
+    //                         originalMockup._id,
+    //                         mockup._id
+    //                     );
+    //                     setLayersByMockup((prev) => ({ ...prev, [mockup._id]: mapped }));
+    //                 }
+    //                 setSelectedMockup(mockup);
+
+    //                 // ── WAIT for the new mockup’s background image to fully load ──
+    //                 await new Promise((resolve) => {
+    //                     // Let React commit the state change
+    //                     setTimeout(() => {
+    //                         const imgEl = mockupImgRef.current;
+    //                         if (!imgEl || imgEl.complete) return resolve();
+    //                         imgEl.onload = resolve;
+    //                         imgEl.onerror = resolve; // don’t block forever
+    //                     }, 200);
+    //                 });
+
+    //                 // ── Additional settling time for Rnd layers ──
+    //                 await new Promise((resolve) => setTimeout(resolve, 1000));
+    //             } else {
+    //                 // Original mockup – ensure admin layers are correct
+    //                 const data = allproductMockupsAdminLayers[originalMockup._id];
+    //                 if (data) {
+    //                     setAdminLayers(data.printAreas);
+    //                     setAllAdminLayers(data.all);
+    //                 }
+    //             }
+
+    //             // ── Capture & Upload with error handling ──
+    //             try {
+    //                 const imageFile = await captureFinalDesign(designContainerRef);
+    //                 if (imageFile) {
+    //                     const uploadRes = await uploadCustomerImage(imageFile);
+    //                     if (uploadRes.success) {
+    //                         uploadedImages.push({
+    //                             mockupId: mockup._id,
+    //                             imageUrl: uploadRes.data.imageUrl,
+    //                             publicId: uploadRes.data.publicId,
+    //                         });
+    //                         console.log(`✅ Captured & uploaded mockup ${mockup._id}`);
+    //                     } else {
+    //                         console.warn(`⚠️ Upload failed for mockup ${mockup._id}`);
+    //                     }
+    //                 } else {
+    //                     console.warn(`⚠️ captureFinalDesign returned null for mockup ${mockup._id}`);
+    //                 }
+    //             } catch (captureErr) {
+    //                 console.error(`❌ Capture/upload error for mockup ${mockup._id}:`, captureErr);
+    //             }
+    //         }
+
+    //         // ── 4. Restore original mockup state ──
+    //         setSelectedMockup(originalMockup);
+    //         const origData = allproductMockupsAdminLayers[originalMockup._id];
+    //         if (origData) {
+    //             setAdminLayers(origData.printAreas);
+    //             setAllAdminLayers(origData.all);
+    //         }
+    //         setLayersByMockup((prev) => ({
+    //             ...prev,
+    //             [originalMockup._id]: originalNormalized,
+    //         }));
+
+    //         // ── 5. Attach captured images to master design ──
+    //         if (uploadedImages.length > 0 && masterDesignId) {
+    //             await updateDesignMockupImages(masterDesignId, uploadedImages);
+    //         }
+
+    //         toast.success(
+    //             `Design saved with ${uploadedImages.length} mockup images!`
+    //         );
+    //         setShowConfirmModal(false);
+    //         navigate(`/user/design-variants/${productId}/${masterDesignId}`, {
+    //             state: {
+    //                 product,
+    //                 selectedMockup: originalMockup,
+    //                 currentLayers: originalNormalized,
+    //                 adminLayers,
+    //                 customerDesignId: masterDesignId,
+    //                 isEditing,
+    //                 existingCustomProduct: isEditing ? existingCustomProduct : null,
+    //             },
+    //         });
+    //     } catch (error) {
+    //         console.error("Error in handleNext:", error);
+    //         toast.error("Something went wrong: " + error.message);
+    //     } finally {
+    //         setSaving(false);
+    //     }
+    // };
+
+    // const handleNext = async () => {
+    //     try {
+    //         setSaving(true);
+
+    //         // Helper function
+    //         const isConfigMockup = (mockup) => {
+    //             if (!mockup?.name) return false;
+    //             return mockup.name.toLowerCase().startsWith('config');
+    //         };
+
+    //         // ── 0. Snapshot original mockup layers ──
+    //         const originalMockup = selectedMockup;
+    //         const originalLayers = layersByMockup[originalMockup._id] || [];
+    //         const originalNormalized = originalLayers.map(l => normalizeLayer(l));
+
+    //         // ── 1. Save designs for every mockup ──
+    //         let masterDesignId = null;
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) {
+    //                 console.log(`⏭️ Skipping config mockup: ${mockup.name}`);
+    //                 continue;
+    //             }
+    //             const layers = layersByMockup[mockup._id] || [];
+    //             const norm = layers.map(l => normalizeLayer(l));
+    //             const res = await saveCustomerDesign({
+    //                 productId,
+    //                 mockupId: mockup._id,
+    //                 layers: norm,
+    //                 forceNew: createNewFlag,
+    //             });
+    //             if (!masterDesignId && res?.success && res.data?._id) {
+    //                 masterDesignId = res.data._id;
+    //             }
+    //         }
+
+    //         // ── 2. Ensure any missing mockup gets a design ──
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) continue;
+    //             if (mockup._id === originalMockup._id) continue;
+    //             const existing = await getCustomerDesign(productId, mockup._id);
+    //             if (!existing.success || !existing.data) {
+    //                 const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
+    //                 await saveCustomerDesign({
+    //                     productId,
+    //                     mockupId: mockup._id,
+    //                     layers: mapped,
+    //                     forceNew: createNewFlag,
+    //                 });
+    //             }
+    //         }
+
+    //         // ── 3. Capture & upload images for each mockup ──
+    //         const uploadedImages = [];
+    //         for (const mockup of allProductMockups) {
+    //             if (isConfigMockup(mockup)) {
+    //                 console.log(`⏭️ Skipping capture for config mockup: ${mockup.name}`);
+    //                 continue;
+    //             }
+
+    //             if (mockup._id !== originalMockup._id) {
+    //                 const data = allproductMockupsAdminLayers[mockup._id];
+    //                 if (data) {
+    //                     setAdminLayers(data.printAreas);
+    //                     setAllAdminLayers(data.all);
+    //                 }
+    //                 const designRes = await getCustomerDesign(productId, mockup._id);
+    //                 if (designRes.success && designRes.data) {
+    //                     setLayersByMockup(prev => ({
+    //                         ...prev,
+    //                         [mockup._id]: designRes.data.layers.map(normalizeLayer),
+    //                     }));
+    //                 } else {
+    //                     const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
+    //                     setLayersByMockup(prev => ({ ...prev, [mockup._id]: mapped }));
+    //                 }
+    //                 setSelectedMockup(mockup);
+    //                 await new Promise(resolve => setTimeout(resolve, 800));
+    //             } else {
+    //                 const data = allproductMockupsAdminLayers[originalMockup._id];
+    //                 if (data) {
+    //                     setAdminLayers(data.printAreas);
+    //                     setAllAdminLayers(data.all);
+    //                 }
+    //             }
+
+    //             const imageFile = await captureFinalDesign(designContainerRef);
+    //             if (imageFile) {
+    //                 const uploadRes = await uploadCustomerImage(imageFile);
+    //                 if (uploadRes.success) {
+    //                     uploadedImages.push({
+    //                         mockupId: mockup._id,
+    //                         imageUrl: uploadRes.data.imageUrl,
+    //                         publicId: uploadRes.data.publicId,
+    //                     });
+    //                 }
+    //             }
+    //         }
+
+    //         // ── 4. Restore original mockup state ──
+    //         setSelectedMockup(originalMockup);
+    //         const origData = allproductMockupsAdminLayers[originalMockup._id];
+    //         if (origData) {
+    //             setAdminLayers(origData.printAreas);
+    //             setAllAdminLayers(origData.all);
+    //         }
+    //         setLayersByMockup(prev => ({ ...prev, [originalMockup._id]: originalNormalized }));
+
+    //         // ── 5. Attach captured images to master design ──
+    //         if (uploadedImages.length > 0 && masterDesignId) {
+    //             await updateDesignMockupImages(masterDesignId, uploadedImages);
+    //         }
+
+    //         toast.success(`Design saved with ${uploadedImages.length} mockup images!`);
+    //         setShowConfirmModal(false);
+    //         navigate(`/user/design-variants/${productId}/${masterDesignId}`, {
+    //             state: {
+    //                 product,
+    //                 selectedMockup: originalMockup,
+    //                 currentLayers: originalNormalized,
+    //                 adminLayers,
+    //                 customerDesignId: masterDesignId,
+    //                 isEditing,
+    //                 existingCustomProduct: isEditing ? existingCustomProduct : null,
+    //             },
+    //         });
+    //     } catch (error) {
+    //         console.error("Error in handleNext:", error);
+    //         toast.error("Something went wrong: " + error.message);
+    //     } finally {
+    //         setSaving(false);
+    //     }
+    // };
 
     const handleReorder = (newOrderedLayers) => {
         const mockupId = selectedMockup._id;
@@ -1359,7 +1711,10 @@ const Editor = () => {
         allProductMockups.forEach(mockup => {
             if (mockup._id === sourceMockupId) return;
             const targetData = allproductMockupsAdminLayers[mockup._id];
-            if (!targetData || !targetData.printAreas) return;
+            if (!targetData || !targetData.printAreas) {
+                console.warn(`Skipping mockup ${mockup._id} – no admin layers loaded`);
+                return;
+            }
             const targetPA = targetData.printAreas.find(
                 pa => pa.name === sourcePrintArea?.name
             );
@@ -1420,6 +1775,7 @@ const Editor = () => {
                                 className="aspect-square relative"
                             >
                                 <img
+                                    ref={mockupImgRef}
                                     src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
@@ -1493,7 +1849,7 @@ const Editor = () => {
                                                     const pixelValues = getPixelValues(printAreaLayer._id, layer);
                                                     return (
                                                         <Rnd
-                                                            key={layer.clientKey || layer._id}
+                                                            key={`${selectedMockup?._id || 'mockup'}-${layer.clientKey || layer._id || globalIndex}`}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
                                                             disableDragging={layer.locked}
@@ -1614,12 +1970,27 @@ const Editor = () => {
                                 <h3 className="text-[15px] font-black text-gray-900">
                                     Design Studio
                                 </h3>
-                                <div
+                                {/* <div
                                     style={{ display: startDesigning ? "none" : "block" }}
                                     onClick={() => setStartDesigning(true)}
                                     className="px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition cursor-pointer rounded-md"
                                 >
                                     Start Designing
+                                </div> */}
+
+                                <div
+                                    style={{ display: startDesigning ? "none" : "block" }}
+                                    onClick={() => {
+                                        if (!allMockupLayersReady) {
+                                            toast.info("Loading mockup data, please wait...");
+                                            return;
+                                        }
+                                        setStartDesigning(true);
+                                    }}
+                                    className={`px-4 py-3 text-white font-bold text-sm transition cursor-pointer rounded-md
+    ${allMockupLayersReady ? 'bg-[#f05a28] hover:opacity-90' : 'bg-gray-400 cursor-not-allowed'}`}
+                                >
+                                    {allMockupLayersReady ? 'Start Designing' : 'Loading mockups…'}
                                 </div>
                             </div>
 

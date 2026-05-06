@@ -15,10 +15,20 @@ const customProductSchema = new mongoose.Schema(
       required: true,
     },
 
-    sellingPrice: {
-      type: Number,
-      default: 0,
-    },
+    // ✅ ADD THIS INSTEAD (usi jagah par):
+    variantPrices: [
+      {
+        variantId: {
+          type: String,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+      },
+    ],
 
     selectedDefaultVariants: [
       {
@@ -125,6 +135,11 @@ const customProductSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
       default: null,
+    },
+
+    deleted: {
+      type: Boolean,
+      default: false
     },
     importedToShopify: {
       type: Boolean,

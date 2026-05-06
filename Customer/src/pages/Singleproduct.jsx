@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ShoppingBag, Edit3, Copy, Archive, RefreshCw, Download, Plus, X, Layout,
+  ShoppingBag, Edit3, Copy, Trash, RefreshCw, Download, Plus, X, Layout,
   Package, Tag, Info, DollarSign, MapPin, Calendar, Layers, Eye, Hash,
   CheckCircle, Circle, Code, List, ListOrdered, ImageIcon, Undo, Link as LinkIcon
 } from "lucide-react";
-import { getCustomProductById } from "../api/customerProduct.api";
+import { getCustomProductById, deleteCustomProduct } from "../api/customerProduct.api";
 import image from "../assets/image/dummy.jpg";
+import { toast } from "react-toastify";
 
 const SingleProduct = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const SingleProduct = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
-  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isConfiguratorModalOpen, setIsConfiguratorModalOpen] = useState(false);
   const [selectedConfigColor, setSelectedConfigColor] = useState("Black");
   const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
@@ -93,6 +94,7 @@ const SingleProduct = () => {
   const selectedMockup = customProduct.selectedMockup || {};
   const customerLayers = customProduct.customerLayers || [];
   const finalDesignImages = customProduct?.customerDesign?.finalDesignImages || [];
+  const variantsPrices = customProduct.variantsPrices || [];
 
   const displayImage =
     selectedImage ||
@@ -218,10 +220,10 @@ const SingleProduct = () => {
             <Copy size={14} /> Duplicate
           </button>
           <button
-            className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
-            onClick={() => setIsArchiveModalOpen(true)}
+            className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
+            onClick={() => setIsDeleteModalOpen(true)}
           >
-            <Archive size={14} /> Archive
+            <Trash size={14} /> Delete
           </button>
           <button
             className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 text-[13px] rounded hover:bg-gray-50"
@@ -770,14 +772,14 @@ const SingleProduct = () => {
         </div>
       )}
 
-      {isArchiveModalOpen && (
+      {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-2xl rounded shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
 
             {/* Modal Header */}
             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-white">
-              <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Archive Product</h2>
-              <button onClick={() => setIsArchiveModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Delete Product</h2>
+              <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
               </button>
             </div>
@@ -785,7 +787,7 @@ const SingleProduct = () => {
             {/* Modal Body - Confirmation Message */}
             <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
               <p className="text-[15px] text-gray-600">
-                You have requested to archive <span className="font-bold text-gray-800">{p.productTitle || "this product"}</span>.
+                You have requested to delete <span className="font-bold text-gray-800">{customProduct?.customVariant?.name || customProduct?.baseProduct?.productTitle || "this product"}</span>.
               </p>
               <p className="text-[15px] text-gray-600">
                 Please confirm your intention.
@@ -795,16 +797,29 @@ const SingleProduct = () => {
             {/* Modal Footer - Buttons */}
             <div className="flex justify-end items-center gap-3 p-4 bg-white border-t border-gray-100">
               <button
-                onClick={() => {
-                  console.log("Product Archived");
-                  setIsArchiveModalOpen(false);
+                onClick={async () => {
+                  try {
+                    const result = await deleteCustomProduct(customProduct._id);
+                    if (result.success) {
+                      console.log("Product deleted successfully");
+                      setIsDeleteModalOpen(false);
+                      // Navigate back to products list
+                      navigate(-1);
+                    } else {
+                      console.error("Failed to delete product:", result.message);
+                      toast.error("Failed to delete product. Please try again.");
+                    }
+                  } catch (error) {
+                    console.error("Error deleting product:", error);
+                    toast.error("An error occurred while deleting the product.");
+                  }
                 }}
-                className="px-6 py-2 bg-[#F05828] text-white text-[13px] font-bold rounded shadow-sm hover:bg-[#199d71] transition-all"
+                className="px-6 py-2 bg-[#F05828] text-white text-[13px] font-bold rounded shadow-sm hover:opacity-90 transition-all"
               >
                 OK
               </button>
               <button
-                onClick={() => setIsArchiveModalOpen(false)}
+                onClick={() => setIsDeleteModalOpen(false)}
                 className="px-6 py-2 border border-gray-200 text-gray-500 text-[13px] rounded hover:bg-gray-50 transition-all"
               >
                 Cancel

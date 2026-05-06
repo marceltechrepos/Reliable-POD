@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LayoutGrid, List } from "lucide-react";
-import { getcustomerDesignByuserId } from "../api/customerDesign.api";
+// import { getcustomerDesignByuserId } from "../api/customerDesign.api";
 import { getCustomProductByUserId } from "../api/customerProduct.api";
 import { getUserStores } from "../api/store.api";
 import { toast } from "react-toastify";
@@ -24,8 +24,12 @@ export default function MyProducts() {
       setLoading(true);
       if (user?._id) {
         const data = await getCustomProductByUserId(user._id);
-        setCustomProducts(data.data || []);
-      }
+
+          const activeProducts = (data.data || []).filter(
+        product => product.deleted !== true
+      );
+      setCustomProducts(activeProducts);
+    }
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -52,7 +56,7 @@ export default function MyProducts() {
 
   const productList = useMemo(() => customProducts || [], [customProducts]);
 
-  console.log(productList , "<<<<<<< productList")
+  console.log(productList, "<<<<<<< productList")
 
   const toggleSelect = (id, e) => {
     e.stopPropagation();
@@ -139,8 +143,8 @@ export default function MyProducts() {
               onClick={handleImportToShopify}
               disabled={selectedProducts.length === 0 || importing || !selectedStoreId}
               className={`px-4 py-2 rounded-lg text-white transition ${selectedProducts.length > 0 && !importing && selectedStoreId
-                  ? "bg-[#f05a28] hover:bg-[#e04a18]"
-                  : "bg-gray-300 cursor-not-allowed"
+                ? "bg-[#f05a28] hover:bg-[#e04a18]"
+                : "bg-gray-300 cursor-not-allowed"
                 }`}
             >
               {importing ? "Pushing..." : "Push to Shopify"}
