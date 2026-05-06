@@ -364,6 +364,43 @@ const getcustomerDesignByuserId = async (req, res) => {
     }
 }
 
+// customDesign.controller.js mein add karo
+
+const getCustomerDesignById = async (req, res) => {
+  try {
+    const { designId } = req.params;
+
+    if (!designId) {
+      return res.status(400).json({
+        success: false,
+        message: "Design ID is required",
+      });
+    }
+
+    const design = await CustomerDesign.findById(designId)
+      .populate("product")
+      .populate("mockup");
+
+    if (!design) {
+      return res.status(404).json({
+        success: false,
+        message: "Design not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: design,
+    });
+  } catch (error) {
+    console.error("getCustomerDesignById error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 // =================================================
 
@@ -452,5 +489,6 @@ export {
     getcustomerDesignByuserId,
     uploadFinalImage,
     uploadMockupImage,
-    updateMockupImages
+    updateMockupImages,
+    getCustomerDesignById
 }

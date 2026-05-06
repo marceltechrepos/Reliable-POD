@@ -13,7 +13,7 @@ const createCustomProduct = async (req, res) => {
       customVariant = {},
       customerDesignId = null,
       selectedMockup = null,
-      sellingPrice = 0,
+      variantPrices = {},
       customerLayers = [],
     } = req.body;
 
@@ -68,7 +68,10 @@ const createCustomProduct = async (req, res) => {
       customerDesign: customerDesignId,
       selectedMockup,
       customerLayers,
-       sellingPrice,
+      variantPrices: Object.entries(variantPrices).map(([variantId, price]) => ({
+        variantId,
+        price: parseFloat(price) || 0,
+      })),
     });
 
     await customProduct.save();
@@ -216,7 +219,7 @@ const getCustomProductByUserId = async (req, res) => {
     }
 
 
-    const customProductsByUserId = await CustomProduct.find({ user: userId })
+    const customProductsByUserId = await CustomProduct.find({ user: userId, deleted: false })
       .populate("baseProduct")
       .populate("customerDesign")
       .populate("selectedMockup")
@@ -284,8 +287,15 @@ const updateCustomProduct = async (req, res) => {
       customerDesign: updateData.customerDesignId,
       selectedMockup: updateData.selectedMockup,
       customerLayers: updateData.customerLayers,
+      variantPrices: updateData.variantPrices,
     };
 
+    if (updateData.variantPrices && typeof updateData.variantPrices === 'object' && !Array.isArray(updateData.variantPrices)) {
+      allowedUpdates.variantPrices = Object.entries(updateData.variantPrices).map(([variantId, price]) => ({
+        variantId,
+        price: parseFloat(price) || 0,
+      }));
+    }
     // Remove undefined fields
     Object.keys(allowedUpdates).forEach(key => {
       if (allowedUpdates[key] === undefined) {
@@ -364,16 +374,60 @@ const updateCustomProduct = async (req, res) => {
 };
 
 // Delete custom product
+// const deleteCustomProduct = async (req, res) => {
+//   try {
+//     const userId = req.user?._id;
+//     const { id } = req.params;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Valid custom product ID is required",
+//       });
+//     }
+
+//     // Check if custom product exists and belongs to user
+//     const customProduct = await CustomProduct.findOne({
+//       _id: id,
+//       user: userId,
+//     });
+
+//     if (!customProduct) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Custom product not found or you don't have permission to delete it",
+//       });
+//     }
+
+//     await CustomProduct.deleteOne({ _id: id, user: userId });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Custom product deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error("deleteCustomProduct error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+// ============== SOFT DELETE (instead of hard delete) ==============
 const deleteCustomProduct = async (req, res) => {
   try {
     const userId = req.user?._id;
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
@@ -383,33 +437,31 @@ const deleteCustomProduct = async (req, res) => {
       });
     }
 
-    // Check if custom product exists and belongs to user
-    const customProduct = await CustomProduct.findOne({
-      _id: id,
-      user: userId,
-    });
+    // Find product and set deleted flag to true
+    const updatedProduct = await CustomProduct.findOneAndUpdate(
+      { _id: id, user: userId, deleted: false },  // only if not already deleted
+      { $set: { deleted: true } },
+      { new: true }
+    );
 
-    if (!customProduct) {
+    if (!updatedProduct) {
       return res.status(404).json({
         success: false,
-        message: "Custom product not found or you don't have permission to delete it",
+        message: "Custom product not found or already deleted",
       });
     }
 
-    await CustomProduct.deleteOne({ _id: id, user: userId });
-
     return res.status(200).json({
       success: true,
-      message: "Custom product deleted successfully",
+      message: "Product deleted (soft delete)",
+      data: updatedProduct,
     });
   } catch (error) {
     console.error("deleteCustomProduct error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Bulk delete custom products
 const bulkDeleteCustomProducts = async (req, res) => {
@@ -441,15 +493,15 @@ const bulkDeleteCustomProducts = async (req, res) => {
       });
     }
 
-    const result = await CustomProduct.deleteMany({
-      _id: { $in: ids },
-      user: userId,
-    });
+    const result = await CustomProduct.updateMany(
+      { _id: { $in: ids }, user: userId, deleted: false },
+      { $set: { deleted: true } }
+    );
 
     return res.status(200).json({
       success: true,
-      message: `${result.deletedCount} custom product(s) deleted successfully`,
-      deletedCount: result.deletedCount,
+      message: `${result.modifiedCount} product(s) soft deleted`,
+      deletedCount: result.modifiedCount,
     });
   } catch (error) {
     console.error("bulkDeleteCustomProducts error:", error);
@@ -510,44 +562,44 @@ const importProductsToShopify = async (req, res) => {
 
 
 // Get imported products by store ID
- const getImportedProductsByStore = async (req, res) => {
-    try {
-        const { storeId } = req.params;
-        
-        if (!storeId) {
-            return res.status(400).json({
-                success: false,
-                message: "Store ID is required"
-            });
-        }
+const getImportedProductsByStore = async (req, res) => {
+  try {
+    const { storeId } = req.params;
 
-        // Find all products with this storeId and importedToShopify = true
-        const products = await CustomProduct.find({
-            storeId: storeId,
-            importedToShopify: true
-        })
-        .populate("baseProduct")
-        .populate("customerDesign")
-        // .populate("baseProduct", "productTitle price thumbnail")
-        .populate("selectedMockup", "imageUrl name")
-        .sort({ createdAt: -1 });
-
-        console.log(`Found ${products.length} imported products for store ${storeId}`);
-
-        return res.status(200).json({
-            success: true,
-            data: products,
-            count: products.length,
-            message: "Products fetched successfully"
-        });
-        
-    } catch (error) {
-        console.error("getImportedProductsByStore error:", error);
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Store ID is required"
+      });
     }
+
+    // Find all products with this storeId and importedToShopify = true
+    const products = await CustomProduct.find({
+      storeId: storeId,
+      importedToShopify: true
+    })
+      .populate("baseProduct")
+      .populate("customerDesign")
+      // .populate("baseProduct", "productTitle price thumbnail")
+      .populate("selectedMockup", "imageUrl name")
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${products.length} imported products for store ${storeId}`);
+
+    return res.status(200).json({
+      success: true,
+      data: products,
+      count: products.length,
+      message: "Products fetched successfully"
+    });
+
+  } catch (error) {
+    console.error("getImportedProductsByStore error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
 
 export {

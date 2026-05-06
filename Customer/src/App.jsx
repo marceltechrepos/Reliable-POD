@@ -56,7 +56,7 @@ function App() {
             element={<Singlecatalogue />}
           />
           <Route
-            path="design-variants/:productId"
+            path="design-variants/:productId/:customDesignId?"
             element={<DesignVariants />}
           />
           {/* <Route path="order" element={<Order />} /> */}
