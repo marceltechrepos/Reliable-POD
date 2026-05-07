@@ -5,7 +5,6 @@ import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } fro
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
 import LayerProperties from "../components/Admin/LayerProperties";
-import TextLayerWithAutoSize from "../components/Admin/TextLayerWithAutoSize";
 import ThreeWarpedImage from "../components/Admin/ThreePerspectiveImage";
 import { ReactSortable } from "react-sortablejs";
 import {
@@ -118,6 +117,13 @@ const Editor = () => {
     const containerRefs = useRef({});
     const designContainerRef = useRef(null);
     const mockupImgRef = useRef(null);
+    const [dragState, setDragState] = useState({
+        index: null,
+        tempX: 0,
+        tempY: 0,
+        tempWidth: 0,
+        tempHeight: 0,
+    });
 
     const sortableLayers = currentLayers.map((layer, idx) => ({
         ...layer,
@@ -300,30 +306,6 @@ const Editor = () => {
         fetchProduct();
     }, [productId, product]);
 
-    // Fetch ALL mockup layers (map)
-    // useEffect(() => {
-    //     const fetchAllMockupLayers = async () => {
-    //         if (product?._id && allProductMockups.length > 0) {
-    //             const allLayersMap = {};
-    //             for (const mockup of allProductMockups) {
-    //                 try {
-    //                     const res = await getLayersByProductId(product._id, mockup._id);
-    //                     if (res.data) {
-    //                         allLayersMap[mockup._id] = {
-    //                             all: res.data,
-    //                             printAreas: res.data.filter(l => l.type === "printarea"),
-    //                         };
-    //                     }
-    //                 } catch (e) {
-    //                     console.error(`Layers for mockup ${mockup._id}:`, e);
-    //                 }
-    //             }
-    //             setAllProductMockupsAdminLayers(allLayersMap);
-    //         }
-    //     };
-    //     fetchAllMockupLayers();
-    // }, [product?._id, allProductMockups]);
-
     useEffect(() => {
         const fetchAllMockupLayers = async () => {
             if (product?._id && allProductMockups.length > 0) {
@@ -397,13 +379,6 @@ const Editor = () => {
         };
         fetchCustomerDesign();
     }, [productId, selectedMockup, isPreviewActive, createNewFlag]);
-
-    // Containers ready
-    // useEffect(() => {
-    //     if (!startDesigning || adminLayers.length === 0) return;
-    //     const timer = setTimeout(() => setContainersReady(true), 200);
-    //     return () => clearTimeout(timer);
-    // }, [startDesigning, adminLayers]);
 
     useEffect(() => {
         if (!startDesigning || adminLayers.length === 0) return;
@@ -501,22 +476,6 @@ const Editor = () => {
         };
     };
 
-    // const getPixelValues = (printAreaId, layer) => {
-    //     const container = containerRefs.current[printAreaId];
-    //     if (!container) return { x: 0, y: 0, width: 100, height: 100, scaleFactor: 1 };
-    //     const rect = container.getBoundingClientRect();
-    //     const cw = rect.width || 300;
-    //     const ch = rect.height || 300;
-    //     const safe = normalizeLayer(layer);
-    //     return {
-    //         x: (safe.positionX / 100) * cw,
-    //         y: (safe.positionY / 100) * ch,
-    //         width: (safe.width / 100) * cw,
-    //         height: (safe.height / 100) * ch,
-    //         scaleFactor: cw / 100,
-    //     };
-    // };
-
     const updateLayerLocalAndMaybeServer = (index, updates, callServer = true) => {
         setLayersByMockup(prev => {
             const mockupId = selectedMockup._id;
@@ -602,29 +561,6 @@ const Editor = () => {
         }, true);
     };
 
-    // const handleDuplicateLayer = (index) => {
-    //     setCustomerLayers(prev => {
-    //         const original = prev[index];
-    //         const maxZ = Math.max(...prev.map(l => l.zIndex || 0), 0);
-    //         // ✅ clientKey aur _id dono hata kar fresh clientKey do
-    //         const { _id, clientKey, ...rest } = original;
-    //         const duplicated = {
-    //             ...rest,
-    //             clientKey: crypto.randomUUID(),
-    //             positionX: (original.positionX || 0) + 5,
-    //             positionY: (original.positionY || 0) + 5,
-    //             zIndex: maxZ + 1,
-    //         };
-    //         const updated = [...prev, normalizeLayer(duplicated)];
-    //         setSelectedLayerIndex(updated.length - 1);
-    //         return updated;
-    //     });
-    // };
-
-    // const handleToggleLock = (index) => {
-    //     setCustomerLayers((prev) => layerHelpers.toggleLayerLock(prev, index));
-    // };
-
     const handleToggleLock = (index) => {
         setLayersByMockup(prev => {
             const mockupId = selectedMockup._id;
@@ -636,46 +572,6 @@ const Editor = () => {
         });
     };
 
-    const handlePrintAreaImageUpload = async (printAreaLayer, file) => {
-        if (!file) return;
-        try {
-            setSaving(true);
-            const uploadRes = await uploadCustomerImage(file);
-            if (!uploadRes.success) throw new Error(uploadRes.message);
-            const { imageUrl, publicId } = uploadRes.data;
-            const fullPrintArea = adminLayers.find(pa => pa._id === printAreaLayer._id);
-            console.log('Admin Print Area:', fullPrintArea);
-            const newLayer = {
-                clientKey: crypto.randomUUID(),
-                printArea: printAreaLayer._id,
-                imageUrl,
-                publicId,
-                positionX: 0,
-                positionY: 0,
-                width: 100,
-                height: 100,
-                rotation: 0,
-                opacity: 1,
-                visible: true,
-                locked: false,
-                horizontalAlign: "center",
-                verticalAlign: "middle",
-                enablePerspective: fullPrintArea?.enablePerspective || false,
-                corners: fullPrintArea?.enablePerspective && fullPrintArea.corners
-                    ? JSON.parse(JSON.stringify(fullPrintArea.corners))
-                    : undefined,
-                fit: fullPrintArea?.fit || "cover",
-            };
-
-            addLayerToAllMockups(newLayer, selectedMockup._id, fullPrintArea);
-            toast.success("Image uploaded to all mockups");
-        } catch (e) {
-            console.error("upload err", e);
-            toast.error("Upload failed");
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const handleAddTextLayer = () => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
@@ -684,20 +580,40 @@ const Editor = () => {
             return;
         }
 
+        // Measure the default text "New Text" with default font (Arial 30px)
+        const defaultText = "New Text";
+        const defaultFontSize = 30;
+        const { width: textPxWidth, height: textPxHeight } = getTextPixelSize(
+            defaultText,
+            defaultFontSize,
+            "Arial",
+            "normal"
+        );
+
+        // Get print area container size (fallback to 500px if not measured yet)
+        const containerRect = containerRefs.current[defaultPrintArea._id]?.getBoundingClientRect();
+        const printAreaWidthPx = containerRect?.width || 500;
+        const printAreaHeightPx = containerRect?.height || 500;
+
+        // Convert pixel dimensions to percentages (clamped between 5% and 100%)
+        let widthPercent = (textPxWidth / printAreaWidthPx) * 100;
+        let heightPercent = (textPxHeight / printAreaHeightPx) * 100;
+        widthPercent = Math.min(Math.max(widthPercent, 5), 100);
+        heightPercent = Math.min(Math.max(heightPercent, 5), 100);
+
         const newLayer = {
             clientKey: crypto.randomUUID(),
             printArea: defaultPrintArea._id,
             type: "text",
-            text: "New Text",
-            fontSize: 30,
+            text: defaultText,
+            fontSize: defaultFontSize,
             fontFamily: "Arial",
             fontWeight: "normal",
-             wrapMode: 'multi',
             fill: "#000000",
             positionX: 15,
             positionY: 15,
-            width: 50,
-            height: 30,
+            width: round2(widthPercent),
+            height: round2(heightPercent),
             rotation: 0,
             opacity: 1,
             visible: true,
@@ -711,7 +627,17 @@ const Editor = () => {
 
         addLayerToAllMockups(newLayer, selectedMockup._id, defaultPrintArea);
     };
-
+    // Get pixel dimensions of a text string using canvas
+    const getTextPixelSize = (text, fontSize, fontFamily = "Arial", fontWeight = "normal") => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        const metrics = ctx.measureText(text);
+        const width = metrics.width;
+        // Approximate height: typical line height = fontSize * 1.2
+        const height = fontSize * 1.2;
+        return { width, height };
+    };
     const handleImageFromModal = (image) => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
         if (!defaultPrintArea) {
@@ -819,31 +745,89 @@ const Editor = () => {
     // Mockup Navigation & Preview
     // ═══════════════════════════════════════════════
 
-    const mapLayersToMockup = (layers, sourceMockupId, targetMockupId) => {
+    const mapLayersToMockup = (layers, sourceMockupId, targetMockupId, preserveAspect = true) => {
         const sourceData = allproductMockupsAdminLayers[sourceMockupId];
         const targetData = allproductMockupsAdminLayers[targetMockupId];
         if (!sourceData || !targetData) return [];
 
         const sourcePrintAreas = sourceData.printAreas || [];
         const targetPrintAreas = targetData.printAreas || [];
-        return layers
-            .map((layer, index) => {
-                const sourcePA = sourcePrintAreas.find(
-                    pa => pa._id === (layer.printArea?._id || layer.printArea)
-                );
-                if (!sourcePA) return null;
 
+        return layers
+            .map((layer, idx) => {
+                const sourcePA = sourcePrintAreas.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
+                if (!sourcePA) return null;
                 const targetPA = targetPrintAreas.find(pa => pa.name === sourcePA.name);
                 if (!targetPA) return null;
 
-                const sourceKey = layer.clientKey || layer._id || index;
-                return {
+                const scaleX = targetPA.width / sourcePA.width;
+                const scaleY = targetPA.height / sourcePA.height;
+
+                // -------- scale size --------
+                let newWidth = layer.width * scaleX;
+                let newHeight = layer.height * scaleY;
+
+                // Optional: preserve aspect ratio for images
+                if (preserveAspect && layer.type === 'image' && layer.imageUrl && newWidth > 0 && newHeight > 0) {
+                    const originalAspect = layer.width / layer.height;
+                    const targetAspect = newWidth / newHeight;
+                    if (Math.abs(originalAspect - targetAspect) > 0.01) {
+                        // keep width, adjust height to maintain original ratio
+                        newHeight = newWidth / originalAspect;
+                        // clamp if needed
+                        if (newHeight > 100) {
+                            newHeight = 100;
+                            newWidth = newHeight * originalAspect;
+                        }
+                    }
+                }
+
+                // clamp to allowed range
+                let clampedWidth = Math.min(Math.max(newWidth, 5), MAX_LAYER_PERCENT);
+                let clampedHeight = Math.min(Math.max(newHeight, 5), MAX_LAYER_PERCENT);
+                if (clampedWidth !== newWidth || clampedHeight !== newHeight) {
+                    console.warn(`Layer ${idx} size clamped: (${newWidth.toFixed(1)},${newHeight.toFixed(1)}) → (${clampedWidth.toFixed(1)},${clampedHeight.toFixed(1)})`);
+                }
+
+                // -------- position based on alignment --------
+                let newX, newY;
+                const hAlign = layer.horizontalAlign || 'center';
+                const vAlign = layer.verticalAlign || 'middle';
+
+                if (hAlign === 'left') newX = 0;
+                else if (hAlign === 'right') newX = 100 - clampedWidth;
+                else newX = 50 - clampedWidth / 2;
+
+                if (vAlign === 'top') newY = 0;
+                else if (vAlign === 'bottom') newY = 100 - clampedHeight;
+                else newY = 50 - clampedHeight / 2;
+
+                // if alignment is not defined, fall back to scaled position with clamping
+                if (layer.horizontalAlign === undefined) {
+                    newX = layer.positionX * scaleX;
+                    newX = Math.min(Math.max(newX, 0), 100 - clampedWidth);
+                }
+                if (layer.verticalAlign === undefined) {
+                    newY = layer.positionY * scaleY;
+                    newY = Math.min(Math.max(newY, 0), 100 - clampedHeight);
+                }
+
+                const masterKey = layer.masterKey || `${targetMockupId}-${layer.clientKey || layer._id || idx}`;
+
+                const mappedLayer = {
                     ...layer,
-                    _id: undefined,
-                    clientKey: `${targetMockupId}-${sourceKey}`,
+                    _id: undefined,               // will be recreated on save
+                    clientKey: `${targetMockupId}-${layer.clientKey || layer._id || idx}`,
+                    masterKey,
                     printArea: targetPA._id,
-                    corners: targetPA.corners || layer.corners, // keep original corners (scaling handles rest)
+                    positionX: round2(newX),
+                    positionY: round2(newY),
+                    width: round2(clampedWidth),
+                    height: round2(clampedHeight),
+                    enablePerspective: targetPA.enablePerspective || false,
+                    corners: targetPA.corners ? JSON.parse(JSON.stringify(targetPA.corners)) : layer.corners,
                 };
+                return normalizeLayer(mappedLayer);
             })
             .filter(Boolean);
     };
@@ -857,36 +841,6 @@ const Editor = () => {
             return { ...prev, [mockupId]: layers };
         });
     };
-
-    // Move a layer up or down in the current mockup, then propagate the swap to all others
-    // const moveLayer = (direction) => {
-    //     if (selectedLayerIndex === null) return;
-    //     const newIndex = direction === 'up' ? selectedLayerIndex - 1 : selectedLayerIndex + 1;
-    //     if (newIndex < 0 || newIndex >= currentLayers.length) return;
-
-    //     const currentMockupId = selectedMockup._id;
-    //     const layerA = currentLayers[selectedLayerIndex];
-    //     const layerB = currentLayers[newIndex];
-
-    //     // Swap in current mockup
-    //     swapLayersInMockup(currentMockupId, selectedLayerIndex, newIndex);
-
-    //     // Propagate to other mockups using masterKey (if both layers have it)
-    //     if (layerA.masterKey && layerB.masterKey) {
-    //         Object.keys(layersByMockup).forEach(mockupId => {
-    //             if (mockupId === currentMockupId) return;
-    //             const layers = layersByMockup[mockupId] || [];
-    //             const indexA = layers.findIndex(l => l.masterKey === layerA.masterKey);
-    //             const indexB = layers.findIndex(l => l.masterKey === layerB.masterKey);
-    //             if (indexA !== -1 && indexB !== -1) {
-    //                 swapLayersInMockup(mockupId, indexA, indexB);
-    //             }
-    //             // Optional: if only one layer exists in another mockup, you could still swap with the adjacent index, but that depends on your use case. We'll keep it simple.
-    //         });
-    //     }
-
-    //     setSelectedLayerIndex(newIndex);
-    // };
 
     const moveLayer = (direction) => {
         if (selectedLayerIndex === null) return;
@@ -948,8 +902,31 @@ const Editor = () => {
     };
 
     const handleSwitchMockup = (targetMockup) => {
+        setSelectedLayerIndex(null);
+
+        // If we already have layers for this mockup (from previous saves), just switch
+        if (layersByMockup[targetMockup._id]) {
+            setSelectedMockup(targetMockup);
+            return;
+        }
+
+        // Otherwise, map the current design (from the current mockup) to the target
+        const sourceMockupId = selectedMockup._id;
+        const sourceLayers = currentLayers; // layers of the currently active mockup
+
+        if (sourceLayers.length === 0) {
+            setSelectedMockup(targetMockup);
+            return;
+        }
+
+        const mapped = mapLayersToMockup(sourceLayers, sourceMockupId, targetMockup._id, true);
+        setLayersByMockup(prev => ({
+            ...prev,
+            [targetMockup._id]: mapped,
+        }));
         setSelectedMockup(targetMockup);
     };
+
     const handleNextMockup = () => {
         if (currentMockupIndex < allProductMockups.length - 1) {
             handleSwitchMockup(allProductMockups[currentMockupIndex + 1]);
@@ -1274,130 +1251,6 @@ const Editor = () => {
         }
     };
 
-    // const handleNext = async () => {
-    //     try {
-    //         setSaving(true);
-
-    //         // ── 0. Snapshot original mockup layers ──
-    //         const originalMockup = selectedMockup;
-    //         const originalLayers = layersByMockup[originalMockup._id] || [];
-    //         const originalNormalized = originalLayers.map(l => normalizeLayer(l));
-
-    //         // ── 1. Save designs for every mockup ──
-    //         let masterDesignId = null;
-    //         for (const mockup of allProductMockups) {
-    //             if (mockup.name.toLowerCase() === "config") continue;
-    //             const layers = layersByMockup[mockup._id] || [];
-    //             const norm = layers.map(l => normalizeLayer(l));
-    //             const res = await saveCustomerDesign({
-    //                 productId,
-    //                 mockupId: mockup._id,
-    //                 layers: norm,
-    //                 forceNew: false,
-    //             });
-    //             // Capture the first successful design ID as master
-    //             if (!masterDesignId && res?.success && res.data?._id) {
-    //                 masterDesignId = res.data._id;
-    //             }
-    //         }
-
-    //         // ── 2. Ensure any missing mockup gets a design ──
-    //         for (const mockup of allProductMockups) {
-    //             if (mockup.name.toLowerCase() === "config") continue;
-    //             if (mockup._id === originalMockup._id) continue;
-    //             const existing = await getCustomerDesign(productId, mockup._id);
-    //             if (!existing.success || !existing.data) {
-    //                 const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
-    //                 await saveCustomerDesign({
-    //                     productId,
-    //                     mockupId: mockup._id,
-    //                     layers: mapped,
-    //                 });
-    //             }
-    //         }
-
-    //         // ── 3. Capture & upload images for each mockup ──
-    //         const uploadedImages = [];
-    //         for (const mockup of allProductMockups) {
-
-    //             if (mockup.name.toLowerCase() === "config") continue;
-
-    //             if (mockup._id !== originalMockup._id) {
-
-    //                 const data = allproductMockupsAdminLayers[mockup._id];
-    //                 if (data) {
-    //                     setAdminLayers(data.printAreas);
-    //                     setAllAdminLayers(data.all);
-    //                 }
-    //                 const designRes = await getCustomerDesign(productId, mockup._id);
-    //                 if (designRes.success && designRes.data) {
-    //                     setLayersByMockup(prev => ({
-    //                         ...prev,
-    //                         [mockup._id]: designRes.data.layers.map(normalizeLayer),
-    //                     }));
-    //                 } else {
-    //                     const mapped = mapLayersToMockup(originalNormalized, originalMockup._id, mockup._id);
-    //                     setLayersByMockup(prev => ({ ...prev, [mockup._id]: mapped }));
-    //                 }
-    //                 setSelectedMockup(mockup);
-    //                 await new Promise(resolve => setTimeout(resolve, 800));
-    //             } else {
-    //                 // Original mockup is not config – ensure admin layers are set
-    //                 const data = allproductMockupsAdminLayers[originalMockup._id];
-    //                 if (data) {
-    //                     setAdminLayers(data.printAreas);
-    //                     setAllAdminLayers(data.all);
-    //                 }
-    //             }
-
-    //             const imageFile = await captureFinalDesign(designContainerRef);
-    //             if (imageFile) {
-    //                 const uploadRes = await uploadCustomerImage(imageFile);
-    //                 if (uploadRes.success) {
-    //                     uploadedImages.push({
-    //                         mockupId: mockup._id,
-    //                         imageUrl: uploadRes.data.imageUrl,
-    //                         publicId: uploadRes.data.publicId,
-    //                     });
-    //                 }
-    //             }
-    //         }
-
-    //         // ── 4. Restore original mockup state ──
-    //         setSelectedMockup(originalMockup);
-    //         const origData = allproductMockupsAdminLayers[originalMockup._id];
-    //         if (origData) {
-    //             setAdminLayers(origData.printAreas);
-    //             setAllAdminLayers(origData.all);
-    //         }
-    //         setLayersByMockup(prev => ({ ...prev, [originalMockup._id]: originalNormalized }));
-
-    //         // ── 5. Attach captured images to master design ──
-    //         if (uploadedImages.length > 0 && masterDesignId) {
-    //             await updateDesignMockupImages(masterDesignId, uploadedImages);
-    //         }
-
-    //         toast.success(`Design saved with ${uploadedImages.length} mockup images!`);
-    //         setShowConfirmModal(false);
-    //         navigate(`/user/design-variants/${productId}`, {
-    //             state: {
-    //                 product,
-    //                 selectedMockup: originalMockup,
-    //                 currentLayers: originalNormalized,
-    //                 adminLayers,
-    //                 customerDesignId: masterDesignId,
-    //                 isEditing,
-    //                 existingCustomProduct: isEditing ? existingCustomProduct : null,
-    //             },
-    //         });
-    //     } catch (error) {
-    //         console.error("Error in handleNext:", error);
-    //         toast.error("Something went wrong: " + error.message);
-    //     } finally {
-    //         setSaving(false);
-    //     }
-    // };
-
     const handleOpenModal = () => setShowConfirmModal(true);
 
     const addLayerToAllMockups = (newLayer, sourceMockupId, sourcePrintArea) => {
@@ -1557,22 +1410,56 @@ const Editor = () => {
                                                             key={`${selectedMockup?._id || 'mockup'}-${layer.clientKey || layer._id || globalIndex}`}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
-                                                            // disableDragging={layer.locked}
-                                                            // enableResizing={!layer.locked}
                                                             disableDragging={globalIndex !== selectedLayerIndex || layer.locked}
                                                             enableResizing={globalIndex === selectedLayerIndex && !layer.locked}
                                                             lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
                                                             onDragStart={() => handleDragStart(globalIndex)}
-                                                            onDragStop={(e, d) => handleDragStop(printAreaLayer._id, globalIndex, d)}
-                                                            onResizeStop={(e, dir, ref, delta, pos) =>
-                                                                handleResizeStop(printAreaLayer._id, globalIndex, ref, pos)
-                                                            }
-                                                            // onMouseDown={() => setSelectedLayerIndex(globalIndex)}
+                                                            onDrag={(e, d) => {
+                                                                if (globalIndex === selectedLayerIndex && !layer.locked) {
+                                                                    const container = containerRefs.current[printAreaLayer._id];
+                                                                    if (!container) return;
+                                                                    const rect = container.getBoundingClientRect();
+                                                                    const newXPercent = (d.x / rect.width) * 100;
+                                                                    const newYPercent = (d.y / rect.height) * 100;
+                                                                    setDragState({
+                                                                        index: globalIndex,
+                                                                        tempX: newXPercent,
+                                                                        tempY: newYPercent,
+                                                                        tempWidth: layer.width,
+                                                                        tempHeight: layer.height,
+                                                                    });
+                                                                }
+                                                            }}
+                                                            onDragStop={(e, d) => {
+                                                                setDragState({ index: null, tempX: 0, tempY: 0, tempWidth: 0, tempHeight: 0 });
+                                                                handleDragStop(printAreaLayer._id, globalIndex, d);
+                                                            }}
+                                                            onResize={(e, dir, ref, delta, pos) => {
+                                                                if (globalIndex === selectedLayerIndex && !layer.locked) {
+                                                                    const container = containerRefs.current[printAreaLayer._id];
+                                                                    if (!container) return;
+                                                                    const rect = container.getBoundingClientRect();
+                                                                    const newWidthPercent = (parseFloat(ref.style.width) / rect.width) * 100;
+                                                                    const newHeightPercent = (parseFloat(ref.style.height) / rect.height) * 100;
+                                                                    const newXPercent = (pos.x / rect.width) * 100;
+                                                                    const newYPercent = (pos.y / rect.height) * 100;
+                                                                    setDragState({
+                                                                        index: globalIndex,
+                                                                        tempX: newXPercent,
+                                                                        tempY: newYPercent,
+                                                                        tempWidth: newWidthPercent,
+                                                                        tempHeight: newHeightPercent,
+                                                                    });
+                                                                }
+                                                            }}
+                                                            onResizeStop={(e, dir, ref, delta, pos) => {
+                                                                setDragState({ index: null, tempX: 0, tempY: 0, tempWidth: 0, tempHeight: 0 });
+                                                                handleResizeStop(printAreaLayer._id, globalIndex, ref, pos);
+                                                            }}
                                                             scale={1}
-                                                            // style={{ zIndex: layer.zIndex || 1 }}
                                                             style={{
                                                                 zIndex: layer.zIndex || 1,
-                                                                pointerEvents: globalIndex === selectedLayerIndex ? 'auto' : 'none' // 👈 yeh add karein
+                                                                pointerEvents: globalIndex === selectedLayerIndex ? 'auto' : 'none',
                                                             }}
                                                         >
                                                             <div
@@ -1582,17 +1469,25 @@ const Editor = () => {
                                                                 style={{ opacity: layer.opacity ?? 1 }}
                                                             >
                                                                 {layer.type === "text" ? (
-    <TextLayerWithAutoSize
-        layer={layer}
-        pixelValues={pixelValues}
-        printAreaId={printAreaLayer._id}
-        containerSizes={containerSizes}
-        updateLayerLocalAndMaybeServer={updateLayerLocalAndMaybeServer}
-        globalIndex={globalIndex}
-        selectedLayerIndex={selectedLayerIndex}
-    />
-) : layer.enablePerspective && layer.corners ? (
-                                                               
+                                                                    <div className="w-full h-full flex items-center justify-center pointer-events-auto"
+                                                                        style={{
+                                                                            transform: `rotate(${layer.rotation || 0}deg)`,
+                                                                            color: layer.fill || "#000000",
+                                                                            fontSize: `${layer.fontSize || 24}px`,
+                                                                            fontFamily: layer.fontFamily || "Arial",
+                                                                            fontWeight: layer.fontWeight || "normal",
+                                                                            fontStyle: layer.fontStyle || "normal",
+                                                                            textAlign: layer.align || "center",
+                                                                            lineHeight: layer.lineHeight || 1.2,
+                                                                            whiteSpace: "pre-wrap",
+                                                                            wordBreak: "break-word",
+                                                                            textDecoration: layer.textDecoration || "none",
+                                                                            letterSpacing: `${layer.letterSpacing || 0}px`,
+                                                                        }}
+                                                                    >
+                                                                        {layer.text || "Your Text"}
+                                                                    </div>
+                                                                ) : layer.enablePerspective && layer.corners ? (
                                                                     (() => {
                                                                         const printArea = adminLayers.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
                                                                         const adminWidth = printArea?.width || 500;
@@ -1680,19 +1575,36 @@ const Editor = () => {
                                                 if (!selectedLayer) return null;
                                                 const belongsToThisPA = (selectedLayer.printArea?._id || selectedLayer.printArea) === printAreaLayer._id;
                                                 if (!belongsToThisPA) return null;
-                                                const { x, y, width, height } = getPixelValues(printAreaLayer._id, selectedLayer);
+
+                                                // Use temporary drag/resize values if this layer is being dragged/resized
+                                                const isDraggingOrResizing = dragState.index === selectedLayerIndex;
+                                                const tempX = isDraggingOrResizing ? dragState.tempX : selectedLayer.positionX;
+                                                const tempY = isDraggingOrResizing ? dragState.tempY : selectedLayer.positionY;
+                                                const tempWidth = isDraggingOrResizing ? dragState.tempWidth : selectedLayer.width;
+                                                const tempHeight = isDraggingOrResizing ? dragState.tempHeight : selectedLayer.height;
+
+                                                const container = containerRefs.current[printAreaLayer._id];
+                                                if (!container) return null;
+                                                const rect = container.getBoundingClientRect();
+
+                                                const boxX = (tempX / 100) * rect.width;
+                                                const boxY = (tempY / 100) * rect.height;
+                                                const boxWidth = (tempWidth / 100) * rect.width;
+                                                const boxHeight = (tempHeight / 100) * rect.height;
+
                                                 return (
                                                     <div
                                                         style={{
                                                             position: 'absolute',
-                                                            left: x,
-                                                            top: y,
-                                                            width: width,
-                                                            height: height,
-                                                            border: '2px solid #3b82f6',        // blue ring
-                                                            pointerEvents: 'none',              // drag/resize interfere nahi karega
+                                                            left: boxX,
+                                                            top: boxY,
+                                                            width: boxWidth,
+                                                            height: boxHeight,
+                                                            border: '2px solid #3b82f6',
+                                                            pointerEvents: 'none',
                                                             zIndex: 99999,
                                                             boxSizing: 'border-box',
+                                                            transition: 'none', // ensure no lag
                                                         }}
                                                     />
                                                 );
@@ -1734,13 +1646,6 @@ const Editor = () => {
                                 <h3 className="text-[15px] font-black text-gray-900">
                                     Design Studio
                                 </h3>
-                                {/* <div
-                                    style={{ display: startDesigning ? "none" : "block" }}
-                                    onClick={() => setStartDesigning(true)}
-                                    className="px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition cursor-pointer rounded-md"
-                                >
-                                    Start Designing
-                                </div> */}
 
                                 <div
                                     style={{ display: startDesigning ? "none" : "block" }}
@@ -1779,15 +1684,6 @@ const Editor = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        {/* 
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                onClick={() => setStartDesigning(true)}
-                                                className=" cursor-pointer px-4 py-3 bg-[#f05a28] text-white font-bold text-sm hover:opacity-90 transition rounded-sm"
-                                            >
-                                                Design
-                                            </button>
-                                        </div> */}
 
                                         {/* Mockup Thumbnails for navigation */}
                                         {allProductMockups.length > 1 && (
@@ -2075,6 +1971,38 @@ const Editor = () => {
                                                             onAlignVertical={handleAlignVertical}
                                                         />
                                                         <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                                                            {currentLayers[selectedLayerIndex]?.type === "text" && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const layer = currentLayers[selectedLayerIndex];
+                                                                        if (!layer) return;
+                                                                        const printAreaId = layer.printArea?._id || layer.printArea;
+                                                                        const containerRect = containerRefs.current[printAreaId]?.getBoundingClientRect();
+                                                                        if (!containerRect) {
+                                                                            toast.info("Cannot auto-size – print area not ready");
+                                                                            return;
+                                                                        }
+                                                                        const { width: textPxWidth, height: textPxHeight } = getTextPixelSize(
+                                                                            layer.text || "Text",
+                                                                            layer.fontSize || 24,
+                                                                            layer.fontFamily || "Arial",
+                                                                            layer.fontWeight || "normal"
+                                                                        );
+                                                                        let newWidth = (textPxWidth / containerRect.width) * 100;
+                                                                        let newHeight = (textPxHeight / containerRect.height) * 100;
+                                                                        newWidth = Math.min(Math.max(newWidth, 5), 100);
+                                                                        newHeight = Math.min(Math.max(newHeight, 5), 100);
+                                                                        handleLayerPropertiesChange({
+                                                                            width: round2(newWidth),
+                                                                            height: round2(newHeight),
+                                                                        });
+                                                                    }}
+                                                                    className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                                                                >
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v16h16" /><path d="M8 20h8" /><path d="M20 12v4" /></svg>
+                                                                    Auto‑size
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 onClick={() =>
                                                                     handleDuplicateLayer(selectedLayerIndex)
