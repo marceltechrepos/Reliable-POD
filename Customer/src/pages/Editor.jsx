@@ -5,6 +5,7 @@ import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } fro
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
 import LayerProperties from "../components/Admin/LayerProperties";
+import TextLayerWithAutoSize from "../components/Admin/TextLayerWithAutoSize";
 import ThreeWarpedImage from "../components/Admin/ThreePerspectiveImage";
 import { ReactSortable } from "react-sortablejs";
 import {
@@ -691,6 +692,7 @@ const Editor = () => {
             fontSize: 30,
             fontFamily: "Arial",
             fontWeight: "normal",
+             wrapMode: 'multi',
             fill: "#000000",
             positionX: 15,
             positionY: 15,
@@ -1580,25 +1582,17 @@ const Editor = () => {
                                                                 style={{ opacity: layer.opacity ?? 1 }}
                                                             >
                                                                 {layer.type === "text" ? (
-                                                                    <div className="w-full h-full flex items-center justify-center pointer-events-auto"
-                                                                        style={{
-                                                                            transform: `rotate(${layer.rotation || 0}deg)`,
-                                                                            color: layer.fill || "#000000",
-                                                                            fontSize: `${layer.fontSize || 24}px`,
-                                                                            fontFamily: layer.fontFamily || "Arial",
-                                                                            fontWeight: layer.fontWeight || "normal",
-                                                                            fontStyle: layer.fontStyle || "normal",
-                                                                            textAlign: layer.align || "center",
-                                                                            lineHeight: layer.lineHeight || 1.2,
-                                                                            whiteSpace: "pre-wrap",
-                                                                            wordBreak: "break-word",
-                                                                            textDecoration: layer.textDecoration || "none",
-                                                                            letterSpacing: `${layer.letterSpacing || 0}px`,
-                                                                        }}
-                                                                    >
-                                                                        {layer.text || "Your Text"}
-                                                                    </div>
-                                                                ) : layer.enablePerspective && layer.corners ? (
+    <TextLayerWithAutoSize
+        layer={layer}
+        pixelValues={pixelValues}
+        printAreaId={printAreaLayer._id}
+        containerSizes={containerSizes}
+        updateLayerLocalAndMaybeServer={updateLayerLocalAndMaybeServer}
+        globalIndex={globalIndex}
+        selectedLayerIndex={selectedLayerIndex}
+    />
+) : layer.enablePerspective && layer.corners ? (
+                                                               
                                                                     (() => {
                                                                         const printArea = adminLayers.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
                                                                         const adminWidth = printArea?.width || 500;

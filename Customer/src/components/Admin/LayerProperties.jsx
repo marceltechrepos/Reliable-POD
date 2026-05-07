@@ -202,6 +202,35 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
                 Italic
               </button>
             </div>
+
+            {/* Wrap Mode Toggle */}
+<div>
+  <label className="text-[11px] text-gray-500 block mb-1">Wrap Mode</label>
+  <div className="flex gap-2">
+    <button
+      type="button"
+      onClick={() => onChange({ wrapMode: 'single' })}
+      className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-lg border ${
+        layer.wrapMode === 'single'
+          ? 'bg-[#f05a28] text-white border-[#f05a28]'
+          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      Single Line
+    </button>
+    <button
+      type="button"
+      onClick={() => onChange({ wrapMode: 'multi' })}
+      className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-lg border ${
+        layer.wrapMode !== 'single'
+          ? 'bg-[#f05a28] text-white border-[#f05a28]'
+          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      Multi Line
+    </button>
+  </div>
+</div>
           </div>
         </Section>
       )}
