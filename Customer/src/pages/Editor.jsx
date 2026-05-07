@@ -1210,7 +1210,7 @@ const Editor = () => {
         }
     };
 
-    
+
     const handleReorder = (newOrderedLayers) => {
         const mockupId = selectedMockup._id;
 
@@ -1603,11 +1603,11 @@ const Editor = () => {
                                                                         const printArea = adminLayers.find(pa => pa._id === (layer.printArea?._id || layer.printArea));
                                                                         const adminWidth = printArea?.width || 500;
                                                                         const adminHeight = printArea?.height || 500;
-                                                                        
+
                                                                         // Container dimensions (full print area on screen)
                                                                         const CW = pixelValues.width / (layer.width / 100);
                                                                         const CH = pixelValues.height / (layer.height / 100);
-                                                                        
+
                                                                         // Layer offset relative to print area top-left in screen pixels
                                                                         const LX = (layer.positionX / 100) * CW;
                                                                         const LY = (layer.positionY / 100) * CH;
