@@ -19,7 +19,7 @@ const customProductSchema = new mongoose.Schema(
     variantPrices: [
       {
         variantId: {
-          type: String,
+          type: mongoose.Schema.Types.ObjectId,
           required: true,
         },
         price: {

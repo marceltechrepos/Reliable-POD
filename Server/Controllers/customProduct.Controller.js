@@ -138,12 +138,33 @@ const getCustomProducts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+
+    const formattedProducts = customProducts.map(product => {
+      const variants = product.baseProduct?.Variants || [];
+
+      const variantPrices = product.variantPrices.map(vp => {
+        const matchedVariant = variants.find(
+          variant => variant._id.toString() === vp.variantId.toString()
+        );
+
+        return {
+          ...vp.toObject(),
+          variant: matchedVariant || null,
+        };
+      });
+
+      return {
+        ...product.toObject(),
+        variantPrices,
+      };
+    });
+
     // Get total count for pagination
     const total = await CustomProduct.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      data: customProducts,
+      data: formattedProducts,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
@@ -578,23 +599,46 @@ const getImportedProductsByStore = async (req, res) => {
       storeId: storeId,
       importedToShopify: true
     })
-      .populate("baseProduct")
+      // .populate("baseProduct")
+      .populate("baseProduct", "productTitle thumbnail Variants")
       .populate("customerDesign")
-      // .populate("baseProduct", "productTitle price thumbnail")
       .populate("selectedMockup", "imageUrl name")
       .sort({ createdAt: -1 });
+
+    // ✅ Attach variant details manually
+    const formattedProducts = products.map(product => {
+      const variants = product.baseProduct?.Variants || [];
+
+      const variantPrices = product.variantPrices.map(vp => {
+        const matchedVariant = variants.find(
+          variant =>
+            variant._id.toString() === vp.variantId.toString()
+        );
+
+        return {
+          ...vp.toObject(),
+          variant: matchedVariant || null,
+        };
+      });
+
+      return {
+        ...product.toObject(),
+        variantPrices,
+      };
+    });
 
     console.log(`Found ${products.length} imported products for store ${storeId}`);
 
     return res.status(200).json({
       success: true,
-      data: products,
-      count: products.length,
+      data: formattedProducts,
+      count: formattedProducts.length,
       message: "Products fetched successfully"
     });
 
   } catch (error) {
     console.error("getImportedProductsByStore error:", error);
+
     return res.status(500).json({
       success: false,
       message: error.message
