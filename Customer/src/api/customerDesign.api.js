@@ -40,12 +40,28 @@ export const captureElementAsFile = async (element, transparent = false) => {
     // Temporarily hide any unwanted UI (e.g., resize handles)
     const handles = element.querySelectorAll('.react-resizable-handle');
     handles.forEach(h => (h.style.display = 'none'));
+    
+    // Temporarily remove print-area styles
+    const originalBorder = element.style.border;
+    const originalBackground = element.style.background;
+    const originalBackgroundColor = element.style.backgroundColor;
+    
+    element.style.border = 'none';
+    element.style.background = 'transparent';
+    element.style.backgroundColor = 'transparent';
+    element.classList.add('capture-hide-border');
 
     const dataUrl = transparent
       ? await toPng(element, { pixelRatio: 2, cacheBust: true })
       : await toJpeg(element, { quality: 0.95, pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
 
     handles.forEach(h => (h.style.display = ''));
+    
+    // Restore print-area styles
+    element.style.border = originalBorder;
+    element.style.background = originalBackground;
+    element.style.backgroundColor = originalBackgroundColor;
+    element.classList.remove('capture-hide-border');
 
     const blob = await fetch(dataUrl).then(r => r.blob());
     return new File([blob], `printarea-${Date.now()}.${transparent ? 'png' : 'jpg'}`, { type: `image/${transparent ? 'png' : 'jpeg'}` });
