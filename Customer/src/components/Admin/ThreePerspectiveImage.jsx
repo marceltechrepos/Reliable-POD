@@ -12,7 +12,7 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
 
   useEffect(() => {
     if (!src) return;
-    
+
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -45,14 +45,14 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
 
-    const targetCorners = (corners && corners.length === 4) 
+    const targetCorners = (corners && corners.length === 4)
       ? corners.map(c => new THREE.Vector2(c.x / width, c.y / height))
       : [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(1, 0),
-          new THREE.Vector2(1, 1),
-          new THREE.Vector2(0, 1)
-        ];
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(1, 1),
+        new THREE.Vector2(0, 1)
+      ];
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -135,23 +135,23 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
 
   useEffect(() => {
     if (!isInitialized || !meshRef.current) return;
-    
+
     const material = meshRef.current.material;
     if (material && material.uniforms) {
       // Update corners
       if (corners && corners.length === 4) {
-        material.uniforms.uTargetCorners.value = corners.map(c => 
+        material.uniforms.uTargetCorners.value = corners.map(c =>
           new THREE.Vector2(c.x / width, c.y / height)
         );
       }
-      
+
       // Update opacity
       material.uniforms.uOpacity.value = opacity;
-      
+
       // Update aspect ratio and fit
       material.uniforms.uQuadAspect.value = width / height;
       material.uniforms.uFitType.value = fit === 'contain' ? 2.0 : (fit === 'cover' ? 1.0 : 0.0);
-      
+
       material.uniformsNeedUpdate = true;
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {

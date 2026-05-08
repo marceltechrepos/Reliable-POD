@@ -14,6 +14,7 @@ import StoreRoute from "./Routes/Store.Route.js";
 import customerRoute from "./Routes/customerDesign.Routes.js";
 import userPrintAreaImage from "./Routes/User.PrintareaImage.Route.js";
 import customerProductRoute from "./Routes/customProduct.routes.js";
+import orderRoute from "./Routes/order.route.js";
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -47,6 +48,7 @@ const routes = [
   CategoryRouter,
   layerRoute,
   ThumbnailRoute,
+  orderRoute,
   StoreRoute,
   userPrintAreaImage
 ];
