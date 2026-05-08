@@ -1,24 +1,54 @@
-import { toJpeg } from "html-to-image";
+import { toPng, toJpeg } from "html-to-image";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-export const captureFinalDesign = async (designContainerRef) => {
-  if (!designContainerRef.current) return null;
+// export const captureFinalDesign = async (designContainerRef) => {
+//   if (!designContainerRef.current) return null;
+//   try {
+//     const borders = designContainerRef.current.querySelectorAll('.print-area-border');
+//     borders.forEach(el => el.classList.add('capture-hide-border'));
+//     await new Promise(resolve => requestAnimationFrame(resolve));
+
+//     const dataUrl = await toJpeg(designContainerRef.current, {
+//       quality: 0.95,
+//       pixelRatio: 2,
+//       backgroundColor: '#ffffff',
+//       cacheBust: true,
+//     });
+
+//     borders.forEach(el => el.classList.remove('capture-hide-border'));
+
+//     const blob = await (await fetch(dataUrl)).blob();
+//     const file = new File([blob], `final-design-${Date.now()}.jpg`, { type: 'image/jpeg' });
+//     return file;
+//   } catch (err) {
+//     console.error('Capture error:', err);
+//     return null;
+//   }
+// };
+
+
+export const captureFinalDesign = async (designContainerRef, options = {}) => {
+  if (!designContainerRef?.current) return null;
   try {
     const borders = designContainerRef.current.querySelectorAll('.print-area-border');
     borders.forEach(el => el.classList.add('capture-hide-border'));
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(r => requestAnimationFrame(r));
 
-    const dataUrl = await toJpeg(designContainerRef.current, {
-      quality: 0.95,
+    const convertFn = options.transparent ? toPng : toJpeg;
+    const dataUrl = await convertFn(designContainerRef.current, {
+      quality: options.quality ?? 0.95,
       pixelRatio: 2,
-      backgroundColor: '#ffffff',
+      backgroundColor: options.transparent ? null : '#ffffff',
       cacheBust: true,
     });
 
     borders.forEach(el => el.classList.remove('capture-hide-border'));
 
-    const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], `final-design-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    if (!dataUrl) throw new Error('No dataUrl generated');
+    const blob = await fetch(dataUrl).then(r => r.blob());
+    if (!blob || blob.size === 0) throw new Error('Empty blob');
+    const ext = options.transparent ? 'png' : 'jpg';
+    const file = new File([blob], `design-${Date.now()}.${ext}`, { type: `image/${ext}` });
     return file;
   } catch (err) {
     console.error('Capture error:', err);
