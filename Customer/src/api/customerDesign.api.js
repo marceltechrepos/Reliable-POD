@@ -1,9 +1,41 @@
 import { toPng, toJpeg } from "html-to-image";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-
+export const waitForCanvasReady = async (container, maxFrames = 20) => {
+  if (!container) return;
+  let frame = 0;
+  return new Promise((resolve) => {
+    const check = () => {
+      const canvases = container.querySelectorAll('canvas');
+      let allDrawn = true;
+      for (const canvas of canvases) {
+        if (canvas.width === 0 || canvas.height === 0) {
+          allDrawn = false;
+          break;
+        }
+        try {
+          const ctx = canvas.getContext('2d');
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          // Ensure at least one non‑transparent pixel exists (optional)
+          // const hasContent = imgData.data.some(ch => ch !== 0);
+          // if (!hasContent) allDrawn = false;
+        } catch (e) {
+          allDrawn = false;
+        }
+      }
+      if (allDrawn || frame >= maxFrames) {
+        resolve();
+      } else {
+        frame++;
+        requestAnimationFrame(check);
+      }
+    };
+    requestAnimationFrame(check);
+  });
+};
 export const captureElementAsFile = async (element, transparent = false) => {
-  if (!element) return null; 
+  if (!element) return null;
+  await waitForCanvasReady(element);
   try {
     // Temporarily hide any unwanted UI (e.g., resize handles)
     const handles = element.querySelectorAll('.react-resizable-handle');
