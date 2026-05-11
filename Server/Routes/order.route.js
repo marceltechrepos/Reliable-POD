@@ -4,12 +4,14 @@ import {
     getOrders,
     getOrderById,
     updateOrder,
-    deleteOrder
+    deleteOrder,
+    shopifyOrderWebhook
 } from "../Controllers/order.controller.js";
 
 const router = express.Router();
 
 router.post("/orders", createOrder);
+router.post("/orders/shopify-webhook", shopifyOrderWebhook);
 router.get("/orders", getOrders);
 router.get("/orders/:id", getOrderById);
 router.put("/orders/:id", updateOrder);
