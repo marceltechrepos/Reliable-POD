@@ -18,13 +18,13 @@ import SingleProduct from "./pages/Singleproduct.jsx";
 import DynamicDesignTool from "./pages/DynamicDesignTool.jsx";
 import Productcatalogue from "./pages/Productcatalogue";
 import Singlecatalogue from "./pages/Singlecatalogue.jsx";
-import Editor from "./pages/Editor.jsx";
+import Editor from "./pagess/Editor.jsx";
 import { ToastContainer } from "react-toastify";
 import DesignVariants from "./components/Admin/DesignVariants.jsx";
 
 function App() {
-  // const token = localStorage.getItem("token");
   return (
+  
     <Router>
       <Routes>
         {/* ADMIN ROUTES */}
