@@ -67,7 +67,6 @@ function App() {
           {/* <Route path="provider" element={<Provider />} /> */}
           {/* <Route path="settings" element={<Settings />} /> */}
         </Route>
-        {/* </Route> */}
 
         {/* AUTH ROUTES */}
         <Route path="/" element={<Signin />} />
