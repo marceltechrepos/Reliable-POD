@@ -83,7 +83,7 @@ const Editor = () => {
     const selectedMockupFromState = location.state?.selectedMockup;
     const productFromState = location.state?.product;
 
-    // ─── States ────────────────────────────────────
+    // â”€â”€â”€ States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const [isShiftPressed, setIsShiftPressed] = useState(false);
     const [product, setProduct] = useState(productFromState || null);
     const [loading, setLoading] = useState(!productFromState);
@@ -131,7 +131,7 @@ const Editor = () => {
         id: layer.clientKey || layer._id || `layer-${idx}`
     }));
 
-    // ─── Derived data ─────────────────────────────
+    // â”€â”€â”€ Derived data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const activeProduct = existingCustomProduct?.baseProduct || product;
     const currentMockupIndex = allProductMockups.findIndex(m => m._id === selectedMockup?._id);
 
@@ -173,9 +173,9 @@ const Editor = () => {
     const displayColors = productColors.length > 0 ? productColors : [];
     const displaySizes = sortedSizes.length > 0 ? sortedSizes : [];
 
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // Effects
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     // Keyboard
     useEffect(() => {
@@ -216,7 +216,7 @@ const Editor = () => {
     // Check existing custom product
     useEffect(() => {
 
-        // 🔥 Agar SingleProduct se specific customProductId aayi hai
+        // ðŸ”¥ Agar SingleProduct se specific customProductId aayi hai
         if (customProductIdFromState) {
             const loadSpecificCustomProduct = async () => {
                 setIsCheckingExisting(true);
@@ -326,7 +326,7 @@ const Editor = () => {
                 }
                 setAllProductMockupsAdminLayers(allLayersMap);
 
-                // 👇 Mark ready only if every mockup got some data (at least an empty array)
+                // ðŸ‘‡ Mark ready only if every mockup got some data (at least an empty array)
                 const allIds = allProductMockups.map(m => m._id);
                 const ready = allIds.every(id => allLayersMap[id] !== undefined);
                 setAllMockupLayersReady(ready);
@@ -412,16 +412,16 @@ const Editor = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // Helpers & Handlers
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 
     // Syncs a new layer to all other mockups of the same product
     const syncNewLayerToAllMockups = async (newLayer, sourcePrintArea) => {
         if (allProductMockups.length <= 1) return;
         if (!sourcePrintArea?.name) {
-            console.warn("Cannot sync – print area has no name");
+            console.warn("Cannot sync â€“ print area has no name");
             return;
         }
         const sourceName = sourcePrintArea.name;
@@ -680,7 +680,7 @@ const Editor = () => {
         const masterKey = layer.masterKey;
         const currentMockupId = selectedMockup._id;
 
-        // ─── 1. Delete from server for all mockups that contain this masterKey ───
+        // â”€â”€â”€ 1. Delete from server for all mockups that contain this masterKey â”€â”€â”€
         if (masterKey) {
             const deletePromises = [];
             for (const mockup of allProductMockups) {
@@ -707,7 +707,7 @@ const Editor = () => {
             }
         }
 
-        // ─── 2. Remove layer from local state for all mockups that have this masterKey ───
+        // â”€â”€â”€ 2. Remove layer from local state for all mockups that have this masterKey â”€â”€â”€
         setLayersByMockup(prev => {
             const newMap = { ...prev };
             if (masterKey) {
@@ -725,7 +725,7 @@ const Editor = () => {
             return newMap;
         });
 
-        // ─── 3. Clear selection if the deleted layer was selected ───
+        // â”€â”€â”€ 3. Clear selection if the deleted layer was selected â”€â”€â”€
         if (selectedLayerIndex === index || (masterKey && selectedLayerIndex !== null)) {
             setSelectedLayerIndex(null);
         }
@@ -786,9 +786,9 @@ const Editor = () => {
         updateLayerLocalAndMaybeServer(selectedLayerIndex, updates, true);
     };
 
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // Mockup Navigation & Preview
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     const mapLayersToMockup = (layers, sourceMockupId, targetMockupId) => {
         const sourceData = allproductMockupsAdminLayers[sourceMockupId];
@@ -975,9 +975,9 @@ const Editor = () => {
         }
     };
 
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // Save & Next (Multiple Mockup Capture)
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     const handleSave = async () => {
         try {
@@ -1171,7 +1171,7 @@ const Editor = () => {
                     try {
                         const ctx = canvas.getContext('2d');
                         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        // Ensure at least one non‑transparent pixel exists (optional)
+                        // Ensure at least one nonâ€‘transparent pixel exists (optional)
                         // const hasContent = imgData.data.some(ch => ch !== 0);
                         // if (!hasContent) allDrawn = false;
                     } catch (e) {
@@ -1241,7 +1241,7 @@ const Editor = () => {
 
             for (const mockup of allProductMockups) {
                 if (mockup._id === configMockup._id) {
-                    // Keep config mockup’s design as-is (with all its editable layers)
+                    // Keep config mockupâ€™s design as-is (with all its editable layers)
                     const configLayers = layersByMockup[configMockup._id] || [];
                     if (configLayers.length === 0) {
                         toast.error("Config mockup has no design to apply.");
@@ -1263,7 +1263,7 @@ const Editor = () => {
                     continue;
                 }
 
-                // For non‑config mockups: create a single image layer per matching print area
+                // For nonâ€‘config mockups: create a single image layer per matching print area
                 const targetData = allproductMockupsAdminLayers[mockup._id];
                 if (!targetData) continue;
 
@@ -1424,7 +1424,7 @@ const Editor = () => {
                 );
                 return {
                     ...(existingLayer || newLayer),
-                    zIndex: idx + 1  // ✅ Consistent zIndex assignment
+                    zIndex: idx + 1  // âœ… Consistent zIndex assignment
                 };
             });
 
@@ -1474,7 +1474,7 @@ const Editor = () => {
     const handleOpenModal = () => setShowConfirmModal(true);
 
     const addLayerToAllMockups = (newLayer, sourceMockupId, sourcePrintArea) => {
-        const masterKey = crypto.randomUUID(); // ← shared identifier
+        const masterKey = crypto.randomUUID(); // â† shared identifier
         const updatedMap = { ...layersByMockup };
 
         // Source mockup
@@ -1490,7 +1490,7 @@ const Editor = () => {
             if (mockup._id === sourceMockupId) return;
             const targetData = allproductMockupsAdminLayers[mockup._id];
             if (!targetData || !targetData.printAreas) {
-                console.warn(`Skipping mockup ${mockup._id} – no admin layers loaded`);
+                console.warn(`Skipping mockup ${mockup._id} â€“ no admin layers loaded`);
                 return;
             }
             const targetPA = targetData.printAreas.find(
@@ -1501,7 +1501,7 @@ const Editor = () => {
             const { _id, clientKey, ...cleanLayer } = newLayer;
             const mappedLayer = {
                 ...cleanLayer,
-                masterKey,                 // ← shared key
+                masterKey,                 // â† shared key
                 clientKey: crypto.randomUUID(),
                 printArea: targetPA._id,
                 enablePerspective: targetPA.enablePerspective || cleanLayer.enablePerspective || false,
@@ -1516,9 +1516,9 @@ const Editor = () => {
 
         setLayersByMockup(updatedMap);
     };
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // Render
-    // ═══════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading product...</div>;
     if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
@@ -1879,7 +1879,7 @@ const Editor = () => {
                                     className={`px-4 py-3 text-white font-bold text-sm transition cursor-pointer rounded-md
             ${allMockupLayersReady ? 'bg-[#f05a28] hover:opacity-90' : 'bg-gray-400 cursor-not-allowed'}`}
                                 >
-                                    {allMockupLayersReady ? 'Start Designing' : 'Loading mockups…'}
+                                    {allMockupLayersReady ? 'Start Designing' : 'Loading mockupsâ€¦'}
                                 </div>
                             </div>
 
@@ -2101,7 +2101,7 @@ const Editor = () => {
                                                                         {layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`}
                                                                     </div>
                                                                     <div className="text-[11px] text-gray-500">
-                                                                        {Math.round(layer.width || 0)}% × {Math.round(layer.height || 0)}%
+                                                                        {Math.round(layer.width || 0)}% Ã— {Math.round(layer.height || 0)}%
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -2116,7 +2116,7 @@ const Editor = () => {
                                                                     className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition rounded"
                                                                     title="Move up"
                                                                 >
-                                                                    ↑
+                                                                    â†‘
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => {
@@ -2126,7 +2126,7 @@ const Editor = () => {
                                                                     className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition rounded"
                                                                     title="Move down"
                                                                 >
-                                                                    ↓
+                                                                    â†“
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => {
@@ -2199,7 +2199,7 @@ const Editor = () => {
                                                                         const printAreaId = layer.printArea?._id || layer.printArea;
                                                                         const containerRect = containerRefs.current[printAreaId]?.getBoundingClientRect();
                                                                         if (!containerRect) {
-                                                                            toast.info("Cannot auto-size – print area not ready");
+                                                                            toast.info("Cannot auto-size â€“ print area not ready");
                                                                             return;
                                                                         }
                                                                         const { width: textPxWidth, height: textPxHeight } = getTextPixelSize(
@@ -2220,7 +2220,7 @@ const Editor = () => {
                                                                     className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
                                                                 >
                                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v16h16" /><path d="M8 20h8" /><path d="M20 12v4" /></svg>
-                                                                    Auto‑size
+                                                                    Autoâ€‘size
                                                                 </button>
                                                             )}
                                                             <button
