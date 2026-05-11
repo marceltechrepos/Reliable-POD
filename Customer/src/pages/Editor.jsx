@@ -14,7 +14,6 @@ import {
     deleteCustomerLayer,
     updateCustomerLayer,
     updateDesignMockupImages,
-    captureElementAsFile,
 } from "../api/customerDesign.api";
 import AddMockup from "../components/Admin/AddMockup";
 import { Rnd } from "react-rnd";
@@ -1156,231 +1155,64 @@ const Editor = () => {
         return uploadedImages;
     };
 
-    const waitForCanvasReady = async (container, maxFrames = 20) => {
-        if (!container) return;
-        let frame = 0;
-        return new Promise((resolve) => {
-            const check = () => {
-                const canvases = container.querySelectorAll('canvas');
-                let allDrawn = true;
-                for (const canvas of canvases) {
-                    if (canvas.width === 0 || canvas.height === 0) {
-                        allDrawn = false;
-                        break;
-                    }
-                    try {
-                        const ctx = canvas.getContext('2d');
-                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        // Ensure at least one non‑transparent pixel exists (optional)
-                        // const hasContent = imgData.data.some(ch => ch !== 0);
-                        // if (!hasContent) allDrawn = false;
-                    } catch (e) {
-                        allDrawn = false;
-                    }
-                }
-                if (allDrawn || frame >= maxFrames) {
-                    resolve();
-                } else {
-                    frame++;
-                    requestAnimationFrame(check);
-                }
-            };
-            requestAnimationFrame(check);
-        });
-    };
+    
 
     const handleNext = async () => {
         try {
             setSaving(true);
             setSelectedLayerIndex(null);
 
-            // --- 1. Identify config mockup ---
-            const configMockup = allProductMockups.find(m => m.name?.toLowerCase().startsWith("config"));
+            const isConfigMockup = (mockup) => mockup?.name?.toLowerCase().startsWith("config");
+            const configMockup = allProductMockups.find(m => isConfigMockup(m));
             if (!configMockup) {
                 toast.error("No config mockup found.");
                 return;
             }
 
-            // --- 2. Capture each print area of the config mockup as an image ---
-            const configPrintAreas = allproductMockupsAdminLayers[configMockup._id]?.printAreas || [];
-            if (!configPrintAreas.length) {
-                toast.error("Config mockup has no print areas.");
+            // Get layers from the config mockup (already stored in layersByMockup)
+            const configLayers = layersByMockup[configMockup._id] || [];
+            if (configLayers.length === 0) {
+                toast.error("No design on config mockup to apply.");
                 return;
             }
 
-            const capturedImages = {};
-            for (const pa of configPrintAreas) {
-                const containerEl = containerRefs.current[pa._id];
-                if (!containerEl) continue;
-
-                // Capture ONLY the content inside the print area (excluding the mockup background)
-                // Set transparent=true so that the mockup image behind remains visible on other mockups
-                const imageFile = await captureElementAsFile(containerEl, true);
-                if (!imageFile) {
-                    toast.error(`Failed to capture print area "${pa.name}"`);
-                    continue;
-                }
-
-                const uploadRes = await uploadCustomerImage(imageFile);
-                if (uploadRes.success) {
-                    capturedImages[pa.name] = {
-                        url: uploadRes.data.imageUrl,
-                        publicId: uploadRes.data.publicId,
-                    };
-                }
-            }
-
-            if (Object.keys(capturedImages).length === 0) {
-                toast.error("No print areas could be captured.");
-                return;
-            }
-
-            // --- 3. For every OTHER mockup, apply the captured image as a single layer (100% width/height) ---
-            const allSavedDesigns = {};
             let masterDesignId = null;
+            const allSavedDesigns = {};
 
+            // Save designs for ALL mockups (config keeps its own layers, others get mapped layers)
             for (const mockup of allProductMockups) {
+                let layersToSave;
                 if (mockup._id === configMockup._id) {
-                    // Keep config mockup’s design as-is (with all its editable layers)
-                    const configLayers = layersByMockup[configMockup._id] || [];
-                    if (configLayers.length === 0) {
-                        toast.error("Config mockup has no design to apply.");
-                        return;
-                    }
-                    const res = await saveCustomerDesign({
-                        productId,
-                        mockupId: mockup._id,
-                        layers: configLayers.map(l => normalizeLayer(l)),
-                        forceNew: createNewFlag,
-                    });
-                    if (res?.success && res.data?._id) {
-                        allSavedDesigns[mockup._id] = res.data._id;
-                        if (!masterDesignId) masterDesignId = res.data._id;
-                        setLayersByMockup(prev => ({ ...prev, [mockup._id]: configLayers }));
-                    } else {
-                        throw new Error(`Failed to save config mockup design`);
-                    }
-                    continue;
-                }
-
-                // For non‑config mockups: create a single image layer per matching print area
-                const targetData = allproductMockupsAdminLayers[mockup._id];
-                if (!targetData) continue;
-
-                const targetPrintAreas = targetData.printAreas || [];
-                const newLayers = [];
-
-                for (const capturedName in capturedImages) {
-                    const targetPA = targetPrintAreas.find(pa => pa.name === capturedName);
-                    if (!targetPA) {
-                        console.warn(`No matching print area "${capturedName}" on mockup ${mockup._id}`);
+                    // Keep original config layers unchanged
+                    layersToSave = configLayers.map(l => normalizeLayer(l));
+                } else {
+                    // Map config layers to this mockup using print area names
+                    layersToSave = mapLayersToMockup(configLayers, configMockup._id, mockup._id, true);
+                    if (layersToSave.length === 0) {
+                        console.warn(`No layers could be mapped to mockup ${mockup._id}`);
                         continue;
                     }
-
-                    newLayers.push({
-                        clientKey: crypto.randomUUID(),
-                        printArea: targetPA._id,
-                        type: "image",
-                        imageUrl: capturedImages[capturedName].url,
-                        publicId: capturedImages[capturedName].publicId,
-                        positionX: 0,     // 0% left
-                        positionY: 0,     // 0% top
-                        width: 100,       // 100% width of print area
-                        height: 100,      // 100% height
-                        rotation: 0,
-                        opacity: 1,
-                        visible: true,
-                        locked: false,
-                        enablePerspective: targetPA.enablePerspective || false,
-                        corners: targetPA.corners ? JSON.parse(JSON.stringify(targetPA.corners)) : undefined,
-                        fit: targetPA.fit || "cover",
-                        horizontalAlign: "center",
-                        verticalAlign: "middle",
-                        zIndex: 1,
-                    });
                 }
 
-                if (newLayers.length === 0) {
-                    console.warn(`No layers created for mockup ${mockup._id}`);
-                    continue;
-                }
-
-                // Save the design (overwrites any previous layers)
                 const res = await saveCustomerDesign({
                     productId,
                     mockupId: mockup._id,
-                    layers: newLayers.map(l => normalizeLayer(l)),
+                    layers: layersToSave,
                     forceNew: createNewFlag,
                 });
 
                 if (res?.success && res.data?._id) {
                     allSavedDesigns[mockup._id] = res.data._id;
                     if (!masterDesignId) masterDesignId = res.data._id;
-                    // Update local state
-                    setLayersByMockup(prev => ({ ...prev, [mockup._id]: newLayers }));
+                    // Update local state immediately
+                    setLayersByMockup(prev => ({ ...prev, [mockup._id]: layersToSave }));
                 } else {
                     throw new Error(`Failed to save design for mockup ${mockup._id}`);
                 }
             }
 
-            // --- 4. Generate thumbnails for ALL mockups (including config) ---
-            const uploadedImages = [];
-            const waitForImages = () => {
-                const images = designContainerRef.current?.querySelectorAll('img');
-                if (!images?.length) return Promise.resolve();
-                const loaders = Array.from(images).map(img =>
-                    img.complete ? Promise.resolve() : new Promise(resolve => { img.onload = resolve; img.onerror = resolve; })
-                );
-                return Promise.all(loaders);
-            };
-
-
-            for (const mockup of allProductMockups) {
-                // Switch mockup in UI to ensure correct rendering
-                const data = allproductMockupsAdminLayers[mockup._id];
-                if (data) {
-                    setAdminLayers(data.printAreas);
-                    setAllAdminLayers(data.all);
-                }
-                setSelectedMockup(mockup);
-                await new Promise(r => setTimeout(r, 300));
-
-                const imgEl = mockupImgRef.current;
-                if (imgEl && !imgEl.complete) {
-                    await new Promise(resolve => { imgEl.onload = resolve; imgEl.onerror = resolve; });
-                }
-
-                // Force container size recalc
-                const sizes = {};
-                data?.printAreas.forEach(pa => {
-                    const el = containerRefs.current[pa._id];
-                    if (el) {
-                        const rect = el.getBoundingClientRect();
-                        sizes[pa._id] = { width: rect.width, height: rect.height };
-                    }
-                });
-                setContainerSizes(prev => ({ ...prev, ...sizes }));
-
-                await new Promise(r => setTimeout(r, 100));
-                await waitForImages();
-                await waitForCanvasReady(designContainerRef.current);
-
-                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-
-                const imageFile = await captureFinalDesign(designContainerRef);
-                if (imageFile) {
-                    const uploadRes = await uploadCustomerImage(imageFile);
-                    if (uploadRes.success) {
-                        uploadedImages.push({
-                            mockupId: mockup._id,
-                            imageUrl: uploadRes.data.imageUrl,
-                            publicId: uploadRes.data.publicId,
-                        });
-                    }
-                }
-            }
-
+            // (Optional) Capture preview thumbnails for all mockups (except config)
+            const uploadedImages = await captureThumbnailsForAllMockupsExceptConfig(configMockup);
             if (uploadedImages.length > 0 && masterDesignId) {
                 await updateDesignMockupImages(masterDesignId, uploadedImages);
             }
@@ -1388,12 +1220,12 @@ const Editor = () => {
             toast.success(`Design applied to ${allProductMockups.length - 1} mockups!`);
             setShowConfirmModal(false);
 
-            // Navigate to next screen
+            // Navigate to next screen with the config mockup as the active one
             navigate(`/user/design-variants/${productId}/${masterDesignId}`, {
                 state: {
                     product,
                     selectedMockup: configMockup,
-                    currentLayers: layersByMockup[configMockup._id] || [],
+                    currentLayers: configLayers,
                     adminLayers,
                     customerDesignId: masterDesignId,
                     isEditing,

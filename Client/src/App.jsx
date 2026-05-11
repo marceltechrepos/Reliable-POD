@@ -20,7 +20,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Signup from "./components/Signup.jsx";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, true = authed, false = not authed
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("token") ? null : false); // null = checking, true = authed, false = not authed
 
   useEffect(() => {
     // Setup axios interceptor for automatic token handling
@@ -115,7 +115,9 @@ function App() {
       }
     };
 
-    verifyTokenOnLoad();
+    if (localStorage.getItem("token")) {
+      verifyTokenOnLoad();
+    }
 
     // Check token periodically (every 5 minutes)
     const interval = setInterval(async () => {
@@ -188,7 +190,7 @@ function App() {
         </Route>
 
         {/* <Route path="/admin/signup" element={<Signup />} /> */}
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <AdminLogin />} />
         <Route path="/admin/editor/:editId?/:mockupId?" element={<Editor />} />
 
         {/* Default redirect */}
