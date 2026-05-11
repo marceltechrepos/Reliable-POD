@@ -8,13 +8,13 @@ import {
     shopifyOrderWebhook
 } from "../Controllers/order.controller.js";
 
-const router = express.Router();
+const orderRoute = express.Router();
 
-router.post("/orders", createOrder);
-router.post("/orders/shopify-webhook", shopifyOrderWebhook);
-router.get("/orders", getOrders);
-router.get("/orders/:id", getOrderById);
-router.put("/orders/:id", updateOrder);
-router.delete("/orders/:id", deleteOrder);
+orderRoute.post("/orders/shopify-webhook", shopifyOrderWebhook);
+orderRoute.post("/orders", createOrder);
+orderRoute.get("/orders", getOrders);
+orderRoute.get("/orders/:id", getOrderById);
+orderRoute.put("/orders/:id", updateOrder);
+orderRoute.delete("/orders/:id", deleteOrder);
 
-export default router;
+export default orderRoute;
