@@ -195,7 +195,7 @@ export default function DesignVariants() {
 
     const generatedMockups = customDesign?.finalDesignImages || [];
     const generatedSelectedCount = generatedMockups.filter(img => selectedVariantIds.includes(img.mockupId)).length;
-
+    console.log(generatedMockups, "generatedMockups");
     // ─── Variant price handler ───
     const handleVariantPriceChange = (variantId, newPrice) => {
         setVariantPrices(prev => ({ ...prev, [variantId]: parseFloat(newPrice) || 0 }));

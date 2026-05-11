@@ -12,16 +12,20 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
 
   useEffect(() => {
     if (!src) return;
-    
-    const loader = new THREE.TextureLoader();
-    loader.load(src, (loadedTexture) => {
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const loadedTexture = new THREE.Texture(img);
       loadedTexture.minFilter = THREE.LinearFilter;
       loadedTexture.magFilter = THREE.LinearFilter;
       loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
       loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
       loadedTexture.flipY = false;
+      loadedTexture.needsUpdate = true;
       setTexture(loadedTexture);
-    });
+    };
+    img.src = src;
   }, [src]);
 
   useEffect(() => {
@@ -41,20 +45,23 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
 
-    const targetCorners = (corners && corners.length === 4) 
+    const targetCorners = (corners && corners.length === 4)
       ? corners.map(c => new THREE.Vector2(c.x / width, c.y / height))
       : [
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(1, 0),
-          new THREE.Vector2(1, 1),
-          new THREE.Vector2(0, 1)
-        ];
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(1, 1),
+        new THREE.Vector2(0, 1)
+      ];
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
         uTexture: { value: texture },
         uTargetCorners: { value: targetCorners },
-        uOpacity: { value: opacity }
+        uOpacity: { value: opacity },
+        uTextureAspect: { value: texture.image ? (texture.image.width / texture.image.height) : 1.0 },
+        uQuadAspect: { value: width / height },
+        uFitType: { value: fit === 'contain' ? 2.0 : (fit === 'cover' ? 1.0 : 0.0) }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -77,10 +84,32 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
         varying vec2 vUv;
         uniform sampler2D uTexture;
         uniform float uOpacity;
+        uniform float uTextureAspect;
+        uniform float uQuadAspect;
+        uniform float uFitType;
         
         void main() {
-          vec4 texColor = texture2D(uTexture, vUv);
-          gl_FragColor = vec4(texColor.rgb, texColor.a * uOpacity);
+          vec2 uv = vUv;
+          
+          if (uFitType > 0.5) { // Cover (1.0) or Contain (2.0)
+            float ratio = uQuadAspect / uTextureAspect;
+            if ((uFitType == 1.0 && ratio > 1.0) || (uFitType == 2.0 && ratio < 1.0)) {
+              // Quad is wider than texture relative to its aspect, so scale y
+              float scale = 1.0 / ratio;
+              uv.y = (uv.y - 0.5) * scale + 0.5;
+            } else {
+              // Quad is taller than texture relative to its aspect, so scale x
+              uv.x = (uv.x - 0.5) * ratio + 0.5;
+            }
+          }
+          
+          // Discard pixels outside the texture boundaries if it's contain or if we scale outside
+          if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+             gl_FragColor = vec4(0.0);
+          } else {
+             vec4 texColor = texture2D(uTexture, uv);
+             gl_FragColor = vec4(texColor.rgb, texColor.a * uOpacity);
+          }
         }
       `,
       side: THREE.DoubleSide,
@@ -106,43 +135,50 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
 
   useEffect(() => {
     if (!isInitialized || !meshRef.current) return;
-    
+
     const material = meshRef.current.material;
     if (material && material.uniforms) {
       // Update corners
       if (corners && corners.length === 4) {
-        material.uniforms.uTargetCorners.value = corners.map(c => 
+        material.uniforms.uTargetCorners.value = corners.map(c =>
           new THREE.Vector2(c.x / width, c.y / height)
         );
       }
-      
+
       // Update opacity
       material.uniforms.uOpacity.value = opacity;
-      
+
+      // Update aspect ratio and fit
+      material.uniforms.uQuadAspect.value = width / height;
+      material.uniforms.uFitType.value = fit === 'contain' ? 2.0 : (fit === 'cover' ? 1.0 : 0.0);
+
       material.uniformsNeedUpdate = true;
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
     }
-  }, [corners, width, height, opacity, isInitialized]);
+  }, [corners, width, height, opacity, fit, isInitialized]);
 
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        display: "block"
-      }}
-    />
+    <>
+      <img src={src} crossOrigin="anonymous" style={{ display: "none" }} alt="preload" />
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          display: "block"
+        }}
+      />
+    </>
   );
 };
 
