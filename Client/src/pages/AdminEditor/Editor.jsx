@@ -160,7 +160,8 @@ function Editor() {
       getCanvasSize,
       BaseUrl,
       setLayers,
-      selectedLayerId
+      selectedLayerId,
+      innerCanvasRef
     });
   };
 

@@ -1,6 +1,7 @@
 import { Layer } from "../Models/Printarea.Modal.js";
 import cloudinary from "../Utils/Cloudinary.Config.js";
 import fs from 'fs';
+import mongoose from 'mongoose';
 
 // Helper function to upload image to Cloudinary
 const uploadImageToCloudinary = async (imagePath) => {
@@ -51,6 +52,27 @@ export const saveLayers = async (req, res) => {
 
     if (!productId || !mockupId) {
       return res.status(400).json({ success: false, message: "productId and mockupId are required" });
+    }
+
+    // 🔥 HANDLE MOCKUP THUMBNAIL UPDATE
+    const thumbnailFile = files.find(f => f.fieldname === "mockupThumbnail");
+    if (thumbnailFile) {
+      try {
+        const MockupImage = mongoose.model("MockupImage");
+        const mockup = await MockupImage.findById(mockupId);
+        if (mockup) {
+          const upload = await cloudinary.uploader.upload(thumbnailFile.path, {
+            folder: "mockup_thumbnails",
+          });
+          mockup.mockupImage.url = upload.secure_url;
+          mockup.mockupImage.public_id = upload.public_id;
+          await mockup.save();
+          console.log("Mockup thumbnail updated for:", mockupId);
+        }
+        if (fs.existsSync(thumbnailFile.path)) fs.unlinkSync(thumbnailFile.path);
+      } catch (err) {
+        console.error("Error updating mockup thumbnail:", err);
+      }
     }
 
     // Parse layers (accept string or array)
@@ -223,6 +245,30 @@ export const updateLayers = async (req, res) => {
     const files = req.files || [];
 
     if (!productId || !mockupId) return res.status(400).json({ success: false, message: "productId and mockupId are required" });
+
+    // 🔥 HANDLE MOCKUP THUMBNAIL UPDATE
+    const thumbnailFile = files.find(f => f.fieldname === "mockupThumbnail");
+    if (thumbnailFile) {
+        try {
+            const MockupImage = mongoose.model("MockupImage");
+            const mockup = await MockupImage.findById(mockupId);
+            if (mockup) {
+                const upload = await cloudinary.uploader.upload(thumbnailFile.path, {
+                    folder: "mockup_thumbnails",
+                });
+                
+                // Optional: delete old image from cloudinary if it was a snapshot
+                // For now just update the URL
+                mockup.mockupImage.url = upload.secure_url;
+                mockup.mockupImage.public_id = upload.public_id;
+                await mockup.save();
+                console.log("Mockup thumbnail updated for:", mockupId);
+            }
+            if (fs.existsSync(thumbnailFile.path)) fs.unlinkSync(thumbnailFile.path);
+        } catch (err) {
+            console.error("Error updating mockup thumbnail:", err);
+        }
+    }
 
     // Parse layers (string or array)
     let layersArray = [];

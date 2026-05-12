@@ -491,7 +491,7 @@ export const handleZoomToFit = (canvasRef, mockup, getCanvasSize, setScale, setC
 };
 
 // ================= UPLOAD HELPER =================
-export const uploadLayersWithImages = async (productId, layersData, layersWithBlobs, selectedMockup, BaseUrl, method = "PUT") => {
+export const uploadLayersWithImages = async (productId, layersData, layersWithBlobs, selectedMockup, BaseUrl, method = "PUT", thumbnailBlob = null) => {
   try {
     console.log("=== uploadLayersWithImages ===");
     const token = localStorage.getItem("token");
@@ -501,6 +501,10 @@ export const uploadLayersWithImages = async (productId, layersData, layersWithBl
 
     const formData = new FormData();
     formData.append("productId", productId);
+
+    if (thumbnailBlob) {
+      formData.append("mockupThumbnail", thumbnailBlob, "thumbnail.png");
+    }
 
     const cleaned = layersData.map(layer => {
       const c = { ...layer };
@@ -571,7 +575,7 @@ export const uploadLayersWithImages = async (productId, layersData, layersWithBl
 };
 
 // ================= SAVE =================
-export const onSave = async ({ editId, selectedMockup, layers, setIsSaving, navigate, getCanvasSize, BaseUrl, setLayers, selectedLayerId }) => {
+export const onSave = async ({ editId, selectedMockup, layers, setIsSaving, navigate, getCanvasSize, BaseUrl, setLayers, selectedLayerId, innerCanvasRef }) => {
   try {
     if (!editId) {
       toast.error("Product ID not found!");
@@ -585,6 +589,21 @@ export const onSave = async ({ editId, selectedMockup, layers, setIsSaving, navi
       toast.error("Session expired! Please login again.");
       navigate("/admin/login");
       return;
+    }
+
+    // 🔥 CAPTURE THUMBNAIL
+    let thumbnailBlob = null;
+    if (innerCanvasRef?.current) {
+      try {
+        const dataUrl = await toPng(innerCanvasRef.current, {
+          cacheBust: true,
+          pixelRatio: 1, // Lower ratio for thumbnail
+        });
+        const res = await fetch(dataUrl);
+        thumbnailBlob = await res.blob();
+      } catch (e) {
+        console.error("Failed to capture thumbnail:", e);
+      }
     }
 
     const canvasSize = getCanvasSize();
@@ -642,8 +661,8 @@ export const onSave = async ({ editId, selectedMockup, layers, setIsSaving, navi
 
     let savedData = null;
 
-    if (layersWithBlobs.length > 0) {
-      savedData = await uploadLayersWithImages(editId, serializable, layersWithBlobs, selectedMockup, BaseUrl, "PUT");
+    if (layersWithBlobs.length > 0 || thumbnailBlob) {
+      savedData = await uploadLayersWithImages(editId, serializable, layersWithBlobs, selectedMockup, BaseUrl, "PUT", thumbnailBlob);
     } else {
       const updateResponse = await updateLayers(editId, selectedMockup?._id, serializable);
       if (!updateResponse.success) throw new Error(updateResponse.message || "Update failed");
