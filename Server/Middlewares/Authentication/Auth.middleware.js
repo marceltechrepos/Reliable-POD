@@ -40,7 +40,7 @@ export const isLogin = async (req, res, next) => {
 
     // 3️⃣ Get user from database
     const user = await User.findById(decoded.id).select("-password");
-    console.log("User found:", !!user); // Debug log
+    // console.log("User found:", !!user); // Debug log
 
     if (!user) {
       return res.status(401).json({

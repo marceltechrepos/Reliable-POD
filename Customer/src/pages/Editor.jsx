@@ -295,7 +295,8 @@ const Editor = () => {
                     setProduct(res);
                     if (res.mockupIds?.length > 0) {
                         setAllProductMockups(res.mockupIds.map(m => m));
-                        setSelectedMockup(res.mockupIds[0]);
+                        const configMockup = res.mockupIds.find(m => m.name?.toLowerCase().startsWith("config"));
+                        setSelectedMockup(configMockup || res.mockupIds[0]);
                     }
                 } catch (err) {
                     console.error(err);
@@ -1241,25 +1242,7 @@ const Editor = () => {
 
             for (const mockup of allProductMockups) {
                 if (mockup._id === configMockup._id) {
-                    // Keep config mockupâ€™s design as-is (with all its editable layers)
-                    const configLayers = layersByMockup[configMockup._id] || [];
-                    if (configLayers.length === 0) {
-                        toast.error("Config mockup has no design to apply.");
-                        return;
-                    }
-                    const res = await saveCustomerDesign({
-                        productId,
-                        mockupId: mockup._id,
-                        layers: configLayers.map(l => normalizeLayer(l)),
-                        forceNew: createNewFlag,
-                    });
-                    if (res?.success && res.data?._id) {
-                        allSavedDesigns[mockup._id] = res.data._id;
-                        if (!masterDesignId) masterDesignId = res.data._id;
-                        setLayersByMockup(prev => ({ ...prev, [mockup._id]: configLayers }));
-                    } else {
-                        throw new Error(`Failed to save config mockup design`);
-                    }
+                    // Skip saving the config mockup design record as per request
                     continue;
                 }
 
@@ -1336,6 +1319,8 @@ const Editor = () => {
 
 
             for (const mockup of allProductMockups) {
+                if (mockup._id === configMockup._id) continue;
+
                 // Switch mockup in UI to ensure correct rendering
                 const data = allproductMockupsAdminLayers[mockup._id];
                 if (data) {
@@ -1595,14 +1580,14 @@ const Editor = () => {
                                         <div
                                             key={printAreaLayer._id}
                                             ref={el => { if (el) containerRefs.current[printAreaLayer._id] = el; }}
-                                            className="absolute print-area-border border-2 border-dashed border-[#f05a28] bg-white/10"
+                                            className={`absolute print-area-border ${saving ? 'border-none' : 'border-2 border-dashed border-[#f05a28] bg-white/10'}`}
                                             style={{
                                                 left: `${printAreaLayer.x_percent || 20}%`,
                                                 top: `${printAreaLayer.y_percent || 20}%`,
                                                 width: `${printAreaLayer.width_percent || 30}%`,
                                                 height: `${printAreaLayer.height_percent || 30}%`,
                                                 overflow: "hidden",
-                                                boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                                                boxShadow: saving ? "none" : "0 8px 24px rgba(0,0,0,0.08)",
                                             }}
                                         >
                                             {isLoadingDesign ? (
@@ -1820,7 +1805,7 @@ const Editor = () => {
                                                             top: boxY,
                                                             width: boxWidth,
                                                             height: boxHeight,
-                                                            border: '2px solid #3b82f6',
+                                                            border: saving ? 'none' : '2px solid #3b82f6',
                                                             pointerEvents: 'none',
                                                             zIndex: 99999,
                                                             boxSizing: 'border-box',
@@ -1833,8 +1818,8 @@ const Editor = () => {
                                     );
                                 })}
 
-                                {/* Navigation Arrows */}
-                                {allProductMockups.length > 1 && (
+                                {/* Navigation Arrows - Hidden as per request */}
+                                {false && allProductMockups.length > 1 && (
                                     <>
                                         <button
                                             onClick={handlePrevMockup}
@@ -1905,8 +1890,8 @@ const Editor = () => {
                                             </div>
                                         </div>
 
-                                        {/* Mockup Thumbnails for navigation */}
-                                        {allProductMockups.length > 1 && (
+                                        {/* Mockup Thumbnails - Hidden as per request */}
+                                        {false && allProductMockups.length > 1 && (
                                             <div className="border border-gray-200 p-4">
                                                 <h4 className="text-[11px] font-black uppercase text-gray-400 mb-3">
                                                     Mockups ({allProductMockups.length})
@@ -1995,8 +1980,8 @@ const Editor = () => {
                                 ) : (
                                     // Design Editor View
                                     <>
-                                        {/* Mockup Switcher Thumbnails */}
-                                        {allProductMockups.length > 1 && (
+                                        {/* Mockup Switcher Thumbnails - Hidden as per request */}
+                                        {false && allProductMockups.length > 1 && (
                                             <div className="border border-gray-200 bg-white p-3">
                                                 <h4 className="text-[11px] font-black uppercase text-gray-400 mb-2">
                                                     Mockups
