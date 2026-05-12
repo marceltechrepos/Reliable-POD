@@ -193,9 +193,12 @@ export default function DesignVariants() {
         String(id).startsWith("custom-")
     ).length;
 
-    const generatedMockups = customDesign?.finalDesignImages || [];
+    const generatedMockups = (customDesign?.finalDesignImages || []).filter(img => {
+        const mockupData = product?.mockupIds?.find(m => m._id === img.mockupId);
+        if (!mockupData) return true;
+        return !mockupData.name?.toLowerCase().startsWith("config");
+    });
     const generatedSelectedCount = generatedMockups.filter(img => selectedVariantIds.includes(img.mockupId)).length;
-    console.log(generatedMockups, "generatedMockups");
     // ─── Variant price handler ───
     const handleVariantPriceChange = (variantId, newPrice) => {
         setVariantPrices(prev => ({ ...prev, [variantId]: parseFloat(newPrice) || 0 }));
