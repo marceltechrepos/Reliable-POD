@@ -6,7 +6,7 @@ import {
   CheckCircle, Circle, Code, List, ListOrdered, ImageIcon, Undo, Link as LinkIcon
 } from "lucide-react";
 import { getCustomProductById, deleteCustomProduct } from "../api/customerProduct.api";
-import image from "../assets/image/dummy.jpg";
+
 import { toast } from "react-toastify";
 
 const SingleProduct = () => {
@@ -101,7 +101,7 @@ const SingleProduct = () => {
     finalDesignImages[0]?.imageUrl ||
     selectedMockup?.mockupImage?.url ||
     p?.thumbnail?.url ||
-    image;
+    "https://placehold.co/600x600?text=No+Image";
 
   const colors = [
     { name: "Black", bg: "bg-black", hex: "#000000" },
@@ -279,7 +279,7 @@ const SingleProduct = () => {
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = image;
+                        e.target.src = "https://placehold.co/600x600?text=No+Image";
                       }}
                     />
                   </div>
@@ -712,7 +712,7 @@ const SingleProduct = () => {
               {/* Left Side: Product Image */}
               <div className="w-full md:w-1/2 p-8 flex justify-center items-start bg-white">
                 <img
-                  src={p.thumbnail?.url || image}
+                  src={p.thumbnail?.url || "https://placehold.co/600x600?text=No+Image"}
                   alt="duplicate-preview"
                   className="w-full max-w-[380px] h-auto object-contain"
                 />

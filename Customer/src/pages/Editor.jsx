@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import image from "../assets/image/dummy.jpg";
+
 import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
@@ -1554,7 +1554,7 @@ const Editor = () => {
                             >
                                 <img
                                     ref={mockupImgRef}
-                                    src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || image}
+                                    src={selectedMockup?.mockupImage?.url || product?.thumbnail?.url || "https://placehold.co/600x600?text=No+Image"}
                                     alt={product?.productTitle}
                                     className="w-full h-full object-cover"
                                 />
@@ -1925,7 +1925,7 @@ const Editor = () => {
                                                                 }`}
                                                         >
                                                             <img
-                                                                src={mockup?.mockupImage?.url || image}
+                                                                src={mockup?.mockupImage?.url || "https://placehold.co/600x600?text=No+Image"}
                                                                 alt={mockup?.name || `Mockup ${idx + 1}`}
                                                                 className="w-full aspect-square object-cover rounded"
                                                             />
@@ -2012,7 +2012,7 @@ const Editor = () => {
                                                                 }`}
                                                         >
                                                             <img
-                                                                src={mockup?.mockupImage?.url || image}
+                                                                src={mockup?.mockupImage?.url || "https://placehold.co/600x600?text=No+Image"}
                                                                 alt={mockup?.name || `Mockup ${idx + 1}`}
                                                                 className="w-full h-full object-cover"
                                                             />

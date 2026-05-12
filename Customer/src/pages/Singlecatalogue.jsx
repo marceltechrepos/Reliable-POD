@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ShoppingBag, Plus, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import { getProductById } from "../api/category.api";
-import image from "../assets/image/dummy.jpg";
+
 
 const Singlecatalogue = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const Singlecatalogue = () => {
   const [productData, setProductData] = useState(productFromState || null);
   const [loading, setLoading] = useState(!productFromState);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [brokenImages, setBrokenImages] = useState(new Set());
 
   // Gather all display images: thumbnail + mockup images
   const allImages = React.useMemo(() => {
@@ -34,8 +35,17 @@ const Singlecatalogue = () => {
       }
     });
 
-    return images;
-  }, [productData]);
+    // Filter out broken images
+    return images.filter(img => !brokenImages.has(img.url));
+  }, [productData, brokenImages]);
+
+  const handleImageError = (url) => {
+    setBrokenImages(prev => {
+      const next = new Set(prev);
+      next.add(url);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -58,7 +68,15 @@ const Singlecatalogue = () => {
   // Reset active image when data changes
   useEffect(() => {
     setActiveImageIndex(0);
+    setBrokenImages(new Set());
   }, [productData?._id]);
+
+  // Adjust index if images are removed
+  useEffect(() => {
+    if (activeImageIndex >= allImages.length && allImages.length > 0) {
+      setActiveImageIndex(allImages.length - 1);
+    }
+  }, [allImages.length]);
 
   if (loading) {
     return (
@@ -87,7 +105,7 @@ const Singlecatalogue = () => {
     );
   }
 
-  const currentImage = allImages[activeImageIndex]?.url || image;
+  const currentImage = allImages[activeImageIndex]?.url;
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-6 px-4 md:px-8">
@@ -107,15 +125,19 @@ const Singlecatalogue = () => {
           <div className="lg:col-span-6 space-y-6">
             {/* Main Image */}
             <div className="relative aspect-square bg-white border border-gray-100 overflow-hidden shadow-sm rounded-lg group">
-              <img
-                src={currentImage}
-                alt={productData.productTitle}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = image;
-                }}
-              />
+              {currentImage && (
+                <img
+                  src={currentImage}
+                  alt={productData.productTitle}
+                  className="w-full h-full object-cover"
+                  onError={() => handleImageError(currentImage)}
+                />
+              )}
+              {!currentImage && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400">
+                   <div className="text-sm font-medium">No valid images available</div>
+                </div>
+              )}
               {/* Navigation Arrows (if more than 1 image) */}
               {allImages.length > 1 && (
                 <>
@@ -165,10 +187,7 @@ const Singlecatalogue = () => {
                       src={img.url}
                       alt={`View ${idx + 1}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = image;
-                      }}
+                      onError={() => handleImageError(img.url)}
                     />
                   </button>
                 ))}

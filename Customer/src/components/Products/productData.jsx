@@ -1,5 +1,5 @@
 
-import DUMMYIMG from "../../assets/image/dummy.jpg"
+const DUMMYIMG = "https://placehold.co/600x600?text=No+Image";
 
 export const PRODUCTS = [
   { id: 1, title: "Premium Hoodie", price: 49.99, type: "Clothing", createdAt: "2024-10-01", discount: true, image: DUMMYIMG },
