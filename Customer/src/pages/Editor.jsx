@@ -1805,7 +1805,7 @@ const Editor = () => {
                                                             top: boxY,
                                                             width: boxWidth,
                                                             height: boxHeight,
-                                                            border: '2px solid #3b82f6',
+                                                            border: saving ? 'none' : '2px solid #3b82f6',
                                                             pointerEvents: 'none',
                                                             zIndex: 99999,
                                                             boxSizing: 'border-box',
