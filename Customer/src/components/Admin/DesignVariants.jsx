@@ -460,9 +460,9 @@ export default function DesignVariants() {
                         disabled={step === "list" ? selectedVariantIds.length === 0 : creating}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f05a28] text-white text-sm font-bold rounded-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                     >
-                        {step === "list"
-                            ? "Next"
-                            : (creating ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Product" : "Create Product"))
+                        {creating 
+                            ? (isEditing ? "Updating..." : "Creating...") 
+                            : "Next"
                         }
                     </button>
                 </div>
@@ -913,25 +913,6 @@ export default function DesignVariants() {
                                     </div>
                                 </div>
 
-                                <div className="mt-6 flex flex-wrap items-center gap-3">
-                                    <button
-                                        onClick={() => setStep("list")}
-                                        className="rounded-none border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
-                                    >
-                                        Back
-                                    </button>
-
-                                    <button
-                                        onClick={handleCreate}
-                                        disabled={creating}
-                                        className="rounded-none bg-[#f05a28] px-5 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 cursor-pointer"
-                                    >
-                                        {creating
-                                            ? (isEditing ? "Updating..." : "Creating...")
-                                            : (isEditing ? "Update Custom Product" : "Create Custom Product")
-                                        }
-                                    </button>
-                                </div>
                             </div>
                         </div>
 
