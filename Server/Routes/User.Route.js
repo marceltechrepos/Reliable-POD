@@ -18,7 +18,7 @@ UserRouter.post(
   upload.single("profileImage"),
   isLogin,
   addUserInformation
-);
+); 
 
 UserRouter.get("/User/VerifyToken", isLogin, VerifyToken);
 
