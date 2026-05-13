@@ -116,9 +116,30 @@ const LayerProperties = ({ layer, onChange, onAlignHorizontal, onAlignVertical }
 
   return (
     <div className="space-y-3">
-
-
-      {/* Text Section - Sirf tab show hoga jab layer type "text" ho */}
+      <Section title="Layer Identity" defaultOpen={true}>
+        <div>
+          <label className="text-[11px] text-gray-500 block mb-1">Layer Name</label>
+          <input
+            type="text"
+            placeholder={layer.type === 'text' ? "Text Layer" : "Image Layer"}
+            value={layer.name || ""}
+            onChange={(e) => onChange({ name: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#f05a28]/20 focus:border-[#f05a28] outline-none transition bg-white"
+          />
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="isPlaceholder"
+            checked={layer.isPlaceholder || false}
+            onChange={(e) => onChange({ isPlaceholder: e.target.checked })}
+            className="w-4 h-4 text-[#f05a28] border-gray-300 rounded focus:ring-[#f05a28]"
+          />
+          <label htmlFor="isPlaceholder" className="text-xs text-gray-700 cursor-pointer">
+            Print Area / Placeholder
+          </label>
+        </div>
+      </Section>
       {isTextLayer && (
         <Section title="Text Settings" defaultOpen={true}>
           <div className="space-y-3">

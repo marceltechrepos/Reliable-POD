@@ -7,9 +7,11 @@ import {
     deleteCustomProduct,
     bulkDeleteCustomProducts,
     getCustomProductByUserId,
+    getCustomProductByShopifyId,
+    updateShopifyProductId,
     importProductsToShopify,
     getImportedProductsByStore  // ✅ Add this
-} from "../Controllers/customProduct.Controller.js";
+} from "../Controllers/customProduct.controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const customerProductRoute = express.Router();
@@ -24,10 +26,12 @@ customerProductRoute.get("/", isLogin, getCustomProducts);
 customerProductRoute.get("/user/:userId", isLogin, getCustomProductByUserId);
 customerProductRoute.get("/:id", isLogin, getCustomProductById);
 customerProductRoute.put("/:id", isLogin, updateCustomProduct);
+customerProductRoute.put("/update-shopify-id/:id", isLogin, updateShopifyProductId);
 customerProductRoute.delete("/:id", isLogin, deleteCustomProduct);
 customerProductRoute.post("/import", isLogin, importProductsToShopify);
 
-// ✅ Public route - No authentication required
+// ✅ Public routes - No authentication required
+customerProductRoute.get("/shopify/:shopifyProductId", getCustomProductByShopifyId);
 customerProductRoute.get("/store/:storeId/imported", getImportedProductsByStore);
 
 export default customerProductRoute;

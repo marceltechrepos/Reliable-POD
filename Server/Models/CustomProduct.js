@@ -129,6 +129,21 @@ const customProductSchema = new mongoose.Schema(
         zIndex: Number,
         horizontalAlign: String,
         verticalAlign: String,
+        // Text properties
+        type: { type: String, default: "image" },
+        text: String,
+        fontSize: Number,
+        fontFamily: String,
+        fontWeight: String,
+        fontStyle: String,
+        fill: String,
+        align: String,
+        lineHeight: Number,
+        letterSpacing: Number,
+        textDecoration: String,
+        wrapMode: String,
+        name: String,
+        isPlaceholder: { type: Boolean, default: false },
       },
     ],
     storeId: {
@@ -144,6 +159,10 @@ const customProductSchema = new mongoose.Schema(
     importedToShopify: {
       type: Boolean,
       default: false,
+    },
+    shopifyProductId: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

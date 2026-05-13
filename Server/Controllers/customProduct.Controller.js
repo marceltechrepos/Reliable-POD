@@ -132,7 +132,7 @@ const getCustomProducts = async (req, res) => {
     const customProducts = await CustomProduct.find(filter)
       .populate("baseProduct", "name images price")
       .populate("customerDesign", "name thumbnailUrl")
-      .populate("selectedMockup", "imageUrl name")
+      .populate("selectedMockup", "mockupImage name")
       .populate("customerLayers.printArea", "name type")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -226,8 +226,9 @@ const getCustomProductByUserId = async (req, res) => {
       .populate("customerLayers.printArea");
 
     if (!customProductsByUserId.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        data: [],
         message: "No custom products found"
       });
     }
@@ -602,6 +603,93 @@ const getImportedProductsByStore = async (req, res) => {
   }
 };
 
+// Get custom product by Shopify Product ID
+const getCustomProductByShopifyId = async (req, res) => {
+  try {
+    const { shopifyProductId } = req.params;
+
+    if (!shopifyProductId) {
+      return res.status(400).json({
+        success: false,
+        message: "Shopify Product ID is required",
+      });
+    }
+
+    const customProduct = await CustomProduct.findOne({
+      shopifyProductId,
+      deleted: false,
+    })
+      .populate("baseProduct")
+      .populate({
+        path: "customerDesign",
+        populate: {
+          path: "layers.printArea",
+          model: "Layer"
+        }
+      })
+      .populate("selectedMockup")
+      .populate("customerLayers.printArea");
+
+    if (!customProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Custom product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: customProduct,
+    });
+  } catch (error) {
+    console.error("getCustomProductByShopifyId error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Update Shopify Product ID for a custom product
+const updateShopifyProductId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { shopifyProductId } = req.body;
+
+    if (!shopifyProductId) {
+      return res.status(400).json({
+        success: false,
+        message: "Shopify Product ID is required",
+      });
+    }
+
+    const customProduct = await CustomProduct.findByIdAndUpdate(
+      id,
+      { shopifyProductId, importedToShopify: true },
+      { new: true }
+    );
+
+    if (!customProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Custom product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Shopify Product ID updated successfully",
+      data: customProduct,
+    });
+  } catch (error) {
+    console.error("updateShopifyProductId error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export {
   getCustomProducts,
   getCustomProductById,
@@ -610,6 +698,8 @@ export {
   bulkDeleteCustomProducts,
   createCustomProduct,
   getCustomProductByUserId,
+  getCustomProductByShopifyId,
+  updateShopifyProductId,
   importProductsToShopify,
   getImportedProductsByStore
 };

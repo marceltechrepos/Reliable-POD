@@ -166,6 +166,7 @@ const ThreeWarpedImage = ({ src, corners, width, height, fit = "cover", opacity 
       <img src={src} crossOrigin="anonymous" style={{ display: "none" }} alt="preload" />
       <canvas
         ref={canvasRef}
+        data-engine="three"
         width={width}
         height={height}
         style={{

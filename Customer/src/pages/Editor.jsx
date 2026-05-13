@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 
-import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Loader2, Copy, Lock, Unlock, Trash2, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { getProductById } from "../api/category.api";
 import { getLayersByProductId } from "../api/layer.api";
 import LayerProperties from "../components/Admin/LayerProperties";
@@ -43,8 +43,19 @@ const normalizeLayer = (layer) => {
     const positionX = toNumber(layer.positionX, 0);
     const positionY = toNumber(layer.positionY, 0);
 
+    // Auto-detect type if missing (for backward compatibility)
+    let type = layer.type;
+    if (!type && layer.text) {
+        type = "text";
+    } else if (!type) {
+        type = "image";
+    }
+
     return {
         ...layer,
+        type,
+        printArea: layer.printArea?._id || layer.printArea,
+        printAreaName: layer.printArea?.name || layer.printAreaName,
         width: round2(width),
         height: round2(height),
         positionX: round2(positionX),
@@ -118,6 +129,8 @@ const Editor = () => {
     const containerRefs = useRef({});
     const designContainerRef = useRef(null);
     const mockupImgRef = useRef(null);
+    const hasInitialLoaded = useRef(false);
+
     const [dragState, setDragState] = useState({
         index: null,
         tempX: 0,
@@ -213,11 +226,9 @@ const Editor = () => {
         };
     }, [selectedLayerIndex, currentLayers]);
 
-    // Check existing custom product
+    // 1. Load specific custom product from state (ONCE on mount)
     useEffect(() => {
-
-        // ðŸ”¥ Agar SingleProduct se specific customProductId aayi hai
-        if (customProductIdFromState) {
+        if (customProductIdFromState && !hasInitialLoaded.current) {
             const loadSpecificCustomProduct = async () => {
                 setIsCheckingExisting(true);
                 try {
@@ -226,13 +237,22 @@ const Editor = () => {
                         const cp = res.data;
                         setExistingCustomProduct(cp);
                         setIsEditing(true);
-                        setCustomerLayers(cp.currentLayers || []);
+                        const loadedLayers = (cp.customerLayers || []).map(l => normalizeLayer(l));
+                        setCustomerLayers(loadedLayers);
+                        if (cp.selectedMockup) {
+                            const mockupId = typeof cp.selectedMockup === 'object' ? cp.selectedMockup._id : cp.selectedMockup;
+                            setLayersByMockup(prev => ({ ...prev, [mockupId]: loadedLayers }));
+                        }
                         setCustomerDesignId(cp.customerDesign?._id || cp.customerDesign);
-                        if (selectedMockupFromState) {
+                        if (cp.selectedMockup) {
+                            const mObj = typeof cp.selectedMockup === 'object' ? cp.selectedMockup : { _id: cp.selectedMockup };
+                            setSelectedMockup(mObj);
+                        } else if (selectedMockupFromState) {
                             setSelectedMockup(selectedMockupFromState);
                         }
-                        // Agar chahte ho to seedha designing mode on kardo
-                        // setStartDesigning(true);
+                        
+                        setStartDesigning(true);
+                        hasInitialLoaded.current = true;
                     }
                 } catch (error) {
                     console.error("Error loading custom product:", error);
@@ -242,17 +262,23 @@ const Editor = () => {
                 }
             };
             loadSpecificCustomProduct();
-            return; // Baaki generic find skip karo
         }
+    }, [customProductIdFromState, selectedMockupFromState]);
 
+    // 2. Generic check for existing designs (when mockup changes, but NOT if we just loaded specific product)
+    useEffect(() => {
         if (createNewFlag) {
             setExistingCustomProduct(null);
             setIsEditing(false);
             setIsCheckingExisting(false);
             return;
         }
+
+        // If we just loaded from state, skip the first generic check
+        if (customProductIdFromState && hasInitialLoaded.current && !selectedMockup?.mockupImage) return;
+
         const checkExistingDesign = async () => {
-            if (!productId || !selectedMockup?._id) return;
+            if (!productId || !selectedMockup?._id || isEditing) return;
             try {
                 setIsCheckingExisting(true);
                 const user = JSON.parse(localStorage.getItem("user"));
@@ -308,6 +334,23 @@ const Editor = () => {
         fetchProduct();
     }, [productId, product]);
 
+    // ✅ Sync selectedMockup with the full object from allProductMockups
+    useEffect(() => {
+        if (selectedMockup?._id && allProductMockups.length > 0) {
+            // If the current selectedMockup is a shell (missing mockupImage), find the full one
+            if (!selectedMockup.mockupImage) {
+                const fullMockup = allProductMockups.find(m => String(m._id) === String(selectedMockup._id));
+                if (fullMockup) {
+                    setSelectedMockup(fullMockup);
+                } else if (allProductMockups.length > 0) {
+                    // Fallback to first available mockup if the saved one is missing from the product
+                    console.warn("Saved mockup not found in product list, falling back to first mockup.");
+                    setSelectedMockup(allProductMockups[0]);
+                }
+            }
+        }
+    }, [allProductMockups, selectedMockup]);
+
     useEffect(() => {
         const fetchAllMockupLayers = async () => {
             if (product?._id && allProductMockups.length > 0) {
@@ -336,17 +379,32 @@ const Editor = () => {
         fetchAllMockupLayers();
     }, [product?._id, allProductMockups]);
 
-    // When selected mockup changes, load admin layers from map
     useEffect(() => {
-        if (selectedMockup?._id && allproductMockupsAdminLayers[selectedMockup._id]) {
-            const data = allproductMockupsAdminLayers[selectedMockup._id];
-            setAdminLayers(data.printAreas);
-            setAllAdminLayers(data.all);
-        } else {
-            setAdminLayers([]);
-            setAllAdminLayers([]);
-        }
-    }, [selectedMockup, allproductMockupsAdminLayers]);
+        const loadAdminLayers = async () => {
+            const mId = String(selectedMockup?._id || "");
+            if (!mId) return;
+
+            if (allproductMockupsAdminLayers[mId]) {
+                const data = allproductMockupsAdminLayers[mId];
+                setAdminLayers(data.printAreas);
+                setAllAdminLayers(data.all);
+            } else if (product?._id) {
+                // Targeted fetch fallback if map hasn't caught up or missed this ID
+                try {
+                    const res = await getLayersByProductId(product._id, mId);
+                    if (res.success && res.data) {
+                        const layers = res.data;
+                        const printAreas = layers.filter(l => l.type === "printarea");
+                        setAdminLayers(printAreas);
+                        setAllAdminLayers(layers);
+                    }
+                } catch (err) {
+                    console.error("Targeted layer fetch failed:", err);
+                }
+            }
+        };
+        loadAdminLayers();
+    }, [selectedMockup, allproductMockupsAdminLayers, product?._id]);
 
     // Customer design fetch (only if not preview active)
     useEffect(() => {
@@ -354,10 +412,18 @@ const Editor = () => {
         if (createNewFlag) return;
 
         const fetchCustomerDesign = async () => {
-            if (productId && selectedMockup?._id && !isPreviewActive) {
+            const mId = String(selectedMockup?._id || "");
+            if (productId && mId && !isPreviewActive) {
+                // 🔥 If we are editing a specific custom product and this is the mockup it was saved with,
+                // don't fetch and overwrite the layers we already loaded in loadSpecificCustomProduct.
+                if (isEditing && existingCustomProduct && String(existingCustomProduct.selectedMockup?._id || existingCustomProduct.selectedMockup) === mId) {
+                    setIsLoadingDesign(false);
+                    return;
+                }
+
                 setIsLoadingDesign(true);
                 try {
-                    const res = await getCustomerDesign(productId, selectedMockup._id);
+                    const res = await getCustomerDesign(productId, mId);
                     if (res.success && res.data) {
                         const loadedLayers = (res.data.layers || []).map((layer) => ({
                             ...layer,
@@ -369,18 +435,23 @@ const Editor = () => {
                             height: Number(layer.height) || 100,
                             rotation: Number(layer.rotation) || 0,
                             opacity: Number(layer.opacity) || 1,
-                        }));
+                        })).map(l => normalizeLayer(l));
                         setCustomerLayers(loadedLayers);
+                        if (loadedLayers.length > 0) {
+                            setLayersByMockup(prev => ({ ...prev, [mId]: loadedLayers }));
+                        }
                     }
                 } catch (error) {
                     console.error("Error loading design:", error);
                 } finally {
                     setIsLoadingDesign(false);
                 }
+            } else {
+                setIsLoadingDesign(false);
             }
         };
         fetchCustomerDesign();
-    }, [productId, selectedMockup, isPreviewActive, createNewFlag]);
+    }, [productId, selectedMockup, isPreviewActive, createNewFlag, isEditing]);
 
     useEffect(() => {
         if (!startDesigning || adminLayers.length === 0) return;
@@ -625,20 +696,31 @@ const Editor = () => {
             enablePerspective: false,
             align: "center",
             lineHeight: 1.2,
+            name: "Text Layer",
         };
 
         addLayerToAllMockups(newLayer, selectedMockup._id, defaultPrintArea);
+        
+        // Auto-select the new layer (it's added at the end)
+        setSelectedLayerIndex(currentLayers.length);
     };
     // Get pixel dimensions of a text string using canvas
     const getTextPixelSize = (text, fontSize, fontFamily = "Arial", fontWeight = "normal") => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-        const metrics = ctx.measureText(text);
-        const width = metrics.width;
-        // Approximate height: typical line height = fontSize * 1.2
-        const height = fontSize * 1.2;
-        return { width, height };
+        
+        const lines = String(text || "").split('\n');
+        let maxWidth = 0;
+        lines.forEach(line => {
+            const metrics = ctx.measureText(line);
+            if (metrics.width > maxWidth) maxWidth = metrics.width;
+        });
+        
+        const lineHeight = fontSize * 1.2;
+        const totalHeight = lines.length * lineHeight;
+        
+        return { width: maxWidth, height: totalHeight };
     };
     const handleImageFromModal = (image) => {
         const defaultPrintArea = selectedPrintArea || adminLayers[0];
@@ -651,6 +733,7 @@ const Editor = () => {
         const newLayer = {
             clientKey: crypto.randomUUID(),
             printArea: defaultPrintArea._id,
+            printAreaName: defaultPrintArea.name,
             imageUrl: image.url,
             publicId: image.id || null,
             positionX: 0,
@@ -661,6 +744,7 @@ const Editor = () => {
             opacity: 1,
             visible: true,
             locked: false,
+            name: image.name || "New Image",
             horizontalAlign: "center",
             verticalAlign: "middle",
             enablePerspective: fullPrintArea?.enablePerspective || false,
@@ -671,6 +755,7 @@ const Editor = () => {
         };
 
         addLayerToAllMockups(newLayer, selectedMockup._id, fullPrintArea);
+        setSelectedLayerIndex(currentLayers.length);
         setOpenMockupModal(false);
     };
 
@@ -991,7 +1076,7 @@ const Editor = () => {
                 const payload = {
                     productId,
                     mockupId: selectedMockup._id,
-                    layers: normalized,
+                    customerLayers: normalized,
                     customVariant: existingCustomProduct.customVariant || {
                         enabled: true,
                         name: "",
@@ -1061,7 +1146,7 @@ const Editor = () => {
                 state: {
                     product,
                     selectedMockup,
-                    currentLayers,
+                    customerLayers,
                     adminLayers,
                     customerDesignId: savedDesignId,
                     isEditing: isEditing && !createNewFlag,
@@ -1169,14 +1254,15 @@ const Editor = () => {
                         allDrawn = false;
                         break;
                     }
+                    if (canvas.dataset.engine === 'three') continue;
+
                     try {
                         const ctx = canvas.getContext('2d');
-                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        // Ensure at least one nonâ€‘transparent pixel exists (optional)
-                        // const hasContent = imgData.data.some(ch => ch !== 0);
-                        // if (!hasContent) allDrawn = false;
+                        if (ctx) {
+                            ctx.getImageData(0, 0, 1, 1);
+                        }
                     } catch (e) {
-                        allDrawn = false;
+                        // ignore
                     }
                 }
                 if (allDrawn || frame >= maxFrames) {
@@ -1236,13 +1322,28 @@ const Editor = () => {
                 return;
             }
 
-            // --- 3. For every OTHER mockup, apply the captured image as a single layer (100% width/height) ---
+            // --- 2.5 Save the config mockup design with original layers (MASTER) ---
+            const configLayers = layersByMockup[configMockup._id] || [];
+            const configRes = await saveCustomerDesign({
+                productId,
+                mockupId: configMockup._id,
+                layers: configLayers.map(l => normalizeLayer(l)),
+                forceNew: createNewFlag,
+            });
+
             const allSavedDesigns = {};
             let masterDesignId = null;
 
+            if (configRes?.success && configRes.data?._id) {
+                masterDesignId = configRes.data._id;
+                allSavedDesigns[configMockup._id] = masterDesignId;
+            } else {
+                console.warn("Failed to save config mockup design record, using first non-config mockup as master instead.");
+            }
+
+            // --- 3. For every OTHER mockup, apply the captured image as a single layer (100% width/height) ---
             for (const mockup of allProductMockups) {
                 if (mockup._id === configMockup._id) {
-                    // Skip saving the config mockup design record as per request
                     continue;
                 }
 
@@ -1370,6 +1471,20 @@ const Editor = () => {
                 await updateDesignMockupImages(masterDesignId, uploadedImages);
             }
 
+            // ✅ Save customer configured layers to CustomProduct if editing
+            if (isEditing && existingCustomProduct?._id && masterDesignId) {
+                try {
+                    const cpPayload = {
+                        customerDesignId: masterDesignId,
+                        customerLayers: (layersByMockup[configMockup._id] || []).map(l => normalizeLayer(l)),
+                        selectedMockup: configMockup._id,
+                    };
+                    await updateCustomProduct(existingCustomProduct._id, cpPayload);
+                } catch (cpErr) {
+                    console.error("Failed to update CustomProduct with master design:", cpErr);
+                }
+            }
+
             toast.success(`Design applied to ${allProductMockups.length - 1} mockups!`);
             setShowConfirmModal(false);
 
@@ -1378,7 +1493,7 @@ const Editor = () => {
                 state: {
                     product,
                     selectedMockup: configMockup,
-                    currentLayers: layersByMockup[configMockup._id] || [],
+                    customerLayers: layersByMockup[configMockup._id] || [],
                     adminLayers,
                     customerDesignId: masterDesignId,
                     isEditing,
@@ -1402,16 +1517,18 @@ const Editor = () => {
             const currentMockupLayers = prev[mockupId] || [];
 
             // Map new order to actual layer data with updated zIndex
-            const reorderedLayers = newOrderedLayers.map((newLayer, idx) => {
-                const layerKey = newLayer.clientKey || newLayer._id;
-                const existingLayer = currentMockupLayers.find(
-                    l => (l.clientKey || l._id) === layerKey
-                );
-                return {
-                    ...(existingLayer || newLayer),
-                    zIndex: idx + 1  // âœ… Consistent zIndex assignment
-                };
-            });
+            const reorderedLayers = newOrderedLayers
+                .filter(Boolean)
+                .map((newLayer, idx) => {
+                    const layerKey = newLayer.clientKey || newLayer._id;
+                    const existingLayer = currentMockupLayers.find(
+                        l => (l.clientKey || l._id) === layerKey
+                    );
+                    return {
+                        ...(existingLayer || newLayer),
+                        zIndex: idx + 1  // ✅ Consistent zIndex assignment
+                    };
+                });
 
             const updated = { ...prev, [mockupId]: reorderedLayers };
 
@@ -1573,9 +1690,14 @@ const Editor = () => {
 
                                 {/* Print Areas & Customer Layers */}
                                 {startDesigning && adminLayers.map(printAreaLayer => {
-                                    const areaLayers = currentLayers.filter(
-                                        l => (l.printArea?._id || l.printArea) === printAreaLayer._id
-                                    );
+                                    const areaLayers = currentLayers.filter(l => {
+                                        const layerPAId = String(l.printArea?._id || l.printArea || "");
+                                        const layerPAName = l.printArea?.name || l.printAreaName;
+                                        const targetId = String(printAreaLayer._id);
+                                        const targetName = printAreaLayer.name;
+                                        
+                                        return layerPAId === targetId || (layerPAName && layerPAName === targetName);
+                                    });
                                     return (
                                         <div
                                             key={printAreaLayer._id}
@@ -1596,9 +1718,6 @@ const Editor = () => {
                                                 </div>
                                             ) : (
                                                 areaLayers.map(layer => {
-                                                    // const globalIndex = currentLayers.findIndex(
-                                                    //     l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
-                                                    // );
                                                     const globalIndex = currentLayers.findIndex(l => {
                                                         if (layer.clientKey && l.clientKey) {
                                                             return l.clientKey === layer.clientKey;
@@ -1615,12 +1734,15 @@ const Editor = () => {
                                                             key={`${selectedMockup?._id || 'mockup'}-${layer.clientKey || layer._id || globalIndex}`}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
-                                                            disableDragging={globalIndex !== selectedLayerIndex || layer.locked}
+                                                            disableDragging={layer.locked}
                                                             enableResizing={globalIndex === selectedLayerIndex && !layer.locked}
                                                             lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
-                                                            onDragStart={() => handleDragStart(globalIndex)}
+                                                            onDragStart={() => {
+                                                                handleDragStart(globalIndex);
+                                                                setSelectedLayerIndex(globalIndex);
+                                                            }}
                                                             onDrag={(e, d) => {
-                                                                if (globalIndex === selectedLayerIndex && !layer.locked) {
+                                                                if (!layer.locked) {
                                                                     const container = containerRefs.current[printAreaLayer._id];
                                                                     if (!container) return;
                                                                     const rect = container.getBoundingClientRect();
@@ -1664,11 +1786,14 @@ const Editor = () => {
                                                             scale={1}
                                                             style={{
                                                                 zIndex: layer.zIndex || 1,
-                                                                pointerEvents: globalIndex === selectedLayerIndex ? 'auto' : 'none',
+                                                                pointerEvents: 'auto',
+                                                                cursor: layer.locked ? 'not-allowed' : (globalIndex === selectedLayerIndex ? 'move' : 'pointer')
                                                             }}
                                                         >
                                                             <div
-                                                                onClick={(e) => e.stopPropagation()}
+                                                                onMouseDown={() => {
+                                                                    setSelectedLayerIndex(globalIndex);
+                                                                }}
                                                                 className={`relative group w-full h-full ${layer.type === "text" ? "overflow-visible" : "overflow-hidden"} ${selectedLayerIndex === globalIndex ? " ring-inset" : ""
                                                                     }`}
                                                                 style={{ opacity: layer.opacity ?? 1 }}
@@ -1864,7 +1989,7 @@ const Editor = () => {
                                     className={`px-4 py-3 text-white font-bold text-sm transition cursor-pointer rounded-md
             ${allMockupLayersReady ? 'bg-[#f05a28] hover:opacity-90' : 'bg-gray-400 cursor-not-allowed'}`}
                                 >
-                                    {allMockupLayersReady ? 'Start Designing' : 'Loading mockupsâ€¦'}
+                                    {allMockupLayersReady ? 'Start Designing' : 'Loading mockups...'}
                                 </div>
                             </div>
 
@@ -2021,12 +2146,15 @@ const Editor = () => {
                                             </div>
 
                                             <ReactSortable
-                                                list={currentLayers.map(layer => ({
+                                                list={currentLayers.map((layer, idx) => ({
                                                     ...layer,
-                                                    id: layer.clientKey || layer._id || `temp-${Math.random()}`
+                                                    id: layer.clientKey || layer._id || `idx-${idx}`
                                                 }))}
                                                 setList={(newList) => {
-                                                    const reordered = newList.map(({ id, ...rest }) => rest);
+                                                    if (!newList) return;
+                                                    const reordered = newList
+                                                        .filter(item => item !== undefined && item !== null)
+                                                        .map(({ id, ...rest }) => rest);
                                                     handleReorder(reordered);
                                                 }}
                                                 animation={200}
@@ -2082,11 +2210,16 @@ const Editor = () => {
 
                                                                 {/* Layer Info */}
                                                                 <div className="min-w-0 flex-1">
-                                                                    <div className="text-sm font-medium text-gray-800 truncate">
-                                                                        {layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`}
+                                                                    <div className="text-sm font-medium text-gray-800 truncate flex items-center gap-2">
+                                                                        {layer.name || (layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`)}
+                                                                        {layer.isPlaceholder && (
+                                                                            <span className="px-1.5 py-0.5 bg-orange-100 text-[9px] font-black text-orange-700 rounded-sm uppercase tracking-tighter">
+                                                                                Placeholder
+                                                                            </span>
+                                                                        )}
                                                                     </div>
-                                                                    <div className="text-[11px] text-gray-500">
-                                                                        {Math.round(layer.width || 0)}% Ã— {Math.round(layer.height || 0)}%
+                                                                     <div className="text-[11px] text-gray-500">
+                                                                        {Math.round(layer.width || 0)}% x {Math.round(layer.height || 0)}%
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -2101,7 +2234,7 @@ const Editor = () => {
                                                                     className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition rounded"
                                                                     title="Move up"
                                                                 >
-                                                                    â†‘
+                                                                    <ArrowUp size={14} />
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => {
@@ -2111,7 +2244,7 @@ const Editor = () => {
                                                                     className="cursor-pointer p-1.5 text-gray-500 hover:text-black hover:bg-gray-100 transition rounded"
                                                                     title="Move down"
                                                                 >
-                                                                    â†“
+                                                                    <ArrowDown size={14} />
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => {
@@ -2184,7 +2317,7 @@ const Editor = () => {
                                                                         const printAreaId = layer.printArea?._id || layer.printArea;
                                                                         const containerRect = containerRefs.current[printAreaId]?.getBoundingClientRect();
                                                                         if (!containerRect) {
-                                                                            toast.info("Cannot auto-size â€“ print area not ready");
+                                                                            toast.info("Cannot auto-size - print area not ready");
                                                                             return;
                                                                         }
                                                                         const { width: textPxWidth, height: textPxHeight } = getTextPixelSize(
@@ -2205,7 +2338,7 @@ const Editor = () => {
                                                                     className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 border text-sm font-medium hover:bg-gray-50 cursor-pointer"
                                                                 >
                                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v16h16" /><path d="M8 20h8" /><path d="M20 12v4" /></svg>
-                                                                    Autoâ€‘size
+                                                                    Auto-size
                                                                 </button>
                                                             )}
                                                             <button
