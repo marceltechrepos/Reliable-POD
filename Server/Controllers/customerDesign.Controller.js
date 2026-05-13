@@ -234,7 +234,19 @@ const updateLayer = async (req, res) => {
             "locked",
             "horizontalAlign",
             "verticalAlign",
-            "zIndex"
+            "zIndex",
+            // Text properties
+            "text",
+            "fontSize",
+            "fontFamily",
+            "fontWeight",
+            "fontStyle",
+            "fill",
+            "align",
+            "lineHeight",
+            "textDecoration",
+            "letterSpacing",
+            "wrapMode"
         ];
 
         allowedFields.forEach(field => {

@@ -132,7 +132,7 @@ const getCustomProducts = async (req, res) => {
     const customProducts = await CustomProduct.find(filter)
       .populate("baseProduct", "name images price")
       .populate("customerDesign", "name thumbnailUrl")
-      .populate("selectedMockup", "imageUrl name")
+      .populate("selectedMockup", "mockupImage name")
       .populate("customerLayers.printArea", "name type")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -226,8 +226,9 @@ const getCustomProductByUserId = async (req, res) => {
       .populate("customerLayers.printArea");
 
     if (!customProductsByUserId.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        data: [],
         message: "No custom products found"
       });
     }

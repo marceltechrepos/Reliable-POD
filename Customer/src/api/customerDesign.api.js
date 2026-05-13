@@ -13,14 +13,15 @@ export const waitForCanvasReady = async (container, maxFrames = 20) => {
           allDrawn = false;
           break;
         }
+        if (canvas.dataset.engine === 'three') continue;
         try {
           const ctx = canvas.getContext('2d');
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          if (ctx) ctx.getImageData(0, 0, 1, 1);
           // Ensure at least one non‑transparent pixel exists (optional)
           // const hasContent = imgData.data.some(ch => ch !== 0);
           // if (!hasContent) allDrawn = false;
         } catch (e) {
-          allDrawn = false;
+          // ignore
         }
       }
       if (allDrawn || frame >= maxFrames) {

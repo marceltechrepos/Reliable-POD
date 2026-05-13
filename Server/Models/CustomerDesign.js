@@ -172,6 +172,7 @@ const layerSchema = new mongoose.Schema(
     skewX: { type: Number, default: 0 },
     skewY: { type: Number, default: 0 },
     transformOrigin: { type: String, default: 'center center' },
+    wrapMode: { type: String, enum: ['single', 'multi'], default: 'multi' },
   },
   {
     _id: true
