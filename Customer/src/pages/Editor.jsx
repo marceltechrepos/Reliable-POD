@@ -696,6 +696,7 @@ const Editor = () => {
             enablePerspective: false,
             align: "center",
             lineHeight: 1.2,
+            name: "Text Layer",
         };
 
         addLayerToAllMockups(newLayer, selectedMockup._id, defaultPrintArea);
@@ -743,6 +744,7 @@ const Editor = () => {
             opacity: 1,
             visible: true,
             locked: false,
+            name: image.name || "New Image",
             horizontalAlign: "center",
             verticalAlign: "middle",
             enablePerspective: fullPrintArea?.enablePerspective || false,
@@ -2208,8 +2210,13 @@ const Editor = () => {
 
                                                                 {/* Layer Info */}
                                                                 <div className="min-w-0 flex-1">
-                                                                    <div className="text-sm font-medium text-gray-800 truncate">
-                                                                        {layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`}
+                                                                    <div className="text-sm font-medium text-gray-800 truncate flex items-center gap-2">
+                                                                        {layer.name || (layer.type === "text" ? "Text Layer" : `Layer ${index + 1}`)}
+                                                                        {layer.isPlaceholder && (
+                                                                            <span className="px-1.5 py-0.5 bg-orange-100 text-[9px] font-black text-orange-700 rounded-sm uppercase tracking-tighter">
+                                                                                Placeholder
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                      <div className="text-[11px] text-gray-500">
                                                                         {Math.round(layer.width || 0)}% x {Math.round(layer.height || 0)}%

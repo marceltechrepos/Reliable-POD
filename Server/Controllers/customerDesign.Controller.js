@@ -246,7 +246,9 @@ const updateLayer = async (req, res) => {
             "lineHeight",
             "textDecoration",
             "letterSpacing",
-            "wrapMode"
+            "wrapMode",
+            "name",
+            "isPlaceholder"
         ];
 
         allowedFields.forEach(field => {

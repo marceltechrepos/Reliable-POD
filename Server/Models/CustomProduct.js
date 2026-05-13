@@ -142,6 +142,8 @@ const customProductSchema = new mongoose.Schema(
         letterSpacing: Number,
         textDecoration: String,
         wrapMode: String,
+        name: String,
+        isPlaceholder: { type: Boolean, default: false },
       },
     ],
     storeId: {
