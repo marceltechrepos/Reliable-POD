@@ -11,7 +11,7 @@ import {
     updateShopifyProductId,
     importProductsToShopify,
     getImportedProductsByStore  // ✅ Add this
-} from "../Controllers/customProduct.controller.js";
+} from "../Controllers/customProduct.Controller.js";
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const customerProductRoute = express.Router();
