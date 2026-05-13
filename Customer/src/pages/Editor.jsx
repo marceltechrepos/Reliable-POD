@@ -1716,9 +1716,6 @@ const Editor = () => {
                                                 </div>
                                             ) : (
                                                 areaLayers.map(layer => {
-                                                    // const globalIndex = currentLayers.findIndex(
-                                                    //     l => (l._id ? String(l._id) : null) === (layer._id ? String(layer._id) : null)
-                                                    // );
                                                     const globalIndex = currentLayers.findIndex(l => {
                                                         if (layer.clientKey && l.clientKey) {
                                                             return l.clientKey === layer.clientKey;
@@ -1735,12 +1732,15 @@ const Editor = () => {
                                                             key={`${selectedMockup?._id || 'mockup'}-${layer.clientKey || layer._id || globalIndex}`}
                                                             size={{ width: pixelValues.width, height: pixelValues.height }}
                                                             position={{ x: pixelValues.x, y: pixelValues.y }}
-                                                            disableDragging={globalIndex !== selectedLayerIndex || layer.locked}
+                                                            disableDragging={layer.locked}
                                                             enableResizing={globalIndex === selectedLayerIndex && !layer.locked}
                                                             lockAspectRatio={isShiftPressed ? getLayerAspectRatio(layer) : false}
-                                                            onDragStart={() => handleDragStart(globalIndex)}
+                                                            onDragStart={() => {
+                                                                handleDragStart(globalIndex);
+                                                                setSelectedLayerIndex(globalIndex);
+                                                            }}
                                                             onDrag={(e, d) => {
-                                                                if (globalIndex === selectedLayerIndex && !layer.locked) {
+                                                                if (!layer.locked) {
                                                                     const container = containerRefs.current[printAreaLayer._id];
                                                                     if (!container) return;
                                                                     const rect = container.getBoundingClientRect();
@@ -1785,12 +1785,11 @@ const Editor = () => {
                                                             style={{
                                                                 zIndex: layer.zIndex || 1,
                                                                 pointerEvents: 'auto',
-                                                                cursor: globalIndex === selectedLayerIndex ? 'move' : 'pointer'
+                                                                cursor: layer.locked ? 'not-allowed' : (globalIndex === selectedLayerIndex ? 'move' : 'pointer')
                                                             }}
                                                         >
                                                             <div
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
+                                                                onMouseDown={() => {
                                                                     setSelectedLayerIndex(globalIndex);
                                                                 }}
                                                                 className={`relative group w-full h-full ${layer.type === "text" ? "overflow-visible" : "overflow-hidden"} ${selectedLayerIndex === globalIndex ? " ring-inset" : ""
