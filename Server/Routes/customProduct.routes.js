@@ -20,18 +20,18 @@ const customerProductRoute = express.Router();
 // customerProductRoute.use(isLogin); // COMMENT THIS OUT
 
 // CRUD operations (protected)
-customerProductRoute.post("/create", isLogin, createCustomProduct);
-customerProductRoute.post("/bulk-delete", isLogin, bulkDeleteCustomProducts);
-customerProductRoute.get("/", isLogin, getCustomProducts);
-customerProductRoute.get("/user/:userId", isLogin, getCustomProductByUserId);
-customerProductRoute.get("/:id", isLogin, getCustomProductById);
-customerProductRoute.put("/:id", isLogin, updateCustomProduct);
+customerProductRoute.post("/custom-product/create", isLogin, createCustomProduct);
+customerProductRoute.post("/custom-product/bulk-delete", isLogin, bulkDeleteCustomProducts);
+customerProductRoute.get("/custom-product", isLogin, getCustomProducts);
+customerProductRoute.get("/custom-product/user/:userId", isLogin, getCustomProductByUserId);
+customerProductRoute.get("/custom-product/:id", isLogin, getCustomProductById);
+customerProductRoute.put("/custom-product/:id", isLogin, updateCustomProduct);
 customerProductRoute.put("/update-shopify-id/:id", isLogin, updateShopifyProductId);
-customerProductRoute.delete("/:id", isLogin, deleteCustomProduct);
-customerProductRoute.post("/import", isLogin, importProductsToShopify);
+customerProductRoute.delete("/custom-product/:id", isLogin, deleteCustomProduct);
+customerProductRoute.post("/custom-product/import", isLogin, importProductsToShopify);
 
 // ✅ Public routes - No authentication required
-customerProductRoute.get("/shopify/:shopifyProductId", getCustomProductByShopifyId);
-customerProductRoute.get("/store/:storeId/imported", getImportedProductsByStore);
+customerProductRoute.get("/custom-product/shopify/:shopifyProductId", getCustomProductByShopifyId);
+customerProductRoute.get("/custom-product/store/:storeId/imported", getImportedProductsByStore);
 
 export default customerProductRoute;
