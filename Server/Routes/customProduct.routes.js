@@ -26,7 +26,7 @@ customerProductRoute.get("/custom-product", isLogin, getCustomProducts);
 customerProductRoute.get("/custom-product/user/:userId", isLogin, getCustomProductByUserId);
 customerProductRoute.get("/custom-product/:id", isLogin, getCustomProductById);
 customerProductRoute.put("/custom-product/:id", isLogin, updateCustomProduct);
-customerProductRoute.put("/update-shopify-id/:id", isLogin, updateShopifyProductId);
+customerProductRoute.put("/update-shopify-id/:id", updateShopifyProductId);
 customerProductRoute.delete("/custom-product/:id", isLogin, deleteCustomProduct);
 customerProductRoute.post("/custom-product/import", isLogin, importProductsToShopify);
 
