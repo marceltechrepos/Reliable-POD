@@ -58,7 +58,7 @@ routes.forEach((route) => {
 });
 
 app.use("/api/customer/designs", customerRoute);
-app.use("/api/custom-product", customerProductRoute);
+app.use("/api", customerProductRoute);
 
 // ✅ Error handling middleware
 app.use((err, req, res, next) => {
