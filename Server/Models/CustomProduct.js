@@ -160,6 +160,10 @@ const customProductSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    shopifyProductId: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
