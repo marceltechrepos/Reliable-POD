@@ -44,7 +44,8 @@ class OrderService {
                 price: item.price,
                 product_id: item.product_id,
                 variant_id: item.variant_id,
-                name: item.name
+                name: item.name,
+                properties: item.properties || []
             })),
             test_order: shopifyData.test,
             confirmed: shopifyData.confirmed,

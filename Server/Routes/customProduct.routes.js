@@ -15,10 +15,7 @@ import {
 import { isLogin } from "../Middlewares/Authentication/Auth.middleware.js";
 
 const customerProductRoute = express.Router();
-
-// ✅ Apply isLogin middleware to all routes EXCEPT the public ones
-// customerProductRoute.use(isLogin); // COMMENT THIS OUT
-
+ 
 // CRUD operations (protected)
 customerProductRoute.post("/custom-product/create", isLogin, createCustomProduct);
 customerProductRoute.post("/custom-product/bulk-delete", isLogin, bulkDeleteCustomProducts);
@@ -30,7 +27,7 @@ customerProductRoute.put("/update-shopify-id/:id", updateShopifyProductId);
 customerProductRoute.delete("/custom-product/:id", isLogin, deleteCustomProduct);
 customerProductRoute.post("/custom-product/import", isLogin, importProductsToShopify);
 
-// ✅ Public routes - No authentication required
+
 customerProductRoute.get("/custom-product/shopify/:shopifyProductId", getCustomProductByShopifyId);
 customerProductRoute.get("/custom-product/store/:storeId/imported", getImportedProductsByStore);
 
