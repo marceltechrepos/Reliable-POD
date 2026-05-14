@@ -262,25 +262,39 @@ function Order() {
                                     </span>
                                 </h3>
                                 <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-sm">
-                                    {selectedOrder.line_items?.map((item, idx) => (
-                                        <div key={idx} className={`p-5 flex justify-between items-center hover:bg-slate-50/80 transition-colors ${idx !== 0 ? 'border-t border-slate-100' : ''}`}>
-                                            <div className="flex items-center gap-5">
-                                                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center text-slate-300 border border-slate-200/50">
-                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                </div>
-                                                <div>
-                                                    <p className="font-extrabold text-slate-800">{item.name || item.title}</p>
-                                                    <div className="flex gap-2.5 mt-1.5">
-                                                        <span className="text-[10px] font-bold tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md uppercase">SKU: {item.sku}</span>
-                                                        <span className="text-[10px] font-bold tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md uppercase">QTY: {item.quantity}</span>
+                                    {selectedOrder.line_items?.map((item, idx) => {
+                                        const hdPreview = item.properties?.find(p => p.name === '_HD_Preview' || p.name === 'Design URL')?.value;
+                                        const otherProperties = item.properties?.filter(p => !p.name.startsWith('_') && p.name !== 'Design URL') || [];
+
+                                        return (
+                                            <div key={idx} className={`p-5 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-slate-50/80 transition-colors ${idx !== 0 ? 'border-t border-slate-100' : ''}`}>
+                                                <div className="flex items-center gap-5">
+                                                    <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200/50">
+                                                        {hdPreview ? (
+                                                            <img src={hdPreview} alt={item.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <svg className="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-extrabold text-slate-800">{item.name || item.title}</p>
+                                                        <div className="flex flex-wrap gap-2.5 mt-1.5">
+                                                            <span className="text-[10px] font-bold tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md uppercase">SKU: {item.sku}</span>
+                                                            <span className="text-[10px] font-bold tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md uppercase">QTY: {item.quantity}</span>
+                                                            {otherProperties.map((prop, pIdx) => (
+                                                                <span key={pIdx} className="text-[10px] font-bold tracking-widest text-[#3B6D92] bg-[#3B6D92]/10 px-2 py-1 rounded-md uppercase">
+                                                                    {prop.name}: {prop.value}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <div className="font-black text-slate-800 text-lg tracking-tight mt-4 sm:mt-0 text-right">
+                                                    ${parseFloat(item.price).toFixed(2)}
+                                                </div>
                                             </div>
-                                            <div className="font-black text-slate-800 text-lg tracking-tight">
-                                                ${parseFloat(item.price).toFixed(2)}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 

@@ -32,6 +32,7 @@ const orderSchema = new Schema(
         product_id: Number,
         variant_id: Number,
         name: String,
+        properties: { type: [Schema.Types.Mixed], default: [] },
       }
     ],
     test_order: { type: Boolean, default: false },
