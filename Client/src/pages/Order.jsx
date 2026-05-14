@@ -263,18 +263,13 @@ function Order() {
                                 </h3>
                                 <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-sm">
                                     {selectedOrder.line_items?.map((item, idx) => {
-                                        const hdPreview = item.properties?.find(p => p.name === '_HD_Preview' || p.name === 'Design URL')?.value;
                                         const otherProperties = item.properties?.filter(p => !p.name.startsWith('_') && p.name !== 'Design URL') || [];
 
                                         return (
                                             <div key={idx} className={`p-5 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-slate-50/80 transition-colors ${idx !== 0 ? 'border-t border-slate-100' : ''}`}>
                                                 <div className="flex items-center gap-5">
-                                                    <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200/50">
-                                                        {hdPreview ? (
-                                                            <img src={hdPreview} alt={item.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <svg className="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                        )}
+                                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-300 border border-slate-200/50">
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                     </div>
                                                     <div>
                                                         <p className="font-extrabold text-slate-800">{item.name || item.title}</p>
@@ -297,6 +292,37 @@ function Order() {
                                     })}
                                 </div>
                             </div>
+
+                            {/* HD Design Assets Section */}
+                            {selectedOrder.line_items?.some(item => item.properties?.some(p => p.name === '_HD_Preview' || p.name === 'Design URL')) && (
+                                <div className="mb-8">
+                                    <h3 className="font-extrabold text-slate-800 mb-4 flex items-center gap-2 tracking-wide uppercase text-xs">
+                                        <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        HD Design Assets
+                                    </h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {selectedOrder.line_items?.flatMap(item => 
+                                            item.properties?.filter(p => p.name === '_HD_Preview' || p.name === 'Design URL')
+                                            .map((p, pIdx) => (
+                                                <div key={`${item.id}-${pIdx}`} className="group relative aspect-square bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 hover:border-[#3B6D92] transition-all duration-300 shadow-sm">
+                                                    <img src={p.value} alt="HD Design" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                                                        <p className="text-[10px] text-white font-bold truncate">{item.name || item.title}</p>
+                                                        <a 
+                                                            href={p.value} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="mt-2 bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest py-1.5 rounded-lg text-center hover:bg-white/40 transition-colors"
+                                                        >
+                                                            View Full
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Financial Summary */}
                             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-7 border border-slate-200 shadow-inner">
@@ -336,6 +362,37 @@ function Order() {
                             >
                                 Close
                             </button>
+                            {selectedOrder.line_items?.some(item => item.properties?.some(p => p.name === '_HD_Preview' || p.name === 'Design URL')) && (
+                                <button 
+                                    onClick={() => {
+                                        const hdPreviews = selectedOrder.line_items?.flatMap(item => 
+                                            item.properties?.filter(p => p.name === '_HD_Preview' || p.name === 'Design URL')
+                                            .map(p => ({ url: p.value, name: item.name || item.title }))
+                                        ) || [];
+                                        
+                                        hdPreviews.forEach((asset, i) => {
+                                            // Add Cloudinary attachment flag if it's a cloudinary URL
+                                            let downloadUrl = asset.url;
+                                            if (downloadUrl.includes('cloudinary.com')) {
+                                                downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+                                            }
+
+                                            const link = document.createElement('a');
+                                            link.href = downloadUrl;
+                                            link.target = "_blank";
+                                            link.download = `HD_Design_${asset.name.replace(/\s+/g, '_')}_${i + 1}.png`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                        });
+                                        toast.success(`Started downloading ${hdPreviews.length} HD design(s)`);
+                                    }}
+                                    className="px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-widest uppercase text-white bg-emerald-600 hover:bg-emerald-700 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] transition-all active:scale-95 flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Download HD Design
+                                </button>
+                            )}
                             <button 
                                 onClick={() => {
                                     toast.info("Invoice generation coming soon!");
